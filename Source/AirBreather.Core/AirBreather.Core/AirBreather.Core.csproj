@@ -40,6 +40,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Collections\BitList.cs" />
+    <Compile Include="Collections\ReadOnlyCollectionWrapper.cs" />
+    <Compile Include="Collections\ReadOnlyDictionaryWrapper.cs" />
+    <Compile Include="Collections\ReadOnlyListWrapper.cs" />
     <Compile Include="DisposableObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Random\BclPseudoRandomPicker.cs" />
