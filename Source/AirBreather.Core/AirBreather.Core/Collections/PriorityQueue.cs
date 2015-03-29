@@ -448,13 +448,14 @@ namespace AirBreather.Core.Collections
                     return false;
                 }
 
-                this.curr = this.queue.nodes[this.currIndex++];
+                this.curr = this.queue.nodes[1 + this.currIndex++];
                 return true;
             }
 
             public void Reset()
             {
                 this.currIndex = 0;
+                this.curr = null;
             }
 
             void IDisposable.Dispose()
