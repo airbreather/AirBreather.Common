@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xunit>
+    <assemblies>
+        <assembly filename="AirBreather.Common.Tests\bin\Debug\AirBreather.Common.Tests.dll" shadow-copy="false" />
+    </assemblies>
+</xunit>

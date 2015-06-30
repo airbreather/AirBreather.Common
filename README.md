@@ -1,2 +1,2 @@
-# AirBreather.Core
-A repository of my own personal "core" .NET utilities.
+# AirBreather.Common
+A repository of my own personal "common" .NET utilities.
