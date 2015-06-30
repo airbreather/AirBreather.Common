@@ -27,7 +27,6 @@ THE SOFTWARE.
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace AirBreather.Common.Collections
 {
@@ -108,7 +107,7 @@ namespace AirBreather.Common.Collections
         {
             if (capacity < 1)
             {
-                throw new ArgumentOutOfRangeException("capacity", "Capacity must be greater than zero.");
+                throw new ArgumentOutOfRangeException(nameof(capacity), "Capacity must be greater than zero.");
             }
 
             this.nodes = new List<PriorityQueueNode<TPriority, TData>>(capacity + 1);
@@ -136,7 +135,7 @@ namespace AirBreather.Common.Collections
         {
             if (copyFrom == null)
             {
-                throw new ArgumentNullException("copyFrom");
+                throw new ArgumentNullException(nameof(copyFrom));
             }
 
             this.nodes = new List<PriorityQueueNode<TPriority, TData>>(copyFrom.nodes.Count);
@@ -214,7 +213,7 @@ namespace AirBreather.Common.Collections
         {
             if (node == null)
             {
-                throw new ArgumentNullException("node");
+                throw new ArgumentNullException(nameof(node));
             }
 
             node.Priority = priority;
@@ -258,7 +257,7 @@ namespace AirBreather.Common.Collections
         {
             if (node == null)
             {
-                throw new ArgumentNullException("node");
+                throw new ArgumentNullException(nameof(node));
             }
 
             node.Priority = priority;

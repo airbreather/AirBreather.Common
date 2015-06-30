@@ -26,12 +26,12 @@ namespace AirBreather.Common.Random
             // because it's a special-case that doesn't need to exist.
             if (rangeSize < 1)
             {
-                throw new ArgumentOutOfRangeException("rangeSize", rangeSize, "Must be positive");
+                throw new ArgumentOutOfRangeException(nameof(rangeSize), rangeSize, "Must be positive");
             }
 
             if (minValueInclusive > Int32.MaxValue - rangeSize)
             {
-                throw new ArgumentOutOfRangeException("minValueInclusive", minValueInclusive, "Must be small enough to avoid overflow");
+                throw new ArgumentOutOfRangeException(nameof(minValueInclusive), minValueInclusive, "Must be small enough to avoid overflow");
             }
 
             int pick;

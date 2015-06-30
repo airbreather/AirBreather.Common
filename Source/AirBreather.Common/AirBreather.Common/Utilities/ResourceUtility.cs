@@ -15,6 +15,16 @@ namespace AirBreather.Common.Utilities
 
         public static Stream OpenEmbeddedResourceFile(string resourceKey, Assembly assembly)
         {
+            if (assembly == null)
+            {
+                throw new ArgumentNullException(nameof(assembly));
+            }
+
+            if (String.IsNullOrWhiteSpace(resourceKey))
+            {
+                throw new ArgumentException("Must be a somewhat reasonably valid key.", nameof(resourceKey));
+            }
+
             // Assumes the assembly's default namespace is equal to its name,
             // which is ridiculous in the extremely general case, but fine for me.
             return assembly.GetManifestResourceStream(String.Join(".", assembly.GetName().Name, resourceKey));

@@ -2,8 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AirBreather.Common.Collections
 {
@@ -15,7 +13,7 @@ namespace AirBreather.Common.Collections
         {
             if (collection == null)
             {
-                throw new ArgumentNullException("collection");
+                throw new ArgumentNullException(nameof(collection));
             }
 
             this.wrappedCollection = collection;
@@ -40,22 +38,22 @@ namespace AirBreather.Common.Collections
         {
             if (array == null)
             {
-                throw new ArgumentNullException("array");
+                throw new ArgumentNullException(nameof(array));
             }
 
             if (arrayIndex < 0)
             {
-                throw new ArgumentOutOfRangeException("arrayIndex", arrayIndex, "Must be non-negative.");
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be non-negative.");
             }
 
             if (array.Length <= arrayIndex)
             {
-                throw new ArgumentOutOfRangeException("arrayIndex", arrayIndex, "Must be less than the length of the array.");
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be less than the length of the array.");
             }
 
             if (array.Length - arrayIndex < this.Count)
             {
-                throw new ArgumentException("Not enough room", "array");
+                throw new ArgumentException("Not enough room", nameof(array));
             }
 
             foreach (T item in this.wrappedCollection)

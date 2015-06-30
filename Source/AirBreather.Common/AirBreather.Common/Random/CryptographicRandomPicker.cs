@@ -23,12 +23,12 @@ namespace AirBreather.Common.Random
         {
             if (rangeSize < 1)
             {
-                throw new ArgumentOutOfRangeException("rangeSize", rangeSize, "Must be positive");
+                throw new ArgumentOutOfRangeException(nameof(rangeSize), rangeSize, "Must be positive");
             }
 
             if (Int32.MaxValue - rangeSize < minValueInclusive)
             {
-                throw new ArgumentOutOfRangeException("minValueInclusive", minValueInclusive, "Must be small enough to avoid overflow");
+                throw new ArgumentOutOfRangeException(nameof(minValueInclusive), minValueInclusive, "Must be small enough to avoid overflow");
             }
 
             this.ThrowIfDisposed();

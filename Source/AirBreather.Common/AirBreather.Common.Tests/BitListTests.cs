@@ -15,25 +15,25 @@ namespace AirBreather.Common.Tests
         {
             BitList bl = new BitList { true, true, false, false };
 
-            Assert.Throws<ArgumentOutOfRangeException>(() => bl[-1]);
-            Assert.Throws<ArgumentOutOfRangeException>(() => bl[4]);
-            Assert.Throws<ArgumentOutOfRangeException>(() => bl[-1] = false);
-            Assert.Throws<ArgumentOutOfRangeException>(() => bl[4] = false);
-            Assert.Throws<ArgumentOutOfRangeException>(() => bl.Insert(-1, false));
-            Assert.Throws<ArgumentOutOfRangeException>(() => bl.Insert(5, true));
-            Assert.Throws<ArgumentOutOfRangeException>(() => bl.RemoveAt(-1));
-            Assert.Throws<ArgumentOutOfRangeException>(() => bl.RemoveAt(4));
-            Assert.Throws<ArgumentNullException>(() => bl.CopyTo(null, 5));
-            Assert.Throws<ArgumentNullException>(() => new BitList(null));
+            Assert.Throws<ArgumentOutOfRangeException>("index", () => bl[-1]);
+            Assert.Throws<ArgumentOutOfRangeException>("index", () => bl[4]);
+            Assert.Throws<ArgumentOutOfRangeException>("index", () => bl[-1] = false);
+            Assert.Throws<ArgumentOutOfRangeException>("index", () => bl[4] = false);
+            Assert.Throws<ArgumentOutOfRangeException>("index", () => bl.Insert(-1, false));
+            Assert.Throws<ArgumentOutOfRangeException>("index", () => bl.Insert(5, true));
+            Assert.Throws<ArgumentOutOfRangeException>("index", () => bl.RemoveAt(-1));
+            Assert.Throws<ArgumentOutOfRangeException>("index", () => bl.RemoveAt(4));
+            Assert.Throws<ArgumentNullException>("array", () => bl.CopyTo(null, 5));
+            Assert.Throws<ArgumentNullException>("bitArray", () => new BitList(null));
 
             bool[] things = new bool[5];
-            Assert.Throws<ArgumentOutOfRangeException>(() => bl.CopyTo(things, -1));
-            Assert.Throws<ArgumentException>(() => bl.CopyTo(things, 2));
-            Assert.Throws<ArgumentOutOfRangeException>(() => bl.CopyTo(things, 5));
+            Assert.Throws<ArgumentOutOfRangeException>("arrayIndex", () => bl.CopyTo(things, -1));
+            Assert.Throws<ArgumentException>("array", () => bl.CopyTo(things, 2));
+            Assert.Throws<ArgumentOutOfRangeException>("arrayIndex", () => bl.CopyTo(things, 5));
 
             things = new bool[3];
-            Assert.Throws<ArgumentException>(() => bl.CopyTo(things, 0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => bl.CopyTo(things, 3));
+            Assert.Throws<ArgumentException>("array", () => bl.CopyTo(things, 0));
+            Assert.Throws<ArgumentOutOfRangeException>("arrayIndex", () => bl.CopyTo(things, 3));
         }
 
         [Fact]

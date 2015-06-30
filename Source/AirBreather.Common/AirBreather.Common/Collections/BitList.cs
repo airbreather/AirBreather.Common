@@ -20,7 +20,7 @@ namespace AirBreather.Common.Collections
         {
             if (bitArray == null)
             {
-                throw new ArgumentNullException("bitArray");
+                throw new ArgumentNullException(nameof(bitArray));
             }
 
             int length = bitArray.Length;
@@ -77,12 +77,12 @@ namespace AirBreather.Common.Collections
         {
             if (index < 0)
             {
-                throw new ArgumentOutOfRangeException("index", index, "Must be non-negative.");
+                throw new ArgumentOutOfRangeException(nameof(index), index, "Must be non-negative.");
             }
 
             if (this.Count < index)
             {
-                throw new ArgumentOutOfRangeException("index", index, "Too big.");
+                throw new ArgumentOutOfRangeException(nameof(index), index, "Too big.");
             }
 
             if (this.Count == index)
@@ -123,12 +123,12 @@ namespace AirBreather.Common.Collections
         {
             if (index < 0)
             {
-                throw new ArgumentOutOfRangeException("index", index, "Must be non-negative.");
+                throw new ArgumentOutOfRangeException(nameof(index), index, "Must be non-negative.");
             }
 
             if (this.Count <= index)
             {
-                throw new ArgumentOutOfRangeException("index", index, "Too big.");
+                throw new ArgumentOutOfRangeException(nameof(index), index, "Too big.");
             }
 
             // TODO: optimize this
@@ -154,12 +154,12 @@ namespace AirBreather.Common.Collections
             {
                 if (index < 0)
                 {
-                    throw new ArgumentOutOfRangeException("index", index, "Must be non-negative.");
+                    throw new ArgumentOutOfRangeException(nameof(index), index, "Must be non-negative.");
                 }
 
                 if (this.Count <= index)
                 {
-                    throw new ArgumentOutOfRangeException("index", index, "Too big.");
+                    throw new ArgumentOutOfRangeException(nameof(index), index, "Too big.");
                 }
 
                 return (this.values[index / 32] & (1u << (index % 32))) > 0;
@@ -169,12 +169,12 @@ namespace AirBreather.Common.Collections
             {
                 if (index < 0)
                 {
-                    throw new ArgumentOutOfRangeException("index", index, "Must be non-negative.");
+                    throw new ArgumentOutOfRangeException(nameof(index), index, "Must be non-negative.");
                 }
 
                 if (this.Count <= index)
                 {
-                    throw new ArgumentOutOfRangeException("index", index, "Too big.");
+                    throw new ArgumentOutOfRangeException(nameof(index), index, "Too big.");
                 }
 
                 int mask = unchecked((int)1u << (index % 32));
@@ -217,22 +217,22 @@ namespace AirBreather.Common.Collections
         {
             if (array == null)
             {
-                throw new ArgumentNullException("array");
+                throw new ArgumentNullException(nameof(array));
             }
 
             if (arrayIndex < 0)
             {
-                throw new ArgumentOutOfRangeException("arrayIndex", arrayIndex, "Must be non-negative.");
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be non-negative.");
             }
 
             if (array.Length <= arrayIndex)
             {
-                throw new ArgumentOutOfRangeException("arrayIndex", arrayIndex, "Must be less than the length of the array.");
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be less than the length of the array.");
             }
 
             if (array.Length - arrayIndex < this.Count)
             {
-                throw new ArgumentException("Not enough room", "array");
+                throw new ArgumentException("Not enough room", nameof(array));
             }
 
             for (int i = 0; i < this.Count; i++)
