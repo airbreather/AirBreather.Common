@@ -129,11 +129,9 @@ namespace AirBreather.Common.Tests
             BitList bl = new BitList();
             foreach (byte val in someStuff)
             {
-                byte mask = 1;
                 for (int j = 0; j < 8; j++)
                 {
-                    bl.Add((val & mask) > 0);
-                    mask <<= 1;
+                    bl.Add((val & (1 << j)) > 0);
                 }
             }
 
@@ -154,11 +152,9 @@ namespace AirBreather.Common.Tests
             BitList bl = new BitList();
             foreach (byte val in someStuff)
             {
-                byte mask = 1;
                 for (int j = 0; j < 8; j++)
                 {
-                    bl.Add((val & mask) > 0);
-                    mask <<= 1;
+                    bl.Add((val & (1 << j)) > 0);
                 }
             }
 

@@ -42,6 +42,11 @@
     <WarningLevel>4</WarningLevel>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <CustomCommands>
+      <CustomCommands>
+        <Command type="Execute" command="../packages/xunit.runner.console.2.1.0-beta4-build3109/tools/xunit.console.exe ${TargetFile} -noappdomain" />
+      </CustomCommands>
+    </CustomCommands>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="BitListTests.cs" />
