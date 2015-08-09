@@ -5,11 +5,11 @@ namespace AirBreather.Common.Random
     public sealed class RandomPicker<TState> : IPicker where TState : struct, IRandomGeneratorState
     {
         // Seems about right, from testing various sizes.
-        private const int BufferSizeInBytes = 16384;
+        private const int DesiredBufferSizeInBytes = 16384;
 
         private readonly IRandomGenerator<TState> rng;
 
-        private readonly byte[] buffer = new byte[BufferSizeInBytes];
+        private readonly byte[] buffer;
 
         private readonly object lockObject = new object();
 
@@ -33,8 +33,8 @@ namespace AirBreather.Common.Random
             this.rngState = initialState;
 
             int chunkSize = rng.ChunkSize;
-            int extra = chunkSize - (BufferSizeInBytes % chunkSize);
-            this.buffer = new byte[BufferSizeInBytes + extra == chunkSize ? 0 : extra];
+            int extra = DesiredBufferSizeInBytes % chunkSize;
+            this.buffer = new byte[DesiredBufferSizeInBytes + (extra == 0 ? 0 : chunkSize - extra)];
         }
 
         public int PickFromRange(int minValueInclusive, int rangeSize)
@@ -48,6 +48,8 @@ namespace AirBreather.Common.Random
             {
                 throw new ArgumentOutOfRangeException(nameof(minValueInclusive), minValueInclusive, "Must be small enough to avoid overflow");
             }
+
+            int bufferLength = this.buffer.Length;
 
             // Conceptually, this creates several "buckets", each with values
             // [0, rangeSize) in it, plus a bucket with values [0, n), where
@@ -70,7 +72,7 @@ namespace AirBreather.Common.Random
                 {
                     if (offset == 0)
                     {
-                        this.rngState = this.rng.FillBuffer(this.rngState, this.buffer, 0, this.buffer.Length);
+                        this.rngState = this.rng.FillBuffer(this.rngState, this.buffer, 0, bufferLength);
                     }
 
                     sample = BitConverter.ToInt32(this.buffer, offset);
@@ -81,7 +83,7 @@ namespace AirBreather.Common.Random
                     // it's silly to discard a perfectly good random bit,
                     // but it's even sillier to bend over backwards to save it.
                     sample &= 0x7FFFFFFF;
-                    offset = (offset + 4) % BufferSizeInBytes;
+                    offset = (offset + 4) % bufferLength;
                 }
                 while (Int32.MaxValue - rerollThreshold < sample);
 
