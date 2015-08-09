@@ -6,6 +6,14 @@ namespace AirBreather.Common.Utilities
 {
     public static class EnumerableUtility
     {
+        public static IEnumerable<uint> Range(uint start, uint count)
+        {
+            for (uint end = start + count; start < end; start++)
+            {
+                yield return start;
+            }
+        }
+
         // lets me write this:
         //     someEnumerable.ExceptWhere(someSet.Contains)
         // instead of this:
@@ -28,11 +36,7 @@ namespace AirBreather.Common.Utilities
             return enumerable.Where(x => !predicate(x));
         }
 
-        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable)
-        {
-            return enumerable.ToHashSet(null);
-        }
-
+        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable) => ToHashSet(enumerable, null);
         public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable, IEqualityComparer<T> equalityComparer)
         {
             if (enumerable == null)
@@ -41,6 +45,67 @@ namespace AirBreather.Common.Utilities
             }
 
             return new HashSet<T>(enumerable, equalityComparer);
+        }
+
+        public static IEnumerable<TSource> DistinctBy<TSource, TCompare>(this IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector) => DistinctBy(enumerable, selector, null);
+        public static IEnumerable<TSource> DistinctBy<TSource, TCompare>(this IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector, IEqualityComparer<TCompare> equalityComparer)
+        {
+            if (enumerable == null)
+            {
+                throw new ArgumentNullException(nameof(enumerable));
+            }
+
+            if (selector == null)
+            {
+                throw new ArgumentNullException(nameof(selector));
+            }
+
+            return DistinctByIterator(enumerable, selector, equalityComparer);
+        }
+
+        private static IEnumerable<TSource> DistinctByIterator<TSource, TCompare>(IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector, IEqualityComparer<TCompare> equalityComparer)
+        {
+            HashSet<TCompare> closedSet = new HashSet<TCompare>(equalityComparer);
+            foreach (TSource value in enumerable)
+            {
+                if (closedSet.Add(selector(value)))
+                {
+                    yield return value;
+                }
+            }
+        }
+
+        public static void CopyTo<T>(this IEnumerable<T> enumerable, T[] array, int arrayIndex)
+        {
+            if (enumerable == null)
+            {
+                throw new ArgumentNullException(nameof(enumerable));
+            }
+
+            if (array == null)
+            {
+                throw new ArgumentNullException(nameof(array));
+            }
+
+            if (arrayIndex < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be non-negative.");
+            }
+
+            if (array.Length <= arrayIndex)
+            {
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be less than the length of the array.");
+            }
+
+            foreach (T item in enumerable)
+            {
+                if (arrayIndex == array.Length)
+                {
+                    throw new ArgumentException("Not enough room", nameof(array));
+                }
+
+                array[arrayIndex++] = item;
+            }
         }
     }
 }

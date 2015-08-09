@@ -8,15 +8,6 @@
         public static readonly int Seed = 17;
 
         // Generic solely to avoid boxing / unboxing.
-        public static int HashWith<T>(this int hashCode, T nextValue)
-        {
-            unchecked
-            {
-                return (hashCode * 31) +
-                       (nextValue == null
-                            ? 0
-                            : nextValue.GetHashCode());
-            }
-        }
+        public static int HashWith<T>(this int hashCode, T nextValue) => unchecked((hashCode * 31) + (nextValue == null ? 0 : nextValue.GetHashCode()));
     }
 }

@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+
+using static AirBreather.Common.Utilities.EnumerableUtility;
 
 namespace AirBreather.Common.Collections
 {
@@ -19,6 +20,9 @@ namespace AirBreather.Common.Collections
             this.wrappedList = list;
         }
 
+        public bool IsReadOnly => true;
+        public int Count => this.wrappedList.Count;
+
         public int IndexOf(T item)
         {
             for (int i = 0; i < this.Count; i++)
@@ -32,27 +36,18 @@ namespace AirBreather.Common.Collections
             return -1;
         }
 
-        public void Insert(int index, T item)
+        public T this[int index] => this.wrappedList[index];
+
+        T IList<T>.this[int index]
         {
-            throw new NotSupportedException();
+            get { return this[index]; }
+            set { throw new NotSupportedException(); }
         }
 
-        public void RemoveAt(int index)
-        {
-            throw new NotSupportedException();
-        }
-
-        public T this[int index]
-        {
-            get
-            {
-                return this.wrappedList[index];
-            }
-            set
-            {
-                throw new NotSupportedException();
-            }
-        }
+        public bool Contains(T item) => this.wrappedList.Contains(item);
+        public void CopyTo(T[] array, int arrayIndex) => this.AsEnumerable().CopyTo(array, arrayIndex);
+        public IEnumerator<T> GetEnumerator() => this.wrappedList.GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.wrappedList.GetEnumerator();
 
         public void Add(T item)
         {
@@ -64,62 +59,19 @@ namespace AirBreather.Common.Collections
             throw new NotSupportedException();
         }
 
-        public bool Contains(T item)
-        {
-            return this.wrappedList.Contains(item);
-        }
-
-        public void CopyTo(T[] array, int arrayIndex)
-        {
-            if (array == null)
-            {
-                throw new ArgumentNullException(nameof(array));
-            }
-
-            if (arrayIndex < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be non-negative.");
-            }
-
-            if (array.Length <= arrayIndex)
-            {
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be less than the length of the array.");
-            }
-
-            if (array.Length - arrayIndex < this.Count)
-            {
-                throw new ArgumentException("Not enough room", nameof(array));
-            }
-
-            for (int i = 0; i < this.Count; i++)
-            {
-                array[i + arrayIndex] = this.wrappedList[i];
-            }
-        }
-
-        public int Count
-        {
-            get { return this.wrappedList.Count; }
-        }
-
-        public bool IsReadOnly
-        {
-            get { return true; }
-        }
-
         public bool Remove(T item)
         {
             throw new NotSupportedException();
         }
 
-        public IEnumerator<T> GetEnumerator()
+        public void Insert(int index, T item)
         {
-            return this.wrappedList.GetEnumerator();
+            throw new NotSupportedException();
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
+        public void RemoveAt(int index)
         {
-            return this.wrappedList.GetEnumerator();
+            throw new NotSupportedException();
         }
     }
 }

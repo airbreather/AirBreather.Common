@@ -28,10 +28,7 @@ namespace AirBreather.Common.Utilities
         //                           .End();
         // example output:
         //     Person[FirstName=John, MiddleName=(null), LastName=Smith]
-        public static IStringCreator Begin<T>(T exemplar)
-        {
-            return new Builder(typeof(T).Name);
-        }
+        public static IStringCreator Begin<T>(T exemplar) => new Builder(typeof(T).Name);
 
         private sealed class Builder : IStringCreator
         {
@@ -60,11 +57,7 @@ namespace AirBreather.Common.Utilities
                 return this;
             }
 
-            public string End()
-            {
-                return this.stringBuilder.Append("]")
-                                         .ToString();
-            }
+            public string End() => this.stringBuilder.Append("]").ToString();
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace AirBreather.Common.Collections
 {
@@ -20,17 +19,11 @@ namespace AirBreather.Common.Collections
         private uint[] data;
 
 #if INSANE_MEMORY
-        private uint Length
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return (uint)(data.Length / 3); }
-        }
+        private const int ValsOffset = 0;
+        private const int NextOffset = 1;
 
-        private uint BucketStart
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return Length * 2; }
-        }
+        private uint Length => (uint)(data.Length / 3);
+        private uint BucketStart => Length * 2;
 #else
         private uint Length;
         private uint BucketStart;

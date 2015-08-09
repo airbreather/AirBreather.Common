@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
+using static AirBreather.Common.Utilities.EnumerableUtility;
+
 namespace AirBreather.Common.Collections
 {
     public sealed class BitList : IList<bool>, IReadOnlyList<bool>
@@ -55,7 +57,7 @@ namespace AirBreather.Common.Collections
 
         public int Count { get; private set; }
 
-        public bool IsReadOnly { get { return false; } }
+        public bool IsReadOnly => false;
 
         public int IndexOf(bool item)
         {
@@ -204,65 +206,25 @@ namespace AirBreather.Common.Collections
             this.Modified();
         }
 
-        public bool Contains(bool item)
+        // TODO: this can be optimized slightly more than IndexOf can be, because in addition to
+        // skipping 32-bit integers that aren't exactly the mask, it can also just create a new
+        // mask for the last one based on Count % 32 and just return whether or not the final
+        // integer matches the mask.
+        public bool Contains(bool item) => this.IndexOf(item) >= 0;
+
+        public void CopyTo(bool[] array, int arrayIndex) => this.AsEnumerable().CopyTo(array, arrayIndex);
+
+        // TODO: hmm... maybe I should actually use BitArray for the implementation
+        // instead of a List<int>...
+        public BitArray ToBitArray() => new BitArray(this.values.ToArray())
         {
-            // TODO: this can be optimized slightly more than IndexOf can be, because in addition to
-            // skipping 32-bit integers that aren't exactly the mask, it can also just create a new
-            // mask for the last one based on Count % 32 and just return whether or not the final
-            // integer matches the mask.
-            return this.IndexOf(item) >= 0;
-        }
+            Length = this.Count
+        };
 
-        public void CopyTo(bool[] array, int arrayIndex)
-        {
-            if (array == null)
-            {
-                throw new ArgumentNullException(nameof(array));
-            }
+        public void TrimExcess() => this.values.TrimExcess();
 
-            if (arrayIndex < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be non-negative.");
-            }
-
-            if (array.Length <= arrayIndex)
-            {
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be less than the length of the array.");
-            }
-
-            if (array.Length - arrayIndex < this.Count)
-            {
-                throw new ArgumentException("Not enough room", nameof(array));
-            }
-
-            for (int i = 0; i < this.Count; i++)
-            {
-                array[arrayIndex + i] = this[i];
-            }
-        }
-
-        public BitArray ToBitArray()
-        {
-            return new BitArray(this.values.ToArray())
-            {
-                Length = this.Count
-            };
-        }
-
-        public void TrimExcess()
-        {
-            this.values.TrimExcess();
-        }
-
-        public IEnumerator<bool> GetEnumerator()
-        {
-            return new Enumerator(this);
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator();
-        }
+        public IEnumerator<bool> GetEnumerator() => new Enumerator(this);
+        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
         private void AddCore(bool value)
         {
@@ -280,13 +242,7 @@ namespace AirBreather.Common.Collections
             this.Count++;
         }
 
-        private void Modified()
-        {
-            unchecked
-            {
-                this.version++;
-            }
-        }
+        private void Modified() => this.version++;
 
         private sealed class Enumerator : IEnumerator<bool>
         {
@@ -296,25 +252,17 @@ namespace AirBreather.Common.Collections
 
             private int currIndex;
 
-            private bool curr;
-
             internal Enumerator(BitList lst)
             {
                 this.lst = lst;
                 this.version = lst.version;
                 this.currIndex = 0;
-                this.curr = false;
+                this.Current = false;;
             }
 
-            public bool Current
-            {
-                get { return this.curr; }
-            }
+            public bool Current { get; private set; }
 
-            object IEnumerator.Current
-            {
-                get { return this.Current; }
-            }
+            object IEnumerator.Current => this.Current;
 
             public bool MoveNext()
             {
@@ -328,7 +276,7 @@ namespace AirBreather.Common.Collections
                     return false;
                 }
 
-                this.curr = this.lst[this.currIndex++];
+                this.Current = this.lst[this.currIndex++];
                 return true;
             }
 

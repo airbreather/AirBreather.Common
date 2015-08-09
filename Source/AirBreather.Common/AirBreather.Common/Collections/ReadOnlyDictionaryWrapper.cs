@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+
+using static AirBreather.Common.Utilities.EnumerableUtility;
 
 namespace AirBreather.Common.Collections
 {
@@ -19,43 +20,26 @@ namespace AirBreather.Common.Collections
             this.wrappedDictionary = dictionary;
         }
 
-        public void Add(TKey key, TValue value)
-        {
-            throw new NotSupportedException();
-        }
+        public bool IsReadOnly => true;
+        public int Count => this.wrappedDictionary.Count;
 
-        public bool ContainsKey(TKey key)
-        {
-            return this.wrappedDictionary.ContainsKey(key);
-        }
+        public TValue this[TKey key] => this.wrappedDictionary[key];
 
-        public ICollection<TKey> Keys
+        public IEnumerable<TKey> Keys => this.wrappedDictionary.Keys;
+        public IEnumerable<TValue> Values => this.wrappedDictionary.Values;
+
+        ICollection<TKey> IDictionary<TKey, TValue>.Keys
         {
             get
             {
                 IEnumerable<TKey> result = this.wrappedDictionary.Keys;
                 return result == null
                     ? null
-                    : result as ICollection<TKey> ?? result.ToArray();
+                        : result as ICollection<TKey> ?? result.ToArray();
             }
         }
 
-        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys
-        {
-            get { return this.wrappedDictionary.Keys; }
-        }
-
-        public bool Remove(TKey key)
-        {
-            throw new NotSupportedException();
-        }
-
-        public bool TryGetValue(TKey key, out TValue value)
-        {
-            return this.wrappedDictionary.TryGetValue(key, out value);
-        }
-
-        public ICollection<TValue> Values
+        ICollection<TValue> IDictionary<TKey, TValue>.Values
         {
             get
             {
@@ -66,21 +50,22 @@ namespace AirBreather.Common.Collections
             }
         }
 
-        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values
+        TValue IDictionary<TKey, TValue>.this[TKey key]
         {
-            get { return this.wrappedDictionary.Values; }
+            get { return this[key]; }
+            set { throw new NotSupportedException(); }
         }
 
-        public TValue this[TKey key]
+        public bool Contains(KeyValuePair<TKey, TValue> item) => this.wrappedDictionary.Contains(item);
+        public bool ContainsKey(TKey key) => this.wrappedDictionary.ContainsKey(key);
+        public bool TryGetValue(TKey key, out TValue value) => this.wrappedDictionary.TryGetValue(key, out value);
+        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => this.AsEnumerable().CopyTo(array, arrayIndex);
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => this.wrappedDictionary.GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.wrappedDictionary.GetEnumerator();
+
+        public void Add(TKey key, TValue value)
         {
-            get
-            {
-                return this.wrappedDictionary[key];
-            }
-            set
-            {
-                throw new NotSupportedException();
-            }
+            throw new NotSupportedException();
         }
 
         public void Add(KeyValuePair<TKey, TValue> item)
@@ -88,67 +73,18 @@ namespace AirBreather.Common.Collections
             throw new NotSupportedException();
         }
 
-        public void Clear()
-        {
-            throw new NotSupportedException();
-        }
-
-        public bool Contains(KeyValuePair<TKey, TValue> item)
-        {
-            return this.wrappedDictionary.Contains(item);
-        }
-
-        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
-        {
-            if (array == null)
-            {
-                throw new ArgumentNullException(nameof(array));
-            }
-
-            if (arrayIndex < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be non-negative.");
-            }
-
-            if (array.Length <= arrayIndex)
-            {
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be less than the length of the array.");
-            }
-
-            if (array.Length - arrayIndex < this.Count)
-            {
-                throw new ArgumentException("Not enough room", nameof(array));
-            }
-
-            foreach (KeyValuePair<TKey, TValue> kvp in this.wrappedDictionary)
-            {
-                array[arrayIndex++] = kvp;
-            }
-        }
-
-        public int Count
-        {
-            get { return this.wrappedDictionary.Count; }
-        }
-
-        public bool IsReadOnly
-        {
-            get { return true; }
-        }
-
         public bool Remove(KeyValuePair<TKey, TValue> item)
         {
             throw new NotSupportedException();
         }
-
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+        public bool Remove(TKey key)
         {
-            return this.wrappedDictionary.GetEnumerator();
+            throw new NotSupportedException();
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
+        public void Clear()
         {
-            return this.wrappedDictionary.GetEnumerator();
+            throw new NotSupportedException();
         }
     }
 }

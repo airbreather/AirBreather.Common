@@ -25,7 +25,6 @@ THE SOFTWARE.
 */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace AirBreather.Common.Collections
@@ -163,7 +162,7 @@ namespace AirBreather.Common.Collections
         /// This is the node whose <typeparamref name="TPriority"/> compares
         /// less than or equal to the priority of all other nodes in the queue.
         /// </summary>
-        public PriorityQueueNode<TPriority, TData> Head { get { return this.nodes[1]; } }
+        public PriorityQueueNode<TPriority, TData> Head => this.nodes[1];
 
         /// <summary>
         /// Removes all nodes from this queue.
@@ -307,16 +306,10 @@ namespace AirBreather.Common.Collections
         }
 
         /// <inheritdoc />
-        public IEnumerator<PriorityQueueNode<TPriority, TData>> GetEnumerator()
-        {
-            return new Enumerator(this);
-        }
+        public IEnumerator<PriorityQueueNode<TPriority, TData>> GetEnumerator() => new Enumerator(this);
 
         /// <inheritdoc />
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator();
-        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
 
         private void HeapifyUp(PriorityQueueNode<TPriority, TData> node)
         {
@@ -408,12 +401,9 @@ namespace AirBreather.Common.Collections
             node2.QueueIndex = temp;
         }
 
-        private bool HasHigherPriority(PriorityQueueNode<TPriority, TData> higher, PriorityQueueNode<TPriority, TData> lower)
-        {
-            // The "higher-priority" item is actually the item whose priority
-            // compares *lower*, because this is a min-heap.
-            return this.priorityComparer.Compare(higher.Priority, lower.Priority) < 0;
-        }
+        // The "higher-priority" item is actually the item whose priority
+        // compares *lower*, because this is a min-heap.
+        private bool HasHigherPriority(PriorityQueueNode<TPriority, TData> higher, PriorityQueueNode<TPriority, TData> lower) => this.priorityComparer.Compare(higher.Priority, lower.Priority) < 0;
 
         private sealed class Enumerator : IEnumerator<PriorityQueueNode<TPriority, TData>>
         {
@@ -421,24 +411,16 @@ namespace AirBreather.Common.Collections
 
             private int currIndex;
 
-            private PriorityQueueNode<TPriority, TData> curr;
-
             internal Enumerator(PriorityQueue<TPriority, TData> queue)
             {
                 this.queue = queue;
                 this.currIndex = 0;
-                this.curr = null;
+                this.Current = null;
             }
 
-            public PriorityQueueNode<TPriority, TData> Current
-            {
-                get { return this.curr; }
-            }
+            public PriorityQueueNode<TPriority, TData> Current { get; private set; }
 
-            object IEnumerator.Current
-            {
-                get { return this.Current; }
-            }
+            object System.Collections.IEnumerator.Current => this.Current;
 
             public bool MoveNext()
             {
@@ -447,14 +429,14 @@ namespace AirBreather.Common.Collections
                     return false;
                 }
 
-                this.curr = this.queue.nodes[1 + this.currIndex++];
+                this.Current = this.queue.nodes[1 + this.currIndex++];
                 return true;
             }
 
             public void Reset()
             {
                 this.currIndex = 0;
-                this.curr = null;
+                this.Current = null;
             }
 
             void IDisposable.Dispose()

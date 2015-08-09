@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+
+using static AirBreather.Common.Utilities.EnumerableUtility;
 
 namespace AirBreather.Common.Collections
 {
@@ -19,6 +20,14 @@ namespace AirBreather.Common.Collections
             this.wrappedCollection = collection;
         }
 
+        public bool IsReadOnly => true;
+        public int Count => this.wrappedCollection.Count;
+
+        public bool Contains(T item) => this.wrappedCollection.Contains(item);
+        public IEnumerator<T> GetEnumerator() => this.wrappedCollection.GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.wrappedCollection.GetEnumerator();
+        public void CopyTo(T[] array, int arrayIndex) => this.AsEnumerable().CopyTo(array, arrayIndex);
+
         public void Add(T item)
         {
             throw new NotSupportedException();
@@ -29,62 +38,9 @@ namespace AirBreather.Common.Collections
             throw new NotSupportedException();
         }
 
-        public bool Contains(T item)
-        {
-            return this.wrappedCollection.Contains(item);
-        }
-
-        public void CopyTo(T[] array, int arrayIndex)
-        {
-            if (array == null)
-            {
-                throw new ArgumentNullException(nameof(array));
-            }
-
-            if (arrayIndex < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be non-negative.");
-            }
-
-            if (array.Length <= arrayIndex)
-            {
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be less than the length of the array.");
-            }
-
-            if (array.Length - arrayIndex < this.Count)
-            {
-                throw new ArgumentException("Not enough room", nameof(array));
-            }
-
-            foreach (T item in this.wrappedCollection)
-            {
-                array[arrayIndex++] = item;
-            }
-        }
-
-        public int Count
-        {
-            get { return this.wrappedCollection.Count; }
-        }
-
-        public bool IsReadOnly
-        {
-            get { return true; }
-        }
-
         public bool Remove(T item)
         {
             throw new NotSupportedException();
-        }
-
-        public IEnumerator<T> GetEnumerator()
-        {
-            return this.wrappedCollection.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.wrappedCollection.GetEnumerator();
         }
     }
 }

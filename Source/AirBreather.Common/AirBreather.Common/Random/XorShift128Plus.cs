@@ -24,40 +24,16 @@ namespace AirBreather.Common.Random
         {
         }
 
-        public bool IsValid { get { return this.s0 != 0 || this.s1 != 0; } }
+        public bool IsValid => this.s0 != 0 || this.s1 != 0;
 
-        public static bool Equals(XorShift128PlusState first, XorShift128PlusState second)
-        {
-            return first.s0 == second.s0 &&
-                   first.s1 == second.s1;
-        }
+        public static bool Equals(XorShift128PlusState first, XorShift128PlusState second) => first.s0 == second.s0 && first.s1 == second.s1;
+        public static int GetHashCode(XorShift128PlusState state) => (state.s0 ^ state.s1).GetHashCode();
 
-        public static bool operator ==(XorShift128PlusState first, XorShift128PlusState second)
-        {
-            return Equals(first, second);
-        }
-
-        public static bool operator !=(XorShift128PlusState first, XorShift128PlusState second)
-        {
-            return !Equals(first, second);
-        }
-
-        public override bool Equals(object obj)
-        {
-            return obj is XorShift128PlusState &&
-                   Equals(this, (XorShift128PlusState)obj);
-        }
-
-        public bool Equals(XorShift128PlusState other)
-        {
-            return Equals(this, other);
-        }
-
-        public override int GetHashCode()
-        {
-            var self = this;
-            return (self.s0 ^ self.s1).GetHashCode();
-        }
+        public static bool operator ==(XorShift128PlusState first, XorShift128PlusState second) => Equals(first, second);
+        public static bool operator !=(XorShift128PlusState first, XorShift128PlusState second) => !Equals(first, second);
+        public override bool Equals(object obj) => obj is XorShift128PlusState && Equals(this, (XorShift128PlusState)obj);
+        public bool Equals(XorShift128PlusState other) => Equals(this, other);
+        public override int GetHashCode() => GetHashCode(this);
     }
 
     public sealed class XorShift128PlusGenerator : IRandomGenerator<XorShift128PlusState>
@@ -69,14 +45,14 @@ namespace AirBreather.Common.Random
 
         /// <inheritdoc />
         [ExcludeFromCodeCoverage]
-        int IRandomGenerator<XorShift128PlusState>.ChunkSize { get { return ChunkSize; } }
+        int IRandomGenerator<XorShift128PlusState>.ChunkSize => ChunkSize;
 
         /// <inheritdoc />
         [ExcludeFromCodeCoverage]
-        RandomnessKind IRandomGenerator<XorShift128PlusState>.RandomnessKind { get { return RandomnessKind.PseudoRandom; } }
+        RandomnessKind IRandomGenerator<XorShift128PlusState>.RandomnessKind => RandomnessKind.PseudoRandom;
 
         /// <inheritdoc />
-        public unsafe XorShift128PlusState FillBuffer(XorShift128PlusState state, byte[] buffer, int index, int count)
+        public XorShift128PlusState FillBuffer(XorShift128PlusState state, byte[] buffer, int index, int count)
         {
             if (buffer == null)
             {

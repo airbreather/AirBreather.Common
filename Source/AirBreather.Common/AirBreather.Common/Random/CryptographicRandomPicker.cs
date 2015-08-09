@@ -76,9 +76,6 @@ namespace AirBreather.Common.Random
             return minValueInclusive + sample;
         }
 
-        protected override void DisposeCore()
-        {
-            this.rng.Dispose();
-        }
+        protected override void DisposeCore() => this.rng.Dispose();
     }
 }

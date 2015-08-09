@@ -8,11 +8,7 @@ namespace AirBreather.Common.Utilities
     // so making them just a tiny bit easier to use helps.
     public static class ResourceUtility
     {
-        public static Stream OpenEmbeddedResourceFile(string resourceKey)
-        {
-            return OpenEmbeddedResourceFile(resourceKey, Assembly.GetCallingAssembly());
-        }
-
+        public static Stream OpenEmbeddedResourceFile(string resourceKey) => OpenEmbeddedResourceFile(resourceKey, Assembly.GetCallingAssembly());
         public static Stream OpenEmbeddedResourceFile(string resourceKey, Assembly assembly)
         {
             if (assembly == null)
