@@ -1,23 +1,41 @@
 ﻿using System;
-using System.Security.Cryptography;
 
 namespace AirBreather.Common.Random
 {
-    // Defers to System.Cryptography to get as high-quality random numbers
-    // as we possibly can.  I expect to use this mainly for coming up with
-    // a seed for a pseudorandom picker.
-    public sealed class CryptographicRandomPicker : DisposableObject, IPicker
+    public sealed class RandomPicker<TState> : IPicker where TState : struct, IRandomGeneratorState
     {
         // Seems about right, from testing various sizes.
         private const int BufferSizeInBytes = 16384;
 
-        private readonly RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+        private readonly IRandomGenerator<TState> rng;
 
         private readonly byte[] buffer = new byte[BufferSizeInBytes];
 
         private readonly object lockObject = new object();
 
+        private TState rngState;
+
         private int nextOffset;
+
+        public RandomPicker(IRandomGenerator<TState> rng, TState initialState)
+        {
+            if (rng == null)
+            {
+                throw new ArgumentNullException(nameof(rng));
+            }
+
+            if (!initialState.IsValid)
+            {
+                throw new ArgumentException("Initial state must be valid.", nameof(initialState));
+            }
+
+            this.rng = rng;
+            this.rngState = initialState;
+
+            int chunkSize = rng.ChunkSize;
+            int extra = chunkSize - (BufferSizeInBytes % chunkSize);
+            this.buffer = new byte[BufferSizeInBytes + extra == chunkSize ? 0 : extra];
+        }
 
         public int PickFromRange(int minValueInclusive, int rangeSize)
         {
@@ -30,8 +48,6 @@ namespace AirBreather.Common.Random
             {
                 throw new ArgumentOutOfRangeException(nameof(minValueInclusive), minValueInclusive, "Must be small enough to avoid overflow");
             }
-
-            this.ThrowIfDisposed();
 
             // Conceptually, this creates several "buckets", each with values
             // [0, rangeSize) in it, plus a bucket with values [0, n), where
@@ -54,7 +70,7 @@ namespace AirBreather.Common.Random
                 {
                     if (offset == 0)
                     {
-                        this.rng.GetBytes(this.buffer);
+                        this.rngState = this.rng.FillBuffer(this.rngState, this.buffer, 0, this.buffer.Length);
                     }
 
                     sample = BitConverter.ToInt32(this.buffer, offset);
@@ -75,7 +91,5 @@ namespace AirBreather.Common.Random
             sample %= rangeSize;
             return minValueInclusive + sample;
         }
-
-        protected override void DisposeCore() => this.rng.Dispose();
     }
 }

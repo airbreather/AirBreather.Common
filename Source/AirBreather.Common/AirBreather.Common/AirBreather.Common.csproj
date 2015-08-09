@@ -54,7 +54,6 @@
     <Compile Include="DisposableObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Random\BclPseudoRandomPicker.cs" />
-    <Compile Include="Random\CryptographicRandomPicker.cs" />
     <Compile Include="Random\Extensions.cs" />
     <Compile Include="Random\IPicker.cs" />
     <Compile Include="Random\IRandomGenerator.cs" />
@@ -72,6 +71,8 @@
     <Compile Include="Collections\ReadOnlySetWrapper.cs" />
     <Compile Include="Collections\IModifiableLookup.cs" />
     <Compile Include="Collections\ModifiableLookup.cs" />
+    <Compile Include="Random\CryptographicRandomGenerator.cs" />
+    <Compile Include="Random\RandomPicker.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
