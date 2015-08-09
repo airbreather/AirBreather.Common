@@ -34,6 +34,9 @@ namespace AirBreather.Common.Tests
             {
                 Assert.Equal(expectedResults[i], BitConverter.ToUInt64(buf, i * 8));
             }
+
+            // Now, ensure that it throws if we're out of alignment.
+            Assert.Throws<ArgumentException>("index", () => state = gen.FillBuffer(state, buf, 3, 8));
         }
     }
 }

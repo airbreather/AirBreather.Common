@@ -74,6 +74,11 @@ namespace AirBreather.Common.Random
                 throw new ArgumentException("Not enough room", nameof(buffer));
             }
 
+            if (index % ChunkSize != 0)
+            {
+                throw new ArgumentException("Must be a multiple of ChunkSize.", nameof(index));
+            }
+
             if (count % ChunkSize != 0)
             {
                 throw new ArgumentException("Must be a multiple of ChunkSize.", nameof(count));

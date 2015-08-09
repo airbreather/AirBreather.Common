@@ -56,8 +56,9 @@ namespace AirBreather.Common.Random
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="index"/> plus <paramref name="count"/> is greater than or equal to the
-        /// length of <paramref name="buffer"/>, or <paramref name="state"/> is not
-        /// <see cref="IRandomGeneratorState.IsValid">valid</see>.
+        /// length of <paramref name="buffer"/>, <paramref name="state"/> is not
+        /// <see cref="IRandomGeneratorState.IsValid">valid</see>, or <paramref name="index"/> is
+        /// not a multiple of <see cref="ChunkSize"/>.
         /// </exception>
         /// <remarks>
         /// <para>
@@ -79,10 +80,6 @@ namespace AirBreather.Common.Random
         /// <para>
         /// Implementations are not <b>required</b> to throw <see cref="ArgumentException"/> when
         /// <paramref name="state"/> is not <see cref="IRandomGeneratorState.IsValid">valid</see>.
-        /// </para>
-        /// <para>
-        /// Callers are encouraged, but not required, to provide index values that are aligned on
-        /// <see cref="ChunkSize"/> boundaries, where reasonably possible.
         /// </para>
         /// </remarks>
         TState FillBuffer(TState state, byte[] buffer, int index, int count);
