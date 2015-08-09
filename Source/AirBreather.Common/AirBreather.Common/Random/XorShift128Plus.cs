@@ -89,16 +89,16 @@ namespace AirBreather.Common.Random
                 throw new ArgumentException("State is not valid; use the parameterized constructor to initialize a new instance with the given seed values.", nameof(state));
             }
 
-            return FillBufferCore(state, buffer, count);
+            return FillBufferCore(state, buffer, index, count);
         }
 
-        private static unsafe XorShift128PlusState FillBufferCore(XorShift128PlusState state, byte[] buffer, int count)
+        private static unsafe XorShift128PlusState FillBufferCore(XorShift128PlusState state, byte[] buffer, int index, int count)
         {
             fixed (byte* fbuf = buffer)
             {
                 // count has already been validated to be a multiple of ChunkSize,
-                // so we can do this fanciness without fear.
-                ulong* pbuf = (ulong*)fbuf;
+                // and so has index, so we can do this fanciness without fear.
+                ulong* pbuf = (ulong*)(fbuf + index);
                 ulong* pend = pbuf + (count / ChunkSize);
                 while (pbuf < pend)
                 {

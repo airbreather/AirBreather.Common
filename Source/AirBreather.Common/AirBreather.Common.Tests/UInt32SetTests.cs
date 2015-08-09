@@ -14,7 +14,7 @@ namespace AirBreather.Common.Tests
         public void Test()
         {
             const int ValueCount = 900000;
-            const int TestCount = 50000000;
+            const int TestCount = 20000000;
             uint[] vals;
             uint[] testVals;
 
