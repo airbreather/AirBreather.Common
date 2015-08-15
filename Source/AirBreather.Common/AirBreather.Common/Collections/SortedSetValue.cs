@@ -50,6 +50,14 @@ namespace AirBreather.Common.Collections
             // We can actually do better than returning right now unconditionally, because
             // many IComparer<T> implementations also happen to implement IEqualityComparer<T>.
             IEqualityComparer<T> equalityComparer = underlyingSet.KeyComparer as IEqualityComparer<T>;
+
+            // Otherwise, if we happen to be using the default comparer for the type, then
+            // we should be able to assume that GetHashCode() is consistent.
+            if (equalityComparer == null && Equals(underlyingSet.KeyComparer, Comparer<T>.Default))
+            {
+                equalityComparer = EqualityComparer<T>.Default;
+            }
+
             if (equalityComparer != null)
             {
                 foreach (T element in underlyingSet)
