@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using static AirBreather.Common.Utilities.EnumerableUtility;
+using AirBreather.Common.Utilities;
 
 namespace AirBreather.Common.Collections
 {
@@ -12,12 +12,7 @@ namespace AirBreather.Common.Collections
 
         public ReadOnlyListWrapper(IReadOnlyList<T> list)
         {
-            if (list == null)
-            {
-                throw new ArgumentNullException(nameof(list));
-            }
-
-            this.wrappedList = list;
+            this.wrappedList = list.ValidateNotNull(nameof(list));
         }
 
         public bool IsReadOnly => true;
@@ -45,7 +40,7 @@ namespace AirBreather.Common.Collections
         }
 
         public bool Contains(T item) => this.wrappedList.Contains(item);
-        public void CopyTo(T[] array, int arrayIndex) => this.AsEnumerable().CopyTo(array, arrayIndex);
+        public void CopyTo(T[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
         public IEnumerator<T> GetEnumerator() => this.wrappedList.GetEnumerator();
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.wrappedList.GetEnumerator();
 

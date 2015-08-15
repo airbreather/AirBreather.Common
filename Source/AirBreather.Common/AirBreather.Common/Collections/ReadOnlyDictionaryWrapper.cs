@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using static AirBreather.Common.Utilities.EnumerableUtility;
+using AirBreather.Common.Utilities;
 
 namespace AirBreather.Common.Collections
 {
@@ -12,12 +12,7 @@ namespace AirBreather.Common.Collections
 
         public ReadOnlyDictionaryWrapper(IReadOnlyDictionary<TKey, TValue> dictionary)
         {
-            if (dictionary == null)
-            {
-                throw new ArgumentNullException(nameof(dictionary));
-            }
-
-            this.wrappedDictionary = dictionary;
+            this.wrappedDictionary = dictionary.ValidateNotNull(nameof(dictionary));
         }
 
         public bool IsReadOnly => true;
@@ -35,7 +30,7 @@ namespace AirBreather.Common.Collections
                 IEnumerable<TKey> result = this.wrappedDictionary.Keys;
                 return result == null
                     ? null
-                        : result as ICollection<TKey> ?? result.ToArray();
+                    : result as ICollection<TKey> ?? result.ToArray();
             }
         }
 
@@ -59,7 +54,7 @@ namespace AirBreather.Common.Collections
         public bool Contains(KeyValuePair<TKey, TValue> item) => this.wrappedDictionary.Contains(item);
         public bool ContainsKey(TKey key) => this.wrappedDictionary.ContainsKey(key);
         public bool TryGetValue(TKey key, out TValue value) => this.wrappedDictionary.TryGetValue(key, out value);
-        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => this.AsEnumerable().CopyTo(array, arrayIndex);
+        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => this.wrappedDictionary.GetEnumerator();
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.wrappedDictionary.GetEnumerator();
 

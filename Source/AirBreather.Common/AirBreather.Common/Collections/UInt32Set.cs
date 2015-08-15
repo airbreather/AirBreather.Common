@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using AirBreather.Common.Utilities;
+
 namespace AirBreather.Common.Collections
 {
     // There's absolutely no reason to use this.  HashSet<uint> is fast enough and lean enough.
@@ -32,10 +34,7 @@ namespace AirBreather.Common.Collections
 #if INSANE_MEMORY
         public UInt32Set(uint[] collection)
         {
-            ////if (collection == null)
-            ////{
-            ////    throw new ArgumentNullException("collection");
-            ////}
+            ////collection.ValidateNotNull(nameof(collection));
 
             uint count = (uint)collection.Length;
             uint length = GetPrime(count);
@@ -58,10 +57,7 @@ namespace AirBreather.Common.Collections
 #else
         public UInt32Set(uint[] collection)
         {
-            ////if (collection == null)
-            ////{
-            ////    throw new ArgumentNullException("collection");
-            ////}
+            ////collection.ValidateNotNull(nameof(collection));
 
             Length = GetPrime((uint)collection.Length);
             ////if (UInt32.MaxValue / 3 < Length)

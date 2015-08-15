@@ -1,5 +1,7 @@
 ﻿using System;
 
+using AirBreather.Common.Utilities;
+
 namespace AirBreather.Common.Random
 {
     public sealed class RandomPicker<TState> : IPicker where TState : struct, IRandomGeneratorState
@@ -19,10 +21,7 @@ namespace AirBreather.Common.Random
 
         public RandomPicker(IRandomGenerator<TState> rng, TState initialState)
         {
-            if (rng == null)
-            {
-                throw new ArgumentNullException(nameof(rng));
-            }
+            rng.ValidateNotNull(nameof(rng));
 
             if (!initialState.IsValid)
             {

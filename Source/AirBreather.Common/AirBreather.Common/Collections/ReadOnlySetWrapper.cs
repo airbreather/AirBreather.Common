@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using static AirBreather.Common.Utilities.EnumerableUtility;
+using AirBreather.Common.Utilities;
 
 namespace AirBreather.Common.Collections
 {
@@ -12,12 +12,7 @@ namespace AirBreather.Common.Collections
 
         public ReadOnlySetWrapper(IReadOnlySet<T> wrappedSet)
         {
-            if (wrappedSet == null)
-            {
-                throw new ArgumentNullException(nameof(wrappedSet));
-            }
-
-            this.wrappedSet = wrappedSet;
+            this.wrappedSet = wrappedSet.ValidateNotNull(nameof(wrappedSet));
         }
 
         public bool IsReadOnly => true;
@@ -30,7 +25,7 @@ namespace AirBreather.Common.Collections
         public bool Overlaps(IEnumerable<T> other) => this.wrappedSet.Overlaps(other);
         public bool SetEquals(IEnumerable<T> other) => this.wrappedSet.SetEquals(other);
         public bool Contains(T item) => this.wrappedSet.Contains(item);
-        public void CopyTo(T[] array, int arrayIndex) => this.AsEnumerable().CopyTo(array, arrayIndex);
+        public void CopyTo(T[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
         public IEnumerator<T> GetEnumerator() => this.wrappedSet.GetEnumerator();
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
 

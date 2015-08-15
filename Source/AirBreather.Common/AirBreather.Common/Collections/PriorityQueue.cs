@@ -27,6 +27,8 @@ THE SOFTWARE.
 using System;
 using System.Collections.Generic;
 
+using AirBreather.Common.Utilities;
+
 namespace AirBreather.Common.Collections
 {
     /// <summary>
@@ -104,11 +106,7 @@ namespace AirBreather.Common.Collections
         /// </exception>
         public PriorityQueue(int capacity, IComparer<TPriority> priorityComparer)
         {
-            if (capacity < 1)
-            {
-                throw new ArgumentOutOfRangeException(nameof(capacity), "Capacity must be greater than zero.");
-            }
-
+            capacity.ValidateMin(nameof(capacity), 1);
             this.nodes = new List<PriorityQueueNode<TPriority, TData>>(capacity + 1);
             for (int i = 0; i <= capacity; i++)
             {
@@ -132,11 +130,7 @@ namespace AirBreather.Common.Collections
         /// </exception>
         public PriorityQueue(PriorityQueue<TPriority, TData> copyFrom)
         {
-            if (copyFrom == null)
-            {
-                throw new ArgumentNullException(nameof(copyFrom));
-            }
-
+            copyFrom.ValidateNotNull(nameof(copyFrom));
             this.nodes = new List<PriorityQueueNode<TPriority, TData>>(copyFrom.nodes.Count);
             this.priorityComparer = copyFrom.priorityComparer;
 
@@ -210,11 +204,7 @@ namespace AirBreather.Common.Collections
         /// </exception>
         public void Enqueue(PriorityQueueNode<TPriority, TData> node, TPriority priority)
         {
-            if (node == null)
-            {
-                throw new ArgumentNullException(nameof(node));
-            }
-
+            nodes.ValidateNotNull(nameof(nodes));
             node.Priority = priority;
             node.QueueIndex = ++this.Count;
 
@@ -254,11 +244,7 @@ namespace AirBreather.Common.Collections
         /// </exception>
         public void ChangePriority(PriorityQueueNode<TPriority, TData> node, TPriority priority)
         {
-            if (node == null)
-            {
-                throw new ArgumentNullException(nameof(node));
-            }
-
+            nodes.ValidateNotNull(nameof(node));
             node.Priority = priority;
             this.OnNodeUpdated(node);
         }

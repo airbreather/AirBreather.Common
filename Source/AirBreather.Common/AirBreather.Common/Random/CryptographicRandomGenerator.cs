@@ -2,17 +2,22 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 
+using AirBreather.Common.Utilities;
+
 namespace AirBreather.Common.Random
 {
     // An IRandomGeneratorState type that carries no data.
     public struct EmptyRandomState : IEquatable<EmptyRandomState>, IRandomGeneratorState
     {
+        private static readonly string Repr = ToStringUtility.Begin(default(EmptyRandomState)).End();
+
         public bool IsValid => true;
         public static bool operator ==(EmptyRandomState first, EmptyRandomState second) => true;
         public static bool operator !=(EmptyRandomState first, EmptyRandomState second) => false;
         public override bool Equals(object obj) => obj is EmptyRandomState;
         public bool Equals(EmptyRandomState other) => true;
         public override int GetHashCode() => 0;
+        public override string ToString() => Repr;
     }
 
     // RNGCryptoServiceProvider claims to be thread-safe and carries no state.
@@ -36,20 +41,8 @@ namespace AirBreather.Common.Random
 
         public EmptyRandomState FillBuffer(EmptyRandomState state, byte[] buffer, int index, int count)
         {
-            if (buffer == null)
-            {
-                throw new ArgumentNullException(nameof(buffer));
-            }
-
-            if (index < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index), index, "Must be non-negative.");
-            }
-
-            if (buffer.Length <= index)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index), index, "Must be less than the length of the buffer.");
-            }
+            buffer.ValidateNotNull(nameof(buffer));
+            index.ValidateInRange(nameof(index), 0, buffer.Length);
 
             if (buffer.Length - index < count)
             {

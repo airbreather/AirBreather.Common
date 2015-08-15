@@ -78,6 +78,13 @@
     <Compile Include="Random\RandomPicker.cs" />
     <Compile Include="Collections\HashSetValue.cs" />
     <Compile Include="Collections\SortedSetValue.cs" />
+    <Compile Include="Utilities\ValidationUtility.cs" />
+    <Compile Include="Utilities\TaskUtility.cs" />
+    <Compile Include="Logging\ILogger.cs" />
+    <Compile Include="Logging\Extensions.cs" />
+    <Compile Include="Logging\ILoggerFactory.cs" />
+    <Compile Include="Logging\Log.cs" />
+    <Compile Include="Logging\DumbLoggerFactory.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -87,4 +94,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup>
+    <Folder Include="Logging\" />
+  </ItemGroup>
 </Project>

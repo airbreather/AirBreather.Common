@@ -21,15 +21,8 @@ namespace AirBreather.Common.Utilities
         // and this also slightly improves fluent readability
         public static IEnumerable<T> ExceptWhere<T>(this IEnumerable<T> enumerable, Func<T, bool> predicate)
         {
-            if (enumerable == null)
-            {
-                throw new ArgumentNullException(nameof(enumerable));
-            }
-
-            if (predicate == null)
-            {
-                throw new ArgumentNullException(nameof(predicate));
-            }
+            enumerable.ValidateNotNull(nameof(enumerable));
+            predicate.ValidateNotNull(nameof(predicate));
 
             // LINQ's .Where() has lots of optimizations,
             // so use that instead of re-implementing it.
@@ -37,32 +30,12 @@ namespace AirBreather.Common.Utilities
         }
 
         public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable) => ToHashSet(enumerable, null);
-        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable, IEqualityComparer<T> equalityComparer)
-        {
-            if (enumerable == null)
-            {
-                throw new ArgumentNullException(nameof(enumerable));
-            }
+        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable, IEqualityComparer<T> equalityComparer) => new HashSet<T>(enumerable.ValidateNotNull(nameof(enumerable)), equalityComparer);
 
-            return new HashSet<T>(enumerable, equalityComparer);
-        }
+        public static IReadOnlyCollection<T> AsReadOnlyCollection<T>(this IReadOnlyCollection<T> collection) => collection;
 
         public static IEnumerable<TSource> DistinctBy<TSource, TCompare>(this IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector) => DistinctBy(enumerable, selector, null);
-        public static IEnumerable<TSource> DistinctBy<TSource, TCompare>(this IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector, IEqualityComparer<TCompare> equalityComparer)
-        {
-            if (enumerable == null)
-            {
-                throw new ArgumentNullException(nameof(enumerable));
-            }
-
-            if (selector == null)
-            {
-                throw new ArgumentNullException(nameof(selector));
-            }
-
-            return DistinctByIterator(enumerable, selector, equalityComparer);
-        }
-
+        public static IEnumerable<TSource> DistinctBy<TSource, TCompare>(this IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector, IEqualityComparer<TCompare> equalityComparer) => DistinctByIterator(enumerable.ValidateNotNull(nameof(enumerable)), selector.ValidateNotNull(nameof(selector)), equalityComparer);
         private static IEnumerable<TSource> DistinctByIterator<TSource, TCompare>(IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector, IEqualityComparer<TCompare> equalityComparer)
         {
             HashSet<TCompare> closedSet = new HashSet<TCompare>(equalityComparer);
@@ -77,25 +50,9 @@ namespace AirBreather.Common.Utilities
 
         public static void CopyTo<T>(this IEnumerable<T> enumerable, T[] array, int arrayIndex)
         {
-            if (enumerable == null)
-            {
-                throw new ArgumentNullException(nameof(enumerable));
-            }
-
-            if (array == null)
-            {
-                throw new ArgumentNullException(nameof(array));
-            }
-
-            if (arrayIndex < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be non-negative.");
-            }
-
-            if (array.Length <= arrayIndex)
-            {
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex), arrayIndex, "Must be less than the length of the array.");
-            }
+            enumerable.ValidateNotNull(nameof(enumerable));
+            array.ValidateNotNull(nameof(array));
+            arrayIndex.ValidateInRange(nameof(arrayIndex), 0, array.Length);
 
             foreach (T item in enumerable)
             {
@@ -104,6 +61,24 @@ namespace AirBreather.Common.Utilities
                     throw new ArgumentException("Not enough room", nameof(array));
                 }
 
+                array[arrayIndex++] = item;
+            }
+        }
+
+        // A version of the above that fails faster for IReadOnlyCollection<T> instances.
+        public static void CopyTo<T>(this IReadOnlyCollection<T> collection, T[] array, int arrayIndex)
+        {
+            collection.ValidateNotNull(nameof(collection));
+            array.ValidateNotNull(nameof(array));
+            arrayIndex.ValidateInRange(nameof(arrayIndex), 0, array.Length);
+
+            if (array.Length - arrayIndex < collection.Count)
+            {
+                throw new ArgumentException("Not enough room", nameof(array));
+            }
+
+            foreach (T item in collection)
+            {
                 array[arrayIndex++] = item;
             }
         }

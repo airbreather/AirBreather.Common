@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using AirBreather.Common.Utilities;
+
 namespace AirBreather.Common.Collections
 {
     public class ReadOnlySet<T> : IReadOnlySet<T>, ISet<T>
@@ -9,12 +11,7 @@ namespace AirBreather.Common.Collections
 
         public ReadOnlySet(ISet<T> wrappedSet)
         {
-            if (wrappedSet == null)
-            {
-                throw new ArgumentNullException(nameof(wrappedSet));
-            }
-
-            this.wrappedSet = wrappedSet;
+            this.wrappedSet = wrappedSet.ValidateNotNull(nameof(wrappedSet));
         }
 
         public bool IsReadOnly => true;

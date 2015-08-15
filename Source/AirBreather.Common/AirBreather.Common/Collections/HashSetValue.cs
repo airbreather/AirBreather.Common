@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
+using AirBreather.Common.Utilities;
+
 namespace AirBreather.Common.Collections
 {
     public struct HashSetValue<T> : IReadOnlySet<T>, IEquatable<HashSetValue<T>>
@@ -11,11 +13,13 @@ namespace AirBreather.Common.Collections
 
         public HashSetValue(IEnumerable<T> values)
         {
+            values.ValidateNotNull(nameof(values));
             this.values = values.ToImmutableHashSet();
         }
 
         public HashSetValue(IEnumerable<T> values, IEqualityComparer<T> comparer)
         {
+            values.ValidateNotNull(nameof(values));
             this.values = values.ToImmutableHashSet(comparer);
         }
 

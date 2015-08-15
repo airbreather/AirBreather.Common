@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
+using AirBreather.Common.Utilities;
+
 namespace AirBreather.Common.Collections
 {
     public struct SortedSetValue<T> : IReadOnlySet<T>, IEquatable<SortedSetValue<T>>
@@ -11,11 +13,13 @@ namespace AirBreather.Common.Collections
 
         public SortedSetValue(IEnumerable<T> values)
         {
+            values.ValidateNotNull(nameof(values));
             this.values = values.ToImmutableSortedSet();
         }
 
         public SortedSetValue(IEnumerable<T> values, IComparer<T> comparer)
         {
+            values.ValidateNotNull(nameof(values));
             this.values = values.ToImmutableSortedSet(comparer);
         }
 

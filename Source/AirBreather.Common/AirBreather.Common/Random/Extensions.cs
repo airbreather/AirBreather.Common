@@ -1,5 +1,8 @@
 ﻿using System;
 
+using AirBreather.Common.Logging;
+using AirBreather.Common.Utilities;
+
 namespace AirBreather.Common.Random
 {
     public static class Extensions
@@ -49,45 +52,28 @@ namespace AirBreather.Common.Random
         public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, byte[] buffer)
             where TState : struct, IRandomGeneratorState
         {
-            if (generator == null)
-            {
-                throw new ArgumentNullException(nameof(generator));
-            }
-
-            if (buffer == null)
-            {
-                throw new ArgumentNullException(nameof(buffer));
-            }
+            generator.ValidateNotNull(nameof(generator));
+            buffer.ValidateNotNull(nameof(buffer));
 
             return generator.FillBuffer(state, buffer, 0, buffer.Length);
         }
 
-        public static int NextInt32<TState>(this IRandomGenerator<TState> generator, ref TState state)
+        public static int NextInt32<TState>(this IRandomGenerator<TState> generator, ref TState state) where TState : struct, IRandomGeneratorState => BitConverter.ToInt32(GetAndFillBuffer(4, generator.ValidateNotNull(nameof(generator)), ref state), 0);
+        public static long NextInt64<TState>(this IRandomGenerator<TState> generator, ref TState state) where TState : struct, IRandomGeneratorState => BitConverter.ToInt64(GetAndFillBuffer(8, generator.ValidateNotNull(nameof(generator)), ref state), 0);
+
+        private static byte[] GetAndFillBuffer<TState>(int minimumSize, IRandomGenerator<TState> generator, ref TState state)
             where TState : struct, IRandomGeneratorState
         {
-            if (generator == null)
+            if (minimumSize < generator.ChunkSize)
             {
-                throw new ArgumentNullException(nameof(generator));
+                Log.For(typeof(Extensions)).Verbose("Wasting random bytes because the chunk size is greater than requested size.");
+                minimumSize = generator.ChunkSize;
             }
 
             // warning, not particularly nice to the GC to use this too much
-            byte[] buffer = new byte[4];
+            byte[] buffer = new byte[minimumSize];
             state = generator.FillBuffer(state, buffer);
-            return BitConverter.ToInt32(buffer, 0);
-        }
-
-        public static long NextInt64<TState>(this IRandomGenerator<TState> generator, ref TState state)
-            where TState : struct, IRandomGeneratorState
-        {
-            if (generator == null)
-            {
-                throw new ArgumentNullException(nameof(generator));
-            }
-
-            // warning, not particularly nice to the GC to use this too much
-            byte[] buffer = new byte[8];
-            state = generator.FillBuffer(state, buffer);
-            return BitConverter.ToInt64(buffer, 0);
+            return buffer;
         }
     }
 }

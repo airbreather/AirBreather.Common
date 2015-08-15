@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 
+using AirBreather.Common.Utilities;
+
 namespace AirBreather.Common.Random
 {
     public struct XorShift128PlusState : IEquatable<XorShift128PlusState>, IRandomGeneratorState
@@ -25,15 +27,19 @@ namespace AirBreather.Common.Random
         }
 
         public bool IsValid => this.s0 != 0 || this.s1 != 0;
+        public ulong S0 => this.s0;
+        public ulong S1 => this.s1;
 
         public static bool Equals(XorShift128PlusState first, XorShift128PlusState second) => first.s0 == second.s0 && first.s1 == second.s1;
         public static int GetHashCode(XorShift128PlusState state) => (state.s0 ^ state.s1).GetHashCode();
+        public static string ToString(XorShift128PlusState state) => ToStringUtility.Begin(state).AddProperty("S0", state.s0).AddProperty("S1", state.s1).End();
 
         public static bool operator ==(XorShift128PlusState first, XorShift128PlusState second) => Equals(first, second);
         public static bool operator !=(XorShift128PlusState first, XorShift128PlusState second) => !Equals(first, second);
         public override bool Equals(object obj) => obj is XorShift128PlusState && Equals(this, (XorShift128PlusState)obj);
         public bool Equals(XorShift128PlusState other) => Equals(this, other);
         public override int GetHashCode() => GetHashCode(this);
+        public override string ToString() => ToString(this);
     }
 
     public sealed class XorShift128PlusGenerator : IRandomGenerator<XorShift128PlusState>
@@ -54,20 +60,8 @@ namespace AirBreather.Common.Random
         /// <inheritdoc />
         public XorShift128PlusState FillBuffer(XorShift128PlusState state, byte[] buffer, int index, int count)
         {
-            if (buffer == null)
-            {
-                throw new ArgumentNullException(nameof(buffer));
-            }
-
-            if (index < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index), index, "Must be non-negative.");
-            }
-
-            if (buffer.Length <= index)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index), index, "Must be less than the length of the buffer.");
-            }
+            buffer.ValidateNotNull(nameof(buffer));
+            index.ValidateInRange(nameof(index), 0, buffer.Length);
 
             if (buffer.Length - index < count)
             {

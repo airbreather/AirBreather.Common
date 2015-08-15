@@ -11,11 +11,7 @@ namespace AirBreather.Common.Utilities
         public static Stream OpenEmbeddedResourceFile(string resourceKey) => OpenEmbeddedResourceFile(resourceKey, Assembly.GetCallingAssembly());
         public static Stream OpenEmbeddedResourceFile(string resourceKey, Assembly assembly)
         {
-            if (assembly == null)
-            {
-                throw new ArgumentNullException(nameof(assembly));
-            }
-
+            assembly.ValidateNotNull(nameof(assembly));
             if (String.IsNullOrWhiteSpace(resourceKey))
             {
                 throw new ArgumentException("Must be a somewhat reasonably valid key.", nameof(resourceKey));

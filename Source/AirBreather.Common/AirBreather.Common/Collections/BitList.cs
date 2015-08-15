@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-using static AirBreather.Common.Utilities.EnumerableUtility;
+using AirBreather.Common.Utilities;
 
 namespace AirBreather.Common.Collections
 {
@@ -20,10 +20,7 @@ namespace AirBreather.Common.Collections
 
         public BitList(BitArray bitArray)
         {
-            if (bitArray == null)
-            {
-                throw new ArgumentNullException(nameof(bitArray));
-            }
+            bitArray.ValidateNotNull(nameof(bitArray));
 
             int length = bitArray.Length;
             int valCount = length / 32;
@@ -77,15 +74,7 @@ namespace AirBreather.Common.Collections
 
         public void Insert(int index, bool item)
         {
-            if (index < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index), index, "Must be non-negative.");
-            }
-
-            if (this.Count < index)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index), index, "Too big.");
-            }
+            index.ValidateInRange(nameof(index), 0, this.Count + 1);
 
             if (this.Count == index)
             {
@@ -123,15 +112,7 @@ namespace AirBreather.Common.Collections
 
         public void RemoveAt(int index)
         {
-            if (index < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index), index, "Must be non-negative.");
-            }
-
-            if (this.Count <= index)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index), index, "Too big.");
-            }
+            index.ValidateInRange(nameof(index), 0, this.Count);
 
             // TODO: optimize this
             BitList copied = new BitList(this.values) { Count = this.Count };
@@ -154,30 +135,13 @@ namespace AirBreather.Common.Collections
         {
             get
             {
-                if (index < 0)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(index), index, "Must be non-negative.");
-                }
-
-                if (this.Count <= index)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(index), index, "Too big.");
-                }
-
+                index.ValidateInRange(nameof(index), 0, this.Count);
                 return (this.values[index / 32] & (1u << (index % 32))) > 0;
             }
 
             set
             {
-                if (index < 0)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(index), index, "Must be non-negative.");
-                }
-
-                if (this.Count <= index)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(index), index, "Too big.");
-                }
+                index.ValidateInRange(nameof(index), 0, this.Count);
 
                 int mask = unchecked((int)1u << (index % 32));
                 if (value)
@@ -212,7 +176,7 @@ namespace AirBreather.Common.Collections
         // integer matches the mask.
         public bool Contains(bool item) => this.IndexOf(item) >= 0;
 
-        public void CopyTo(bool[] array, int arrayIndex) => this.AsEnumerable().CopyTo(array, arrayIndex);
+        public void CopyTo(bool[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
 
         // TODO: hmm... maybe I should actually use BitArray for the implementation
         // instead of a List<int>...
