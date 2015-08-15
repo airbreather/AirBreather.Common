@@ -23,7 +23,7 @@ namespace AirBreather.Common.Random
         internal ulong s13;
         internal ulong s14;
         internal ulong s15;
-		internal int p;
+        internal int p;
 
         public XorShift1024StarState(ulong s0, ulong s1, ulong s2, ulong s3, ulong s4, ulong s5, ulong s6, ulong s7, ulong s8, ulong s9, ulong s10, ulong s11, ulong s12, ulong s13, ulong s14, ulong s15)
             : this(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, 0)
@@ -37,7 +37,7 @@ namespace AirBreather.Common.Random
                 throw new ArgumentException("At least one seed value must be non-zero.");
             }
 
-			p.ValidateInRange(nameof(p), 0, 16);
+            p.ValidateInRange(nameof(p), 0, 16);
 
             this.s0 = s0;
             this.s1 = s1;
@@ -55,7 +55,7 @@ namespace AirBreather.Common.Random
             this.s13 = s13;
             this.s14 = s14;
             this.s15 = s15;
-			this.p = p;
+            this.p = p;
         }
 
         public XorShift1024StarState(XorShift1024StarState copyFrom)
@@ -80,7 +80,7 @@ namespace AirBreather.Common.Random
         public ulong S13 => this.s13;
         public ulong S14 => this.s14;
         public ulong S15 => this.s15;
-		public int P => this.p;
+        public int P => this.p;
 
         public static bool Equals(XorShift1024StarState first, XorShift1024StarState second) => first.s0 == second.s0 && first.s1 == second.s1 && first.s2 == second.s2 && first.s3 == second.s3 && first.s4 == second.s4 && first.s5 == second.s5 && first.s6 == second.s6 && first.s7 == second.s7 && first.s8 == second.s8 && first.s9 == second.s9 && first.s10 == second.s10 && first.s11 == second.s11 && first.s12 == second.s12 && first.s13 == second.s13 && first.s14 == second.s14 && first.s15 == second.s15 && first.p == second.p;
         public static int GetHashCode(XorShift1024StarState state) => (state.s0 ^ state.s1 ^ state.s2 ^ state.s3 ^ state.s4 ^ state.s5 ^ state.s6 ^ state.s7 ^ state.s8 ^ state.s9 ^ state.s10 ^ state.s11 ^ state.s12 ^ state.s13 ^ state.s14 ^ state.s15 ^ unchecked((ulong)state.p)).GetHashCode();
@@ -136,34 +136,34 @@ namespace AirBreather.Common.Random
             }
 
             FillBufferCore(ref state, buffer, index, count);
-			return state;
+            return state;
         }
 
         private static unsafe void FillBufferCore(ref XorShift1024StarState state, byte[] buffer, int index, int count)
         {
             fixed (byte* fbuf = buffer)
-			fixed (XorShift1024StarState* fState = &state)
+            fixed (XorShift1024StarState* fState = &state)
             {
                 // count has already been validated to be a multiple of ChunkSize,
                 // and so has index, so we can do this fanciness without fear.
                 ulong* pbuf = (ulong*)(fbuf + index);
                 ulong* pend = pbuf + (count / ChunkSize);
 
-				ulong* pState = (ulong*)fState;
+                ulong* pState = (ulong*)fState;
 
                 while (pbuf < pend)
                 {
-					ulong s0 = *(pState + (state.p++));
-					state.p = state.p & 15;
+                    ulong s0 = *(pState + (state.p++));
+                    state.p = state.p & 15;
 
                     ulong* pCurr = pState + state.p;
-					ulong s1 = *(pCurr);
+                    ulong s1 = *(pCurr);
 
-					s1 ^= s1 << 31;
-					s1 ^= s1 >> 11;
-					s0 ^= s0 >> 30;
-					*pCurr = s0 ^ s1;
-					*(pbuf++) = unchecked(1181783497276652981 * *(pCurr));
+                    s1 ^= s1 << 31;
+                    s1 ^= s1 >> 11;
+                    s0 ^= s0 >> 30;
+                    *pCurr = s0 ^ s1;
+                    *(pbuf++) = unchecked(1181783497276652981 * *(pCurr));
                 }
             }
         }
