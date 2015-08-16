@@ -51,13 +51,12 @@ namespace AirBreather.Common.Tests
         [InlineData(1234524356ul, 47845723665ul, 64)]
         public unsafe void SpeedTestSingleArray(ulong s0, ulong s1, int chunks)
         {
-            // see how quickly we can fill the biggest possible buffer that doesn't require 2GB array sizes.
             var gen = new XorShift128PlusGenerator();
 
             // stage 1: set up the initial state, output buffer, and chunk size.
             var initialState = new XorShift128PlusState(s0, s1);
 
-            const int OutputBufferLength = 1 << 30;
+            const int OutputBufferLength = 1 << 25;
             var outputBuffer = new byte[OutputBufferLength];
             var chunkSize = OutputBufferLength / chunks;
 
@@ -115,13 +114,12 @@ namespace AirBreather.Common.Tests
         [InlineData(1234524356ul, 47845723665ul, 64)]
         public unsafe void SpeedTestSeparateArraysWithMergeAtEnd(ulong s0, ulong s1, int chunks)
         {
-            // see how quickly we can fill the biggest possible buffer that doesn't require 2GB array sizes.
             var gen = new XorShift128PlusGenerator();
 
             // stage 1: set up the initial state, output buffer, and chunk size.
             var initialState = new XorShift128PlusState(s0, s1);
 
-            const int OutputBufferLength = 1 << 30;
+            const int OutputBufferLength = 1 << 25;
             var outputBuffer = new byte[OutputBufferLength];
             var chunkSize = OutputBufferLength / chunks;
 
