@@ -32,7 +32,9 @@
 */
 using System;
 using System.Collections;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 using AirBreather.Common.Utilities;
 
@@ -40,13 +42,10 @@ namespace AirBreather.Common.Random
 {
     public struct MT19937_64State : IEquatable<MT19937_64State>, IRandomGeneratorState
     {
-        // TODO: System.Array.Empty<ulong>() when that .NET 4.6 thing makes it into mono.
-        private static readonly ulong[] EmptyArray = (ulong[])System.Linq.Enumerable.Empty<ulong>(); 
-        
         // TODO: if I ever feel like bothering, T4 can help keep this off the heap
         // without me having to actually write the gigantic switch/case chain...
         // and yes, keeping it off the heap is important for immutability reasons.
-        internal ulong[] values;
+        internal ImmutableArray<ulong> values;
         internal int idx;
 
         public MT19937_64State(ulong seed)
@@ -59,7 +58,7 @@ namespace AirBreather.Common.Random
                 localValues[idx] = unchecked((6364136223846793005 * (prev ^ (prev >> 62))) + (ulong)idx);
             }
 
-            this.values = localValues;
+            this.values = ImmutableArray.Create(localValues);
             this.idx = 312;
         }
 
@@ -67,22 +66,15 @@ namespace AirBreather.Common.Random
 
         public MT19937_64State(MT19937_64State copyFrom)
         {
-            if (copyFrom == default(MT19937_64State))
-            {
-                this = default(MT19937_64State);
-                return;
-            }
-
-            this.values = (ulong[])copyFrom.values.Clone();
+            this.values = copyFrom.values;
             this.idx = copyFrom.idx;
         }
 
-        private static bool StateIsValid(MT19937_64State state) => state.Values.Length == 312 && 0 <= state.idx && state.idx <= 312;
+        private static bool StateIsValid(MT19937_64State state) => state.values.Length == 312 && 0 <= state.idx && state.idx <= 312;
         public bool IsValid => StateIsValid(this);
-        private ulong[] Values => this.values ?? EmptyArray;
 
-        public static bool Equals(MT19937_64State first, MT19937_64State second) => first.idx == second.idx && StructuralComparisons.StructuralEqualityComparer.Equals(first.Values, second.Values);
-        public static int GetHashCode(MT19937_64State state) => state.idx.GetHashCode() ^ (StructuralComparisons.StructuralEqualityComparer.GetHashCode(state.Values));
+        public static bool Equals(MT19937_64State first, MT19937_64State second) => first.idx == second.idx && first.values.SequenceEqual(second.values);
+        public static int GetHashCode(MT19937_64State state) => HashCodeUtility.Seed.HashWith(state.idx).HashWith(StructuralComparisons.StructuralEqualityComparer.GetHashCode(state.values));
         public static string ToString(MT19937_64State state) => ToStringUtility.Begin(state).End();
 
         public static bool operator ==(MT19937_64State first, MT19937_64State second) => Equals(first, second);
@@ -140,6 +132,10 @@ namespace AirBreather.Common.Random
 
         private static unsafe void FillBufferCore(ref MT19937_64State state, byte[] buffer, int index, int count)
         {
+            ulong[] vals = new ulong[312];
+            state.values.CopyTo(vals);
+            bool twisted = false;
+
             fixed (byte* fbuf = buffer)
             {
                 // count has already been validated to be a multiple of ChunkSize,
@@ -150,11 +146,12 @@ namespace AirBreather.Common.Random
                 {
                     if (state.idx == 312)
                     {
-                        Twist(state.values);
+                        twisted = true;
+                        Twist(vals);
                         state.idx = 0;
                     }
 
-                    ulong x = state.values[state.idx++];
+                    ulong x = vals[state.idx++];
 
                     x ^= (x >> 29) & 0x5555555555555555;
                     x ^= (x << 17) & 0x71D67FFFEDA60000;
@@ -163,6 +160,11 @@ namespace AirBreather.Common.Random
 
                     *(pbuf++) = x;
                 }
+            }
+
+            if (twisted)
+            {
+                state.values = ImmutableArray.Create(vals);
             }
         }
 
