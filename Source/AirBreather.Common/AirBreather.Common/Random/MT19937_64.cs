@@ -78,15 +78,15 @@ namespace AirBreather.Common.Random
         private static bool StateIsValid(MT19937_64State state) => 0 <= state.idx && state.idx <= 312;
         public bool IsValid => StateIsValid(this);
 
-        public static unsafe bool Equals(MT19937_64State first, MT19937_64State second)
+        private static unsafe bool EqualsUnsafe(MT19937_64State* first, MT19937_64State* second)
         {
-            if (first.idx != second.idx)
+            if (first->idx != second->idx)
             {
                 return false;
             }
 
-            ulong* s = (ulong*)&first;
-            ulong* t = (ulong*)&second;
+            ulong* s = (ulong*)first;
+            ulong* t = (ulong*)second;
             for (int i = 0; i < 312; i++)
             {
                 if (*(s++) != *(t++))
@@ -98,12 +98,12 @@ namespace AirBreather.Common.Random
             return true;
         }
 
-        public static unsafe int GetHashCode(MT19937_64State state)
+        public static unsafe int GetHashCodeUnsafe(MT19937_64State* state)
         {
             int hashCode = HashCodeUtility.Seed;
 
-            hashCode = hashCode.HashWith(state.idx);
-            ulong* p = (ulong*)&state;
+            hashCode = hashCode.HashWith(state->idx);
+            ulong* p = (ulong*)state;
             for (int i = 0; i < 312; i++)
             {
                 hashCode = hashCode.HashWith(*(p++));
@@ -114,11 +114,33 @@ namespace AirBreather.Common.Random
 
         public static string ToString(MT19937_64State state) => ToStringUtility.Begin(state).End();
 
-        public static bool operator ==(MT19937_64State first, MT19937_64State second) => Equals(first, second);
-        public static bool operator !=(MT19937_64State first, MT19937_64State second) => !Equals(first, second);
-        public override bool Equals(object obj) => obj is MT19937_64State && Equals(this, (MT19937_64State)obj);
+        public static unsafe bool operator ==(MT19937_64State first, MT19937_64State second) => EqualsUnsafe(&first, &second);
+        public static unsafe bool operator !=(MT19937_64State first, MT19937_64State second) => !EqualsUnsafe(&first, &second);
+        public static unsafe bool Equals(MT19937_64State first, MT19937_64State second) => EqualsUnsafe(&first, &second);
+        public unsafe override bool Equals(object obj)
+        {
+            if (!(obj is MT19937_64State))
+            {
+                return false;
+            }
+
+            MT19937_64State other = (MT19937_64State)obj;
+            fixed (MT19937_64State* fThis = &this)
+            {
+                return EqualsUnsafe(fThis, &other);
+            }
+        }
+
         public bool Equals(MT19937_64State other) => Equals(this, other);
-        public override int GetHashCode() => GetHashCode(this);
+        public static unsafe int GetHashCode(MT19937_64State state) => GetHashCodeUnsafe(&state);
+        public unsafe override int GetHashCode()
+        {
+            fixed (MT19937_64State* fThis = &this)
+            {
+                return GetHashCodeUnsafe(fThis);
+            }
+        }
+
         public override string ToString() => ToString(this);
     }
 
