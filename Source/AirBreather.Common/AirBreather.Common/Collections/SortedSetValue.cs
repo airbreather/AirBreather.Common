@@ -18,7 +18,6 @@ namespace AirBreather.Common.Collections
         }
 
         public ImmutableSortedSet<T> UnderlyingSet => this.values ?? ImmutableSortedSet<T>.Empty;
-        public IComparer<T> KeyComparer => this.UnderlyingSet.KeyComparer;
         public int Count => this.UnderlyingSet.Count;
 
         public bool Contains(T item) => this.UnderlyingSet.Contains(item);
