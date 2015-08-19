@@ -63,6 +63,8 @@ namespace AirBreather.Common.Random
             this.idx = 312;
         }
 
+        // TODO: our cousins in other languages allow seeding by multiple input values... support that too.
+
         public MT19937_64State(MT19937_64State copyFrom)
         {
             if (copyFrom == default(MT19937_64State))
