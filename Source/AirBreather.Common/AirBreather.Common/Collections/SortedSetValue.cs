@@ -14,13 +14,7 @@ namespace AirBreather.Common.Collections
         public SortedSetValue(IEnumerable<T> values)
         {
             values.ValidateNotNull(nameof(values));
-            this.values = values.ToImmutableSortedSet();
-        }
-
-        public SortedSetValue(IEnumerable<T> values, IComparer<T> comparer)
-        {
-            values.ValidateNotNull(nameof(values));
-            this.values = values.ToImmutableSortedSet(comparer);
+            this.values = values.ToImmutableSortedSet(Comparer<T>.Default);
         }
 
         public ImmutableSortedSet<T> UnderlyingSet => this.values ?? ImmutableSortedSet<T>.Empty;
@@ -36,13 +30,13 @@ namespace AirBreather.Common.Collections
         public bool Overlaps(IEnumerable<T> other) => this.UnderlyingSet.Overlaps(other);
         public bool SetEquals(IEnumerable<T> other) => this.UnderlyingSet.SetEquals(other);
 
-        public SortedSetValue<T> Clear() => new SortedSetValue<T>(this.UnderlyingSet.Clear(), this.UnderlyingSet.KeyComparer);
-        public SortedSetValue<T> Add(T value) => new SortedSetValue<T>(this.UnderlyingSet.Add(value), this.UnderlyingSet.KeyComparer);
-        public SortedSetValue<T> Remove(T value) => new SortedSetValue<T>(this.UnderlyingSet.Remove(value), this.UnderlyingSet.KeyComparer);
-        public SortedSetValue<T> Intersect(IEnumerable<T> other) => new SortedSetValue<T>(this.UnderlyingSet.Intersect(other), this.UnderlyingSet.KeyComparer);
-        public SortedSetValue<T> Except(IEnumerable<T> other) => new SortedSetValue<T>(this.UnderlyingSet.Except(other), this.UnderlyingSet.KeyComparer);
-        public SortedSetValue<T> SymmetricExcept(IEnumerable<T> other) => new SortedSetValue<T>(this.UnderlyingSet.SymmetricExcept(other), this.UnderlyingSet.KeyComparer);
-        public SortedSetValue<T> Union(IEnumerable<T> other) => new SortedSetValue<T>(this.UnderlyingSet.Union(other), this.UnderlyingSet.KeyComparer);
+        public SortedSetValue<T> Clear() => new SortedSetValue<T>(this.UnderlyingSet.Clear());
+        public SortedSetValue<T> Add(T value) => new SortedSetValue<T>(this.UnderlyingSet.Add(value));
+        public SortedSetValue<T> Remove(T value) => new SortedSetValue<T>(this.UnderlyingSet.Remove(value));
+        public SortedSetValue<T> Intersect(IEnumerable<T> other) => new SortedSetValue<T>(this.UnderlyingSet.Intersect(other));
+        public SortedSetValue<T> Except(IEnumerable<T> other) => new SortedSetValue<T>(this.UnderlyingSet.Except(other));
+        public SortedSetValue<T> SymmetricExcept(IEnumerable<T> other) => new SortedSetValue<T>(this.UnderlyingSet.SymmetricExcept(other));
+        public SortedSetValue<T> Union(IEnumerable<T> other) => new SortedSetValue<T>(this.UnderlyingSet.Union(other));
 
         IImmutableSet<T> IImmutableSet<T>.Clear() => this.Clear();
         IImmutableSet<T> IImmutableSet<T>.Add(T value) => this.Add(value);
@@ -64,27 +58,14 @@ namespace AirBreather.Common.Collections
         public override int GetHashCode() => GetHashCode(this);
         public static int GetHashCode(SortedSetValue<T> value)
         {
-            ImmutableSortedSet<T> underlyingSet = value.UnderlyingSet;
+            int hashCode = HashCodeUtility.Seed;
 
-            int hashCode = underlyingSet.Count;
+            hashCode = hashCode.HashWith(value.Count);
 
-            // We can actually do better than returning right now unconditionally, because
-            // many IComparer<T> implementations also happen to implement IEqualityComparer<T>.
-            IEqualityComparer<T> equalityComparer = underlyingSet.KeyComparer as IEqualityComparer<T>;
-
-            // Otherwise, if we happen to be using the default comparer for the type, then
-            // we should be able to assume that GetHashCode() is consistent.
-            if (equalityComparer == null && Equals(underlyingSet.KeyComparer, Comparer<T>.Default))
+            foreach (T element in value)
             {
-                equalityComparer = EqualityComparer<T>.Default;
-            }
-
-            if (equalityComparer != null)
-            {
-                foreach (T element in underlyingSet)
-                {
-                    hashCode ^= equalityComparer.GetHashCode(element);
-                }
+                // Since SortedSet is sorted, we can make a better hash code than XOR.
+                hashCode = hashCode.HashWith(element);
             }
 
             return hashCode;
