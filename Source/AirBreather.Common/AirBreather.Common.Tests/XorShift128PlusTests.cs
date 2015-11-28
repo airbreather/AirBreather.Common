@@ -45,6 +45,24 @@ namespace AirBreather.Common.Tests
                 Assert.Equal(expectedResults[i], BitConverter.ToUInt64(buf, i * 8));
             }
 
+            // Now, repeat the same for the extension method.
+            state = new XorShift128PlusState(s0 ,s1);
+            ulong[] typedBuf = new ulong[expectedResults.Length];
+            for (int i = 0; i < expectedResults.Length; i++)
+            {
+                state = gen.FillBuffer(state, typedBuf, i, 1);
+                Assert.Equal(expectedResults[i], typedBuf[i]);
+            }
+
+            // again, all in one call
+            state = new XorShift128PlusState(s0, s1);
+            typedBuf = new ulong[expectedResults.Length];
+            state = gen.FillBuffer(state, typedBuf, 0, typedBuf.Length);
+            for (int i = 0; i < expectedResults.Length; i++)
+            {
+                Assert.Equal(expectedResults[i], typedBuf[i]);
+            }
+
             // Now, ensure that it throws if we're out of alignment.
             Assert.Throws<ArgumentException>("index", () => state = gen.FillBuffer(state, buf, 3, 8));
         }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 
 using Xunit;
@@ -24,27 +23,16 @@ namespace AirBreather.Common.Tests
         {
             const int ValueCount = 900000;
             const int TestCount = 20000000;
-            uint[] vals;
-            uint[] testVals;
+            var vals = new uint[ValueCount];
+            var testVals = new uint[TestCount];
+
+            // a RNG used to generate truly random seeds for (faster) PRNGs
+            var initRand = new CryptographicRandomGenerator();
 
             var rand = new MT19937_64Generator();
-            var state = new MT19937_64State(5489);
-
-            {
-                byte[] valData = new byte[ValueCount * 4];
-
-                state = rand.FillBuffer(state, valData);
-                vals = new uint[ValueCount];
-                Buffer.BlockCopy(valData, 0, vals, 0, valData.Length);
-            }
-
-            {
-                byte[] valData = new byte[ValueCount * 4];
-
-                state = rand.FillBuffer(state, valData);
-                testVals = new uint[TestCount];
-                Buffer.BlockCopy(valData, 0, testVals, 0, valData.Length);
-            }
+            var state = new MT19937_64State(initRand.NextUInt64());
+            state = rand.FillBuffer(state, vals);
+            state = rand.FillBuffer(state, testVals);
 
             UInt32Set mySet = new UInt32Set(vals);
             HashSet<uint> realSet = new HashSet<uint>(vals);

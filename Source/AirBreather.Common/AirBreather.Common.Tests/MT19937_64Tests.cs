@@ -40,10 +40,29 @@ namespace AirBreather.Common.Tests
 
             // Now, do it all in one call.
             state = new MT19937_64State(5489);
+            buf = new byte[expectedResults.Length * 8];
             state = gen.FillBuffer(state, buf, 0, buf.Length);
             for (int i = 0; i < expectedResults.Length; i++)
             {
                 Assert.Equal(expectedResults[i], BitConverter.ToUInt64(buf, i * 8));
+            }
+
+            // Now, repeat the same for the extension method.
+            state = new MT19937_64State(5489);
+            ulong[] typedBuf = new ulong[expectedResults.Length];
+            for (int i = 0; i < expectedResults.Length; i++)
+            {
+                state = gen.FillBuffer(state, typedBuf, i, 1);
+                Assert.Equal(expectedResults[i], typedBuf[i]);
+            }
+
+            // again, all in one call
+            state = new MT19937_64State(5489);
+            typedBuf = new ulong[expectedResults.Length];
+            state = gen.FillBuffer(state, typedBuf, 0, typedBuf.Length);
+            for (int i = 0; i < expectedResults.Length; i++)
+            {
+                Assert.Equal(expectedResults[i], typedBuf[i]);
             }
 
             // Now, ensure that it throws if we're out of alignment.
@@ -70,14 +89,13 @@ namespace AirBreather.Common.Tests
             var chunkSize = OutputBufferLength / chunks;
 
             // stage 2: use that state to set up the parallel independent states.
-            var parallelStateBuffer = new byte[sizeof(ulong) * chunks];
+            var parallelStateBuffer = new ulong[chunks];
             gen.FillBuffer(initialState, parallelStateBuffer);
 
             var parallelStates = new MT19937_64State[chunks];
             for (int i = 0; i < parallelStates.Length; i++)
             {
-                ulong currentSeed = BitConverter.ToUInt64(parallelStateBuffer, i * sizeof(ulong));
-                parallelStates[i] = new MT19937_64State(currentSeed);
+                parallelStates[i] = new MT19937_64State(parallelStateBuffer[i]);
             }
 
             Stopwatch sw = Stopwatch.StartNew();
@@ -126,14 +144,13 @@ namespace AirBreather.Common.Tests
             var chunkSize = OutputBufferLength / chunks;
 
             // stage 2: use that state to set up the parallel independent states.
-            var parallelStateBuffer = new byte[sizeof(ulong) * chunks];
+            var parallelStateBuffer = new ulong[chunks];
             gen.FillBuffer(initialState, parallelStateBuffer);
 
             var parallelStates = new MT19937_64State[chunks];
             for (int i = 0; i < parallelStates.Length; i++)
             {
-                ulong currentSeed = BitConverter.ToUInt64(parallelStateBuffer, i * sizeof(ulong));
-                parallelStates[i] = new MT19937_64State(currentSeed);
+                parallelStates[i] = new MT19937_64State(parallelStateBuffer[i]);
             }
 
             // stage 2.99: preallocate buffers for the different chunks.

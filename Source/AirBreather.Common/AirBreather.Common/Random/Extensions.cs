@@ -1,6 +1,5 @@
 ﻿using System;
 
-using AirBreather.Common.Logging;
 using AirBreather.Common.Utilities;
 
 namespace AirBreather.Common.Random
@@ -58,22 +57,48 @@ namespace AirBreather.Common.Random
             return generator.FillBuffer(state, buffer, 0, buffer.Length);
         }
 
-        public static int NextInt32<TState>(this IRandomGenerator<TState> generator, ref TState state) where TState : struct, IRandomGeneratorState => BitConverter.ToInt32(GetAndFillBuffer(4, generator.ValidateNotNull(nameof(generator)), ref state), 0);
-        public static long NextInt64<TState>(this IRandomGenerator<TState> generator, ref TState state) where TState : struct, IRandomGeneratorState => BitConverter.ToInt64(GetAndFillBuffer(8, generator.ValidateNotNull(nameof(generator)), ref state), 0);
+        // TODO: overload for bool[] or BitArray, whichever makes more sense.
 
-        private static byte[] GetAndFillBuffer<TState>(int minimumSize, IRandomGenerator<TState> generator, ref TState state)
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, sbyte[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => generator.FillBuffer(state, (byte[])(Array)buffer, index, count);
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, short[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, index, count, sizeof(short));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, ushort[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, index, count, sizeof(ushort));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, int[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, index, count, sizeof(int));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, uint[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, index, count, sizeof(uint));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, long[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, index, count, sizeof(long));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, ulong[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, index, count, sizeof(ulong));
+
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, sbyte[] buffer) where TState : struct, IRandomGeneratorState => generator.FillBuffer(state, (byte[])(Array)buffer);
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, short[] buffer) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, 0, null, sizeof(short));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, ushort[] buffer) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, 0, null, sizeof(ushort));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, int[] buffer) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, 0, null, sizeof(int));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, uint[] buffer) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, 0, null, sizeof(uint));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, long[] buffer) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, 0, null, sizeof(long));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, ulong[] buffer) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, 0, null, sizeof(ulong));
+
+        private static TState FillResizedBuffer<TState>(IRandomGenerator<TState> generator, TState state, Array buffer, int index, int? count, int elementSize)
             where TState : struct, IRandomGeneratorState
         {
-            if (minimumSize < generator.ChunkSize)
+            generator.ValidateNotNull(nameof(generator));
+            buffer.ValidateNotNull(nameof(buffer));
+            index.ValidateInRange(nameof(index), 0, buffer.Length);
+
+            int realCount = count ?? buffer.Length;
+            realCount.ValidateNotLessThan(nameof(count), 0);
+
+            if (buffer.Length - index < realCount)
             {
-                Log.For(typeof(Extensions)).Verbose("Wasting random bytes because the chunk size is greater than requested size.");
-                minimumSize = generator.ChunkSize;
+                throw new ArgumentException("Not enough room", nameof(buffer));
             }
 
-            // warning, not particularly nice to the GC to use this too much
-            byte[] buffer = new byte[minimumSize];
-            state = generator.FillBuffer(state, buffer);
-            return buffer;
+            int desiredBufferSizeInBytes = realCount * elementSize;
+            int chunkSize = generator.ChunkSize;
+            int extra = desiredBufferSizeInBytes % chunkSize;
+            byte[] byteBuffer = new byte[desiredBufferSizeInBytes + (extra == 0 ? 0 : chunkSize - extra)];
+
+            state = generator.FillBuffer(state, byteBuffer, 0, byteBuffer.Length);
+            Buffer.BlockCopy(byteBuffer, 0, buffer, index * elementSize, realCount * elementSize);
+
+            return state;
         }
     }
 }

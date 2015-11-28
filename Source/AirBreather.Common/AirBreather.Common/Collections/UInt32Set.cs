@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 using AirBreather.Common.Utilities;
 
@@ -7,22 +9,27 @@ namespace AirBreather.Common.Collections
     // There's absolutely no reason to use this.  HashSet<uint> is fast enough and lean enough.
     // Optimizations over HashSet<uint>:
     // - needs between 1 and 3 fewer objects allocated on the heap
-    // - Contains takes just 75% of the time
+    // - Contains takes less than 65% of the time
     // - Approximately 24 bytes smaller, depending on system
     // Disadvantages:
     // - uint only
+    // - takes longer to create
     // - only supports Contains checks, nothing else (so in other words, "get me all the things contained in this set" would be "for every valid UInt32 value, if this set contains it, add that to a regular list" and then return that list)
+    //   note: I think it's theoretically possible to get "all things contained in this set" if we spend 4 bytes on a "count" field.
     // - zero error handling (though if you really really need the tiny speed and memory boost, I think you'll live)
     public struct UInt32Set
     {
+        private const int ValsOffset = 0;
+        private const int NextOffset = 1;
+
         // Layout:
         // [value1, next1, value2, next2, ..., valueN, nextN, bucket1, bucket2, ..., bucketN]
         private uint[] data;
 
+        // We can trim down another 8 bytes of memory consumption by computing the length and bucket
+        // start index on-the-fly instead of caching them in fields, but testing indicates that
+        // doing so causes each Contains call to take about 15% longer.
 #if INSANE_MEMORY
-        private const int ValsOffset = 0;
-        private const int NextOffset = 1;
-
         private uint Length => (uint)(data.Length / 3);
         private uint BucketStart => Length * 2;
 #else
@@ -30,65 +37,52 @@ namespace AirBreather.Common.Collections
         private uint BucketStart;
 #endif
 
-#if INSANE_MEMORY
-        public UInt32Set(uint[] collection)
+        public UInt32Set(IEnumerable<uint> values)
         {
-            ////collection.ValidateNotNull(nameof(collection));
+            ////values.ValidateNotNull(nameof(values));
 
-            uint count = (uint)collection.Length;
-            uint length = GetPrime(count);
-            ////if (UInt32.MaxValue / 3 < Length)
+            // I'm intimately aware of the irony of what's going on here.
+            List<uint> collection = values.Distinct().ToList();
+
+            uint length = GetPrime((uint)collection.Count);
+
+            ////if (UInt32.MaxValue / 3 < length)
             ////{
             ////    throw new NotSupportedException("way too long");
             ////}
 
-            data = new uint[length * 3];
+            uint bucketStart = length + length;
 
-            for (uint i = 0; i < count; i++)
+            this.data = new uint[length * 3];
+
+#if !INSANE_MEMORY
+            this.Length = length;
+            this.BucketStart = bucketStart;
+#endif
+
+            for (uint i = 0; i < collection.Count; i++)
             {
-                uint value = collection[i];
+                uint value = collection[unchecked((int)i)];
                 uint bucket = value % length;
                 data[i * 2 + ValsOffset] = value;
-                data[i * 2 + NextOffset] = unchecked(data[length + length + bucket] - 1);
-                data[length + length + bucket] = i + 1;
+                data[i * 2 + NextOffset] = unchecked(data[bucketStart + bucket] - 1);
+                data[bucketStart + bucket] = i + 1;
             }
         }
-#else
-        public UInt32Set(uint[] collection)
-        {
-            ////collection.ValidateNotNull(nameof(collection));
-
-            Length = GetPrime((uint)collection.Length);
-            ////if (UInt32.MaxValue / 3 < Length)
-            ////{
-            ////    throw new NotSupportedException("way too long");
-            ////}
-
-            data = new uint[Length * 3];
-            BucketStart = Length << 1;
-
-            for (uint i = 0; i < collection.Length; i++)
-            {
-                uint value = collection[i];
-                uint bucket = value % Length;
-                data[i * 2] = value;
-                data[i * 2 + 1] = unchecked(data[BucketStart + bucket] - 1);
-                data[BucketStart + bucket] = i + 1;
-            }
-        }
-#endif
 
         public bool Contains(uint item)
         {
-            ////if (this.buckets == null)
+            UInt32Set set = this;
+
+            ////if (set.data == null)
             ////{
             ////    return false;
             ////}
 
-            for (uint i = unchecked(data[BucketStart + (item % Length)] - 1); i != UInt32.MaxValue; i = data[i + 1])
+            for (uint i = unchecked(set.data[set.BucketStart + (item % set.Length)] - 1); i != UInt32.MaxValue; i = set.data[i + NextOffset])
             {
                 i <<= 1;
-                if (data[i] == item)
+                if (set.data[i + ValsOffset] == item)
                 {
                     return true;
                 }
