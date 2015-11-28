@@ -77,7 +77,7 @@ namespace AirBreather.Common.Random
                     sample = BitConverter.ToInt32(this.buffer, offset);
 
                     // range of sample is [Int32.MinValue, Int32.MaxValue].
-                    // we need [0, Int32.MaxValue - rerollThreshold).
+                    // we need [0, Int32.MaxValue - rerollThreshold].
                     // for the left half, we can just mask away the first bit.
                     // it's silly to discard a perfectly good random bit,
                     // but it's even sillier to bend over backwards to save it.

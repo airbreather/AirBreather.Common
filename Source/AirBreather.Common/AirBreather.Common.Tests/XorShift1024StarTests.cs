@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 
 using Xunit;
+using Xunit.Abstractions;
 
 using AirBreather.Common.Random;
 
@@ -12,6 +13,13 @@ namespace AirBreather.Common.Tests
     {
         // I, too, like to live dangerously.
         private const int pOffset = sizeof(ulong) * 16;
+
+        private readonly ITestOutputHelper output;
+
+        public XorShift1024StarTests(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
 
         [Theory]
         [InlineData(1234524356ul, 47845723665ul, 1)]
@@ -28,7 +36,7 @@ namespace AirBreather.Common.Tests
             // stage 1: set up the initial state, output buffer, and chunk size.
             XorShift1024StarState initialState = CreateInitialState(s0, s1);
 
-            const int OutputBufferLength = 1 << 25;
+            const int OutputBufferLength = 1 << 30;
             var outputBuffer = new byte[OutputBufferLength];
             var chunkSize = OutputBufferLength / chunks;
 
@@ -67,11 +75,11 @@ namespace AirBreather.Common.Tests
             sw.Stop();
 
             double seconds = sw.ElapsedTicks / (double)Stopwatch.Frequency / (double)Reps;
-            Console.WriteLine("XorShift1024StarTests.SpeedTestSingleArray: {0:N5} seconds, size of {1:N0} bytes ({2:N5} GiB per second), {3} separate chunk(s).",
-                              seconds,
-                              OutputBufferLength,
-                              OutputBufferLength / seconds / (1 << 30),
-                              chunks.ToString().PadLeft(2));
+            this.output.WriteLine("XorShift1024StarTests.SpeedTestSingleArray: {0:N5} seconds, size of {1:N0} bytes ({2:N5} GiB per second), {3} separate chunk(s).",
+                                  seconds,
+                                  OutputBufferLength,
+                                  OutputBufferLength / seconds / (1 << 30),
+                                  chunks.ToString().PadLeft(2));
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -93,7 +101,7 @@ namespace AirBreather.Common.Tests
             // stage 1: set up the initial state, output buffer, and chunk size.
             XorShift1024StarState initialState = CreateInitialState(s0, s1);
 
-            const int OutputBufferLength = 1 << 25;
+            const int OutputBufferLength = 1 << 30;
             var outputBuffer = new byte[OutputBufferLength];
             var chunkSize = OutputBufferLength / chunks;
 
@@ -152,13 +160,13 @@ namespace AirBreather.Common.Tests
             // Not only is it *slower* than writing to the single big buffer,
             // but it requires *greater* peak memory consumption overall.
             // HOWEVER, the other one has one particular disadvantage: it fixes
-            // the *entire* array of just under 2 GiB for the duration.
+            // the *entire* array of 1 GiB for the duration.
             double seconds = sw.ElapsedTicks / (double)Stopwatch.Frequency / (double)Reps;
-            Console.WriteLine("XorShift1024StarTests.SpeedTestSeparateArraysWithMergeAtEnd: {0:N5} seconds, size of {1:N0} bytes ({2:N5} GiB per second), {3} separate chunk(s).",
-                              seconds,
-                              OutputBufferLength,
-                              OutputBufferLength / seconds / (1 << 30),
-                              chunks.ToString().PadLeft(2));
+            this.output.WriteLine("XorShift1024StarTests.SpeedTestSeparateArraysWithMergeAtEnd: {0:N5} seconds, size of {1:N0} bytes ({2:N5} GiB per second), {3} separate chunk(s).",
+                                  seconds,
+                                  OutputBufferLength,
+                                  OutputBufferLength / seconds / (1 << 30),
+                                  chunks.ToString().PadLeft(2));
 
             GC.Collect();
             GC.WaitForPendingFinalizers();

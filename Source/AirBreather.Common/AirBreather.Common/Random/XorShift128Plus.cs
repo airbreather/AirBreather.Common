@@ -7,18 +7,16 @@ namespace AirBreather.Common.Random
 {
     public struct XorShift128PlusState : IEquatable<XorShift128PlusState>, IRandomGeneratorState
     {
-        internal ulong s0;
-        internal ulong s1;
+        internal ulong s0; internal ulong s1;
 
         public XorShift128PlusState(ulong s0, ulong s1)
         {
-            if (s0 == 0 && s1 == 0)
+            if (0 == (s0 | s1))
             {
                 throw new ArgumentException("At least one seed value must be non-zero.");
             }
 
-            this.s0 = s0;
-            this.s1 = s1;
+            this.s0 = s0; this.s1 = s1;
         }
 
         public XorShift128PlusState(XorShift128PlusState copyFrom)
@@ -26,11 +24,12 @@ namespace AirBreather.Common.Random
         {
         }
 
-        public bool IsValid => this.s0 != 0 || this.s1 != 0;
-        public ulong S0 => this.s0;
-        public ulong S1 => this.s1;
+        public bool IsValid => StateIsValid(this);
+        public ulong S0 => this.s0; public ulong S1 => this.s1;
 
-        public static bool Equals(XorShift128PlusState first, XorShift128PlusState second) => first.s0 == second.s0 && first.s1 == second.s1;
+        public static bool StateIsValid(XorShift128PlusState state) => 0 != (state.s0 ^ state.s1);
+
+        public static bool Equals(XorShift128PlusState first, XorShift128PlusState second) => 0 == (first.s0 ^ second.s0 | (first.s1 ^ second.s1));
         public static int GetHashCode(XorShift128PlusState state) => (state.s0 ^ state.s1).GetHashCode();
         public static string ToString(XorShift128PlusState state) => ToStringUtility.Begin(state).AddProperty("S0", state.s0).AddProperty("S1", state.s1).End();
 

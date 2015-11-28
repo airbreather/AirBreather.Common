@@ -49,7 +49,7 @@ namespace AirBreather.Common.Collections
             this.Data = data;
         }
 
-        internal PriorityQueueNode(PriorityQueueNode<TPriority, TData> copyFrom)
+        private PriorityQueueNode(PriorityQueueNode<TPriority, TData> copyFrom)
         {
             this.Data = copyFrom.Data;
             this.Priority = copyFrom.Priority;
@@ -77,5 +77,7 @@ namespace AirBreather.Common.Collections
         /// It has no "real" meaning to anyone else.
         /// </remarks>
         internal int QueueIndex { get; set; }
+
+        internal PriorityQueueNode<TPriority, TData> Clone() => new PriorityQueueNode<TPriority, TData>(this);
     }
 }

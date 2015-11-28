@@ -17,7 +17,7 @@ namespace AirBreather.Common.Utilities
 
         public static T ValidateInRange<T>(this T value, string paramName, T minInclusive, T maxExclusive) where T : IComparable<T>
         {
-            if (value.CompareTo(minInclusive) < 0 || value.CompareTo(maxExclusive) >= 0)
+            if (!value.IsInRange(minInclusive, maxExclusive))
             {
                 throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be between [{0}, {1}).", minInclusive, maxExclusive));
             }
@@ -25,9 +25,9 @@ namespace AirBreather.Common.Utilities
             return value;
         }
 
-        public static T ValidateMin<T>(this T value, string paramName, T minInclusive) where T : IComparable<T>
+        public static T ValidateNotLessThan<T>(this T value, string paramName, T minInclusive) where T : IComparable<T>
         {
-            if (value.CompareTo(minInclusive) < 0)
+            if (!value.IsNotLessThan(minInclusive))
             {
                 throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be greater than or equal to {0}.", minInclusive));
             }

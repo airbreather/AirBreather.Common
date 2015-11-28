@@ -1,6 +1,8 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
+using Xunit;
+
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
@@ -33,3 +35,8 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
+
+// There are some tests that indicate parallel speedup.  We can't run those in
+// parallel with one another without tainting the results massively.  We also
+// can't run them in parallel with too many other tests for the same reason.
+[assembly: CollectionBehavior(DisableTestParallelization = true)]

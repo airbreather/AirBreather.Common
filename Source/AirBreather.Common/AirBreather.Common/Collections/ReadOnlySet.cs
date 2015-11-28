@@ -30,7 +30,7 @@ namespace AirBreather.Common.Collections
 
         #region Unsupported (Read-Only)
 
-        public bool Add(T item)
+        bool ISet<T>.Add(T item)
         {
             throw new NotSupportedException("Set is read-only.");
         }
@@ -40,32 +40,32 @@ namespace AirBreather.Common.Collections
             throw new NotSupportedException("Set is read-only.");
         }
 
-        public void UnionWith(IEnumerable<T> other)
+        void ISet<T>.UnionWith(IEnumerable<T> other)
         {
             throw new NotSupportedException("Set is read-only.");
         }
 
-        public void IntersectWith(IEnumerable<T> other)
+        void ISet<T>.IntersectWith(IEnumerable<T> other)
         {
             throw new NotSupportedException("Set is read-only.");
         }
 
-        public void ExceptWith(IEnumerable<T> other)
+        void ISet<T>.ExceptWith(IEnumerable<T> other)
         {
             throw new NotSupportedException("Set is read-only.");
         }
 
-        public void SymmetricExceptWith(IEnumerable<T> other)
+        void ISet<T>.SymmetricExceptWith(IEnumerable<T> other)
         {
             throw new NotSupportedException("Set is read-only.");
         }
 
-        public void Clear()
+        void ICollection<T>.Clear()
         {
             throw new NotSupportedException("Set is read-only.");
         }
 
-        public bool Remove(T item)
+        bool ICollection<T>.Remove(T item)
         {
             throw new NotSupportedException("Set is read-only.");
         }

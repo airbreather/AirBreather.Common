@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 
 using Xunit;
+using Xunit.Abstractions;
 
 using AirBreather.Common.Random;
 
@@ -10,6 +11,13 @@ namespace AirBreather.Common.Tests
 {
     public sealed class XorShift128PlusTests
     {
+        private readonly ITestOutputHelper output;
+
+        public XorShift128PlusTests(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
+
         [Theory]
         [InlineData(1234524356ul, 47845723665ul, 10356027574996968ul, 421627830503766283ul, 7267806761253193977ul)]
         [InlineData(262151541652562ul, 468594272265ul, 3923822141990852456ul, 3993942717521754294ul, 13070632098572223408ul)]
@@ -56,7 +64,7 @@ namespace AirBreather.Common.Tests
             // stage 1: set up the initial state, output buffer, and chunk size.
             var initialState = new XorShift128PlusState(s0, s1);
 
-            const int OutputBufferLength = 1 << 25;
+            const int OutputBufferLength = 1 << 30;
             var outputBuffer = new byte[OutputBufferLength];
             var chunkSize = OutputBufferLength / chunks;
 
@@ -93,11 +101,11 @@ namespace AirBreather.Common.Tests
             sw.Stop();
 
             double seconds = sw.ElapsedTicks / (double)Stopwatch.Frequency / (double)Reps;
-            Console.WriteLine("XorShift128PlusTests.SpeedTestSingleArray: Took an average of {0:N5} seconds to fill a single buffer with a size of {1:N0} bytes ({2:N5} GiB per second) by directly writing to {3} chunk(s).",
-                              seconds,
-                              OutputBufferLength,
-                              OutputBufferLength / seconds / (1 << 30),
-                              chunks.ToString().PadLeft(2));
+            this.output.WriteLine("XorShift128PlusTests.SpeedTestSingleArray: Took an average of {0:N5} seconds to fill a single buffer with a size of {1:N0} bytes ({2:N5} GiB per second) by directly writing to {3} chunk(s).",
+                                  seconds,
+                                  OutputBufferLength,
+                                  OutputBufferLength / seconds / (1 << 30),
+                                  chunks.ToString().PadLeft(2));
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -119,7 +127,7 @@ namespace AirBreather.Common.Tests
             // stage 1: set up the initial state, output buffer, and chunk size.
             var initialState = new XorShift128PlusState(s0, s1);
 
-            const int OutputBufferLength = 1 << 25;
+            const int OutputBufferLength = 1 << 30;
             var outputBuffer = new byte[OutputBufferLength];
             var chunkSize = OutputBufferLength / chunks;
 
@@ -176,13 +184,13 @@ namespace AirBreather.Common.Tests
             // Not only is it *slower* than writing to the single big buffer,
             // but it requires *greater* peak memory consumption overall.
             // HOWEVER, the other one has one particular disadvantage: it fixes
-            // the *entire* array of just under 2 GiB for the duration.
+            // the *entire* array of 1 GiB for the duration.
             double seconds = sw.ElapsedTicks / (double)Stopwatch.Frequency / (double)Reps;
-            Console.WriteLine("XorShift128PlusTests.SpeedTestSeparateArraysWithMergeAtEnd: Took an average of {0:N5} seconds to fill a single buffer with a size of {1:N0} bytes ({2:N5} GiB per second) by writing to {3} new chunk(s) in parallel and merging.",
-                              seconds,
-                              OutputBufferLength,
-                              OutputBufferLength / seconds / (1 << 30),
-                              chunks.ToString().PadLeft(2));
+            this.output.WriteLine("XorShift128PlusTests.SpeedTestSeparateArraysWithMergeAtEnd: Took an average of {0:N5} seconds to fill a single buffer with a size of {1:N0} bytes ({2:N5} GiB per second) by writing to {3} new chunk(s) in parallel and merging.",
+                                  seconds,
+                                  OutputBufferLength,
+                                  OutputBufferLength / seconds / (1 << 30),
+                                  chunks.ToString().PadLeft(2));
 
             GC.Collect();
             GC.WaitForPendingFinalizers();

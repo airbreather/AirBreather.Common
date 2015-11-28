@@ -39,108 +39,120 @@ namespace AirBreather.Common.Random
 {
     public struct MT19937_64State : IEquatable<MT19937_64State>, IRandomGeneratorState
     {
-        internal ulong s0; internal ulong s1; internal ulong s2; internal ulong s3; internal ulong s4; internal ulong s5; internal ulong s6; internal ulong s7; internal ulong s8; internal ulong s9; internal ulong s10; internal ulong s11; internal ulong s12; internal ulong s13; internal ulong s14; internal ulong s15; internal ulong s16; internal ulong s17; internal ulong s18; internal ulong s19; internal ulong s20; internal ulong s21; internal ulong s22; internal ulong s23; internal ulong s24; internal ulong s25; internal ulong s26; internal ulong s27; internal ulong s28; internal ulong s29; internal ulong s30; internal ulong s31; internal ulong s32; internal ulong s33; internal ulong s34; internal ulong s35; internal ulong s36; internal ulong s37; internal ulong s38; internal ulong s39; internal ulong s40; internal ulong s41; internal ulong s42; internal ulong s43; internal ulong s44; internal ulong s45; internal ulong s46; internal ulong s47; internal ulong s48; internal ulong s49; internal ulong s50; internal ulong s51; internal ulong s52; internal ulong s53; internal ulong s54; internal ulong s55; internal ulong s56; internal ulong s57; internal ulong s58; internal ulong s59; internal ulong s60; internal ulong s61; internal ulong s62; internal ulong s63; internal ulong s64; internal ulong s65; internal ulong s66; internal ulong s67; internal ulong s68; internal ulong s69; internal ulong s70; internal ulong s71; internal ulong s72; internal ulong s73; internal ulong s74; internal ulong s75; internal ulong s76; internal ulong s77; internal ulong s78; internal ulong s79; internal ulong s80; internal ulong s81; internal ulong s82; internal ulong s83; internal ulong s84; internal ulong s85; internal ulong s86; internal ulong s87; internal ulong s88; internal ulong s89; internal ulong s90; internal ulong s91; internal ulong s92; internal ulong s93; internal ulong s94; internal ulong s95; internal ulong s96; internal ulong s97; internal ulong s98; internal ulong s99; internal ulong s100; internal ulong s101; internal ulong s102; internal ulong s103; internal ulong s104; internal ulong s105; internal ulong s106; internal ulong s107; internal ulong s108; internal ulong s109; internal ulong s110; internal ulong s111; internal ulong s112; internal ulong s113; internal ulong s114; internal ulong s115; internal ulong s116; internal ulong s117; internal ulong s118; internal ulong s119; internal ulong s120; internal ulong s121; internal ulong s122; internal ulong s123; internal ulong s124; internal ulong s125; internal ulong s126; internal ulong s127; internal ulong s128; internal ulong s129; internal ulong s130; internal ulong s131; internal ulong s132; internal ulong s133; internal ulong s134; internal ulong s135; internal ulong s136; internal ulong s137; internal ulong s138; internal ulong s139; internal ulong s140; internal ulong s141; internal ulong s142; internal ulong s143; internal ulong s144; internal ulong s145; internal ulong s146; internal ulong s147; internal ulong s148; internal ulong s149; internal ulong s150; internal ulong s151; internal ulong s152; internal ulong s153; internal ulong s154; internal ulong s155; internal ulong s156; internal ulong s157; internal ulong s158; internal ulong s159; internal ulong s160; internal ulong s161; internal ulong s162; internal ulong s163; internal ulong s164; internal ulong s165; internal ulong s166; internal ulong s167; internal ulong s168; internal ulong s169; internal ulong s170; internal ulong s171; internal ulong s172; internal ulong s173; internal ulong s174; internal ulong s175; internal ulong s176; internal ulong s177; internal ulong s178; internal ulong s179; internal ulong s180; internal ulong s181; internal ulong s182; internal ulong s183; internal ulong s184; internal ulong s185; internal ulong s186; internal ulong s187; internal ulong s188; internal ulong s189; internal ulong s190; internal ulong s191; internal ulong s192; internal ulong s193; internal ulong s194; internal ulong s195; internal ulong s196; internal ulong s197; internal ulong s198; internal ulong s199; internal ulong s200; internal ulong s201; internal ulong s202; internal ulong s203; internal ulong s204; internal ulong s205; internal ulong s206; internal ulong s207; internal ulong s208; internal ulong s209; internal ulong s210; internal ulong s211; internal ulong s212; internal ulong s213; internal ulong s214; internal ulong s215; internal ulong s216; internal ulong s217; internal ulong s218; internal ulong s219; internal ulong s220; internal ulong s221; internal ulong s222; internal ulong s223; internal ulong s224; internal ulong s225; internal ulong s226; internal ulong s227; internal ulong s228; internal ulong s229; internal ulong s230; internal ulong s231; internal ulong s232; internal ulong s233; internal ulong s234; internal ulong s235; internal ulong s236; internal ulong s237; internal ulong s238; internal ulong s239; internal ulong s240; internal ulong s241; internal ulong s242; internal ulong s243; internal ulong s244; internal ulong s245; internal ulong s246; internal ulong s247; internal ulong s248; internal ulong s249; internal ulong s250; internal ulong s251; internal ulong s252; internal ulong s253; internal ulong s254; internal ulong s255; internal ulong s256; internal ulong s257; internal ulong s258; internal ulong s259; internal ulong s260; internal ulong s261; internal ulong s262; internal ulong s263; internal ulong s264; internal ulong s265; internal ulong s266; internal ulong s267; internal ulong s268; internal ulong s269; internal ulong s270; internal ulong s271; internal ulong s272; internal ulong s273; internal ulong s274; internal ulong s275; internal ulong s276; internal ulong s277; internal ulong s278; internal ulong s279; internal ulong s280; internal ulong s281; internal ulong s282; internal ulong s283; internal ulong s284; internal ulong s285; internal ulong s286; internal ulong s287; internal ulong s288; internal ulong s289; internal ulong s290; internal ulong s291; internal ulong s292; internal ulong s293; internal ulong s294; internal ulong s295; internal ulong s296; internal ulong s297; internal ulong s298; internal ulong s299; internal ulong s300; internal ulong s301; internal ulong s302; internal ulong s303; internal ulong s304; internal ulong s305; internal ulong s306; internal ulong s307; internal ulong s308; internal ulong s309; internal ulong s310; internal ulong s311;
+        internal ulong[] data;
         internal int idx;
 
-        public unsafe MT19937_64State(ulong seed)
+        public MT19937_64State(ulong seed)
         {
-            fixed (MT19937_64State* fThis = &this)
+            this.data = new ulong[312];
+            this.data[0] = seed;
+            for (int i = 1; i < 312; i++)
             {
-                ulong* p = (ulong*)(fThis);
-                *p++ = seed;
-                for (int i = 1; i < 312; i++)
-                {
-                    ulong prev = *(p - 1);
-                    *(p++) = unchecked((6364136223846793005 * (prev ^ (prev >> 62))) + (ulong)i);
-                }
+                ulong prev = this.data[i - 1];
+                this.data[i] = unchecked((6364136223846793005 * (prev ^ (prev >> 62))) + (ulong)i);
             }
 
             this.idx = 312;
         }
 
-        // TODO: our cousins in other languages allow seeding by multiple input values... support that too.
-
-        public unsafe MT19937_64State(MT19937_64State copyFrom)
+        public MT19937_64State(MT19937_64State copyFrom)
         {
-            fixed (MT19937_64State* fThis = &this)
-            {
-                ulong* s = (ulong*)fThis;
-                ulong* t = (ulong*)&copyFrom;
-                for (int i = 0; i < 312; i++)
-                {
-                    *(s++) = *(t++);
-                }
-            }
-
             this.idx = copyFrom.idx;
+
+            if (copyFrom.data == null)
+            {
+                this.data = null;
+            }
+            else
+            {
+                this.data = new ulong[312];
+                Buffer.BlockCopy(copyFrom.data, 0, this.data, 0, 312 * sizeof(ulong));
+            }
         }
 
-        private static bool StateIsValid(MT19937_64State state) => 0 <= state.idx && state.idx <= 312;
+        // TODO: our cousins in other languages allow seeding by multiple input values... support that too.
         public bool IsValid => StateIsValid(this);
 
-        private static unsafe bool EqualsUnsafe(MT19937_64State* first, MT19937_64State* second)
+        private static bool StateIsValid(MT19937_64State state)
         {
-            if (first->idx != second->idx)
+            if (state.data == null)
             {
                 return false;
             }
 
-            ulong* s = (ulong*)first;
-            ulong* t = (ulong*)second;
-            for (int i = 0; i < 312; i++)
+            if (!state.idx.IsInRange(0, 313))
             {
-                if (*(s++) != *(t++))
-                {
-                    return false;
-                }
+                return false;
             }
 
-            return true;
+            ulong accumulator = 0;
+            foreach (ulong value in state.data)
+            {
+                accumulator |= value;
+            }
+
+            return accumulator != 0;
         }
 
-        public static unsafe int GetHashCodeUnsafe(MT19937_64State* state)
+        public static bool Equals(MT19937_64State first, MT19937_64State second)
+        {
+            if (first.idx != second.idx)
+            {
+                return false;
+            }
+
+            bool firstIsDefault = first.data == null;
+            bool secondIsDefault = second.data == null;
+
+            if (firstIsDefault != secondIsDefault)
+            {
+                return false;
+            }
+
+            if (firstIsDefault)
+            {
+                return true;
+            }
+
+            ulong accumulator = 0;
+            for (int i = 0; i < 312; i++)
+            {
+                ulong differentBits = first.data[i] ^ second.data[i];
+                accumulator |= differentBits;
+            }
+
+            return accumulator == 0;
+        }
+
+        public static int GetHashCode(MT19937_64State state)
         {
             int hashCode = HashCodeUtility.Seed;
 
-            hashCode = hashCode.HashWith(state->idx);
-            ulong* p = (ulong*)state;
-            for (int i = 0; i < 312; i++)
+            hashCode = hashCode.HashWith(state.idx);
+
+            if (state.data == null)
             {
-                hashCode = hashCode.HashWith(*(p++));
+                return hashCode;
             }
+
+            ulong accumulator = 0;
+            foreach (ulong value in state.data)
+            {
+                accumulator ^= value;
+            }
+
+            hashCode = hashCode.HashWith(accumulator);
 
             return hashCode;
         }
 
         public static string ToString(MT19937_64State state) => ToStringUtility.Begin(state).End();
 
-        public static unsafe bool operator ==(MT19937_64State first, MT19937_64State second) => EqualsUnsafe(&first, &second);
-        public static unsafe bool operator !=(MT19937_64State first, MT19937_64State second) => !EqualsUnsafe(&first, &second);
-        public static unsafe bool Equals(MT19937_64State first, MT19937_64State second) => EqualsUnsafe(&first, &second);
-        public unsafe override bool Equals(object obj)
-        {
-            if (!(obj is MT19937_64State))
-            {
-                return false;
-            }
-
-            MT19937_64State other = (MT19937_64State)obj;
-            fixed (MT19937_64State* fThis = &this)
-            {
-                return EqualsUnsafe(fThis, &other);
-            }
-        }
-
+        public static bool operator ==(MT19937_64State first, MT19937_64State second) => Equals(first, second);
+        public static bool operator !=(MT19937_64State first, MT19937_64State second) => !Equals(first, second);
+        public override bool Equals(object obj) => obj is MT19937_64State && Equals(this, (MT19937_64State)obj);
         public bool Equals(MT19937_64State other) => Equals(this, other);
-        public static unsafe int GetHashCode(MT19937_64State state) => GetHashCodeUnsafe(&state);
-        public unsafe override int GetHashCode()
-        {
-            fixed (MT19937_64State* fThis = &this)
-            {
-                return GetHashCodeUnsafe(fThis);
-            }
-        }
-
+        public override int GetHashCode() => GetHashCode(this);
         public override string ToString() => ToString(this);
     }
 
@@ -191,11 +203,11 @@ namespace AirBreather.Common.Random
 
         private static unsafe void FillBufferCore(ref MT19937_64State state, byte[] buffer, int index, int count)
         {
-            fixed (MT19937_64State* fState = &state)
+            state = new MT19937_64State(state);
+
+            fixed (ulong* fData = state.data)
             fixed (byte* fbuf = buffer)
             {
-                ulong* s = (ulong*)fState;
-
                 // count has already been validated to be a multiple of ChunkSize,
                 // and so has index, so we can do this fanciness without fear.
                 ulong* pbuf = (ulong*)(fbuf + index);
@@ -204,11 +216,11 @@ namespace AirBreather.Common.Random
                 {
                     if (state.idx == 312)
                     {
-                        Twist(s);
+                        Twist(fData);
                         state.idx = 0;
                     }
 
-                    ulong x = s[state.idx++];
+                    ulong x = fData[state.idx++];
 
                     x ^= (x >> 29) & 0x5555555555555555;
                     x ^= (x << 17) & 0x71D67FFFEDA60000;

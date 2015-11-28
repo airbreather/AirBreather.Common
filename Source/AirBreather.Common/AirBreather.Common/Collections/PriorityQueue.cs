@@ -45,7 +45,7 @@ namespace AirBreather.Common.Collections
     /// sorted order.  To get at the elements in sorted order, use the copy
     /// constructor and repeatedly <see cref="Dequeue"/> elements from it.
     /// </remarks>
-    public sealed class PriorityQueue<TPriority, TData> : IEnumerable<PriorityQueueNode<TPriority, TData>>
+    public sealed class PriorityQueue<TPriority, TData> : IReadOnlyCollection<PriorityQueueNode<TPriority, TData>>
     {
         private const int DefaultCapacity = 4;
 
@@ -106,7 +106,7 @@ namespace AirBreather.Common.Collections
         /// </exception>
         public PriorityQueue(int capacity, IComparer<TPriority> priorityComparer)
         {
-            capacity.ValidateMin(nameof(capacity), 1);
+            capacity.ValidateNotLessThan(nameof(capacity), 1);
             this.nodes = new List<PriorityQueueNode<TPriority, TData>>(capacity + 1);
             for (int i = 0; i <= capacity; i++)
             {
@@ -131,24 +131,18 @@ namespace AirBreather.Common.Collections
         public PriorityQueue(PriorityQueue<TPriority, TData> copyFrom)
         {
             copyFrom.ValidateNotNull(nameof(copyFrom));
-            this.nodes = new List<PriorityQueueNode<TPriority, TData>>(copyFrom.nodes.Count);
             this.priorityComparer = copyFrom.priorityComparer;
 
             // We need to copy the nodes, because they store queue state that
             // will change in one queue but not in the other.
-            for (int i = 0; i < copyFrom.nodes.Count; i++)
+            this.nodes = new List<PriorityQueueNode<TPriority, TData>>(copyFrom.nodes.Count);
+            foreach (var node in copyFrom.nodes)
             {
-                var nodeToCopy = copyFrom.nodes[i];
-                var copiedNode = nodeToCopy == null
-                    ? null
-                    : new PriorityQueueNode<TPriority, TData>(nodeToCopy);
-                this.nodes.Add(copiedNode);
+                this.nodes.Add(node?.Clone());
             }
         }
 
-        /// <summary>
-        /// Gets the number of nodes currently stored in this queue.
-        /// </summary>
+        /// <inheritdoc />
         public int Count { get; private set; }
 
         /// <summary>

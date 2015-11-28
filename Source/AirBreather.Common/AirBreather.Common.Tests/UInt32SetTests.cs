@@ -3,13 +3,22 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 using Xunit;
+using Xunit.Abstractions;
 
 using AirBreather.Common.Collections;
+using AirBreather.Common.Random;
 
 namespace AirBreather.Common.Tests
 {
     public sealed class UInt32SetTests
     {
+        private readonly ITestOutputHelper output;
+
+        public UInt32SetTests(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
+
         [Fact]
         public void Test()
         {
@@ -18,18 +27,21 @@ namespace AirBreather.Common.Tests
             uint[] vals;
             uint[] testVals;
 
+            var rand = new MT19937_64Generator();
+            var state = new MT19937_64State(5489);
+
             {
                 byte[] valData = new byte[ValueCount * 4];
-                var rand = new System.Random(Guid.NewGuid().GetHashCode());
-                rand.NextBytes(valData);
+
+                state = rand.FillBuffer(state, valData);
                 vals = new uint[ValueCount];
                 Buffer.BlockCopy(valData, 0, vals, 0, valData.Length);
             }
 
             {
-                byte[] valData = new byte[TestCount * 4];
-                var rand = new System.Random(Guid.NewGuid().GetHashCode());
-                rand.NextBytes(valData);
+                byte[] valData = new byte[ValueCount * 4];
+
+                state = rand.FillBuffer(state, valData);
                 testVals = new uint[TestCount];
                 Buffer.BlockCopy(valData, 0, testVals, 0, valData.Length);
             }
@@ -37,16 +49,15 @@ namespace AirBreather.Common.Tests
             UInt32Set mySet = new UInt32Set(vals);
             HashSet<uint> realSet = new HashSet<uint>(vals);
 
-            byte[] myResults = new byte[TestCount];
-            byte[] realResults = new byte[TestCount];
+            bool[] myResults = new bool[TestCount];
+            bool[] realResults = new bool[TestCount];
 
-            const byte TrueByte = 1;
-            const byte FalseByte = 0;
-
+            // run mine first so it's the one that's disadvantaged if there's a
+            // caching-related bias that unfairly benefits one of the two.
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < testVals.Length; i++)
             {
-                myResults[i] = mySet.Contains(testVals[i]) ? TrueByte : FalseByte;
+                myResults[i] = mySet.Contains(testVals[i]);
             }
 
             sw.Stop();
@@ -56,29 +67,28 @@ namespace AirBreather.Common.Tests
             sw.Restart();
             for (int i = 0; i < testVals.Length; i++)
             {
-                realResults[i] = realSet.Contains(testVals[i]) ? TrueByte : FalseByte;
+                realResults[i] = realSet.Contains(testVals[i]);
             }
 
             sw.Stop();
 
-            ////System.IO.File.AppendAllText(@"C:\Freedom\mine.txt", String.Format("mineSet: {0} seconds", mySetTicks / (double)Stopwatch.Frequency));
-            ////System.IO.File.AppendAllText(@"C:\Freedom\mine.txt", Environment.NewLine);
-            ////System.IO.File.AppendAllText(@"C:\Freedom\mine.txt", String.Format("realSet: {0} seconds", sw.ElapsedTicks / (double)Stopwatch.Frequency));
-            ////System.IO.File.AppendAllText(@"C:\Freedom\mine.txt", Environment.NewLine);
+            this.output.WriteLine("{0} seconds for built-in HashSet<uint>", sw.ElapsedTicks / (double)Stopwatch.Frequency);
+            this.output.WriteLine("{0} seconds for my UInt32Set", mySetTicks / (double)Stopwatch.Frequency);
+            this.output.WriteLine("Mine took {0:P2} as long to run as the built-in did", mySetTicks / (double)sw.ElapsedTicks);
 
             Assert.True(UnsafeCompare(realResults, myResults));
         }
 
-        // http://stackoverflow.com/a/8808245/1083771
-        static unsafe bool UnsafeCompare(byte[] a1, byte[] a2)
+        // based on http://stackoverflow.com/a/8808245/1083771
+        static unsafe bool UnsafeCompare(bool[] a1, bool[] a2)
         {
             if (a1 == a2)
                 return true;
             if (a1 == null || a2 == null || a1.Length != a2.Length)
                 return false;
-            fixed (byte* p1 = a1, p2 = a2)
+            fixed (bool * p1 = a1, p2 = a2)
             {
-                byte* x1 = p1, x2 = p2;
+                bool* x1 = p1, x2 = p2;
                 int l = a1.Length;
                 for (int i = 0; i < l / 8; i++, x1 += 8, x2 += 8)
                     if (*((long*)x1) != *((long*)x2)) return false;

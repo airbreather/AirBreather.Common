@@ -44,29 +44,33 @@ namespace AirBreather.Common.Collections
         public IEnumerator<T> GetEnumerator() => this.wrappedList.GetEnumerator();
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.wrappedList.GetEnumerator();
 
-        public void Add(T item)
+        #region Unsupported (Read-Only)
+
+        void ICollection<T>.Add(T item)
         {
             throw new NotSupportedException();
         }
 
-        public void Clear()
+        void ICollection<T>.Clear()
         {
             throw new NotSupportedException();
         }
 
-        public bool Remove(T item)
+        bool ICollection<T>.Remove(T item)
         {
             throw new NotSupportedException();
         }
 
-        public void Insert(int index, T item)
+        void IList<T>.Insert(int index, T item)
         {
             throw new NotSupportedException();
         }
 
-        public void RemoveAt(int index)
+        void IList<T>.RemoveAt(int index)
         {
             throw new NotSupportedException();
         }
+
+        #endregion
     }
 }

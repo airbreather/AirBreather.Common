@@ -23,19 +23,23 @@ namespace AirBreather.Common.Collections
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.wrappedCollection.GetEnumerator();
         public void CopyTo(T[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
 
-        public void Add(T item)
+        #region Unsupported (Read-Only)
+
+        void ICollection<T>.Add(T item)
         {
             throw new NotSupportedException();
         }
 
-        public void Clear()
+        void ICollection<T>.Clear()
         {
             throw new NotSupportedException();
         }
 
-        public bool Remove(T item)
+        bool ICollection<T>.Remove(T item)
         {
             throw new NotSupportedException();
         }
+
+        #endregion
     }
 }
