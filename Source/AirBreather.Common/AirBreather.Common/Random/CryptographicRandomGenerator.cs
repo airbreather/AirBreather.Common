@@ -40,11 +40,12 @@ namespace AirBreather.Common.Random
         /// <inheritdoc />
         public EmptyRandomState FillBuffer(EmptyRandomState state, byte[] buffer, int index, int count)
         {
-            this.FillBuffer(buffer, index, count);
+            FillBuffer(buffer, index, count);
             return state;
         }
 
-        public void FillBuffer(byte[] buffer, int index, int count)
+        public static void FillBuffer(byte[] buffer) => FillBuffer(buffer, 0, buffer?.Length ?? 0);
+        public static void FillBuffer(byte[] buffer, int index, int count)
         {
             buffer.ValidateNotNull(nameof(buffer));
             index.ValidateInRange(nameof(index), 0, buffer.Length);

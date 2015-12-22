@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace AirBreather.Common.Utilities
 {
@@ -18,12 +17,16 @@ namespace AirBreather.Common.Utilities
             // of the fact that IObservable<T> supports non-success messages natively,
             // so it can return IObservable<T> instead of keeping the Task<T> wrapper.
             tasks.ValidateNotNull(nameof(tasks));
-            Task<T>[] taskArray = tasks.ToArray();
+            List<Task<T>> taskList = tasks.ToList();
 
-            TaskCompletionSource<T>[] outputSources = Array.ConvertAll(taskArray, _ => new TaskCompletionSource<T>());
+            TaskCompletionSource<T>[] outputSources = new TaskCompletionSource<T>[taskList.Count];
+            for (int i = 0; i < outputSources.Length; i++)
+            {
+                outputSources[i] = new TaskCompletionSource<T>();
+            }
 
             int highestCompletedIndex = -1;
-            foreach (Task<T> task in taskArray)
+            foreach (Task<T> task in taskList)
             {
                 task.ContinueWith(t =>
                 {
@@ -35,7 +38,7 @@ namespace AirBreather.Common.Utilities
                             break;
 
                         case TaskStatus.Faulted:
-                            outputSource.SetException(t.Exception);
+                            outputSource.SetException(t.Exception.InnerException);
                             break;
 
                         ////case TaskStatus.RanToCompletion:

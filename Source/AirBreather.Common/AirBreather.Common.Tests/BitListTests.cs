@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
-using AirBreather.Common.Collections;
-
 using Xunit;
+
+using AirBreather.Common.Collections;
+using AirBreather.Common.Random;
 
 namespace AirBreather.Common.Tests
 {
@@ -24,7 +26,8 @@ namespace AirBreather.Common.Tests
             Assert.Throws<ArgumentOutOfRangeException>("index", () => bl.RemoveAt(-1));
             Assert.Throws<ArgumentOutOfRangeException>("index", () => bl.RemoveAt(4));
             Assert.Throws<ArgumentNullException>("array", () => bl.CopyTo(null, 5));
-            Assert.Throws<ArgumentNullException>("bitArray", () => new BitList(null));
+            Assert.Throws<ArgumentNullException>("bitArray", () => new BitList(default(BitArray)));
+            Assert.Throws<ArgumentNullException>("values", () => new BitList(default(IEnumerable<bool>)));
 
             bool[] things = new bool[5];
             Assert.Throws<ArgumentOutOfRangeException>("arrayIndex", () => bl.CopyTo(things, -1));
@@ -124,7 +127,8 @@ namespace AirBreather.Common.Tests
             const int ArrayOffset = 3871;
 
             byte[] someStuff = new byte[ByteCount];
-            new System.Random().NextBytes(someStuff);
+
+            CryptographicRandomGenerator.FillBuffer(someStuff);
 
             BitList bl = new BitList();
             foreach (byte val in someStuff)
@@ -147,7 +151,8 @@ namespace AirBreather.Common.Tests
             const int ByteCount = 1927;
 
             byte[] someStuff = new byte[ByteCount];
-            new System.Random().NextBytes(someStuff);
+
+            CryptographicRandomGenerator.FillBuffer(someStuff);
 
             BitList bl = new BitList();
             foreach (byte val in someStuff)
@@ -173,7 +178,9 @@ namespace AirBreather.Common.Tests
         public void CopyFromBitArrayShouldWork(int byteCount)
         {
             byte[] someStuff = new byte[byteCount];
-            new System.Random().NextBytes(someStuff);
+
+            CryptographicRandomGenerator.FillBuffer(someStuff);
+
             BitArray ba = new BitArray(someStuff);
             BitList bl = new BitList(ba);
 

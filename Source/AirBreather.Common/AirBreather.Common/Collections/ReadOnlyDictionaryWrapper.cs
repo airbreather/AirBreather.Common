@@ -30,7 +30,7 @@ namespace AirBreather.Common.Collections
                 IEnumerable<TKey> result = this.wrappedDictionary.Keys;
                 return result == null
                     ? null
-                    : result as ICollection<TKey> ?? result.ToArray();
+                    : result as ICollection<TKey> ?? result.ToList();
             }
         }
 
@@ -41,7 +41,7 @@ namespace AirBreather.Common.Collections
                 IEnumerable<TValue> result = this.wrappedDictionary.Values;
                 return result == null
                     ? null
-                    : result as ICollection<TValue> ?? result.ToArray();
+                    : result as ICollection<TValue> ?? result.ToList();
             }
         }
 

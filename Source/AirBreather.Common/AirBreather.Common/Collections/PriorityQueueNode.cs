@@ -59,7 +59,7 @@ namespace AirBreather.Common.Collections
         /// <summary>
         /// Gets the <typeparamref name="TData"/> that is stored in this node.
         /// </summary>
-		public TData Data { get; }
+        public TData Data { get; }
 
         /// <summary>
         /// Gets the <typeparamref name="TPriority"/> of this node in the queue.
