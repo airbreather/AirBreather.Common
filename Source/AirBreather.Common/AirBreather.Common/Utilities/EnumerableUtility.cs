@@ -141,7 +141,7 @@ namespace AirBreather.Common.Utilities
             // not ICollection<T> or ICollection, AND even *notice* the difference in the ordering
             // of these calls (more likely, they've got a user-defined collection type that's got
             // even slightly sub-optimal client code that, if optimized, would do literally millions
-            // of times better than switching this order.
+            // of times better than switching this order).
             System.Collections.ICollection legacyCollection = enumerable as System.Collections.ICollection;
             if (legacyCollection != null)
             {
@@ -156,6 +156,11 @@ namespace AirBreather.Common.Utilities
 
             // We've exhausted all the collection-with-Count-property interfaces that I care to do.
             return default(int?);
+        }
+
+        public static IEnumerable<T> Concat<T>(this IEnumerable<T> enumerable, params T[] values)
+        {
+            return Enumerable.Concat(enumerable, values);
         }
     }
 }

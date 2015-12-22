@@ -73,6 +73,7 @@
     <Compile Include="Utilities\HashCodeUtility.cs" />
     <Compile Include="Utilities\ResourceUtility.cs" />
     <Compile Include="Text\EncodingEx.cs" />
+    <Compile Include="Utilities\StringUtility.cs" />
     <Compile Include="Utilities\ToStringUtility.cs" />
     <Compile Include="Collections\IReadOnlySet.cs" />
     <Compile Include="Collections\ReadOnlySet.cs" />
