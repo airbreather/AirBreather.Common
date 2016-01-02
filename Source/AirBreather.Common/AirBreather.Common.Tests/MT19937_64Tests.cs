@@ -77,7 +77,7 @@ namespace AirBreather.Common.Tests
         [InlineData(0ul, 16)]
         [InlineData(0ul, 32)]
         [InlineData(0ul, 64)]
-        public unsafe void SpeedTestSingleArray(ulong seed, int chunks)
+        public void SpeedTestSingleArray(ulong seed, int chunks)
         {
             var gen = new MT19937_64Generator();
 
@@ -132,7 +132,7 @@ namespace AirBreather.Common.Tests
         [InlineData(0ul, 16)]
         [InlineData(0ul, 32)]
         [InlineData(0ul, 64)]
-        public unsafe void SpeedTestSeparateArraysWithMergeAtEnd(ulong seed, int chunks)
+        public void SpeedTestSeparateArraysWithMergeAtEnd(ulong seed, int chunks)
         {
             var gen = new MT19937_64Generator();
 
