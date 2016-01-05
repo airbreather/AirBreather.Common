@@ -60,6 +60,7 @@
     <Compile Include="Collections\ReadOnlyListWrapper.cs" />
     <Compile Include="DisposableObject.cs" />
     <Compile Include="IO\ReadThrottledStream.cs" />
+    <Compile Include="Collections\ObjectReferenceEqualityComparer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Random\BclPseudoRandomPicker.cs" />
     <Compile Include="Random\Extensions.cs" />
