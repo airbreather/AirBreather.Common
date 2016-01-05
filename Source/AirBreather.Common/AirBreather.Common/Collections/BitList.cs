@@ -10,7 +10,7 @@ namespace AirBreather.Common.Collections
     {
         private static readonly BitArray Empty = new BitArray(0);
 
-        private readonly BitArray values;
+        private BitArray values;
 
         private int version;
         private int count;
@@ -81,7 +81,14 @@ namespace AirBreather.Common.Collections
                     return;
                 }
 
-                this.values.Length = value;
+                if (this.values == Empty)
+                {
+                    this.values = new BitArray(value);
+                }
+                else
+                {
+                    this.values.Length = value;
+                }
             }
         }
 
