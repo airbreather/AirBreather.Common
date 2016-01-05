@@ -51,6 +51,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="BitListTests.cs" />
+    <Compile Include="MT19937_32Tests.cs" />
     <Compile Include="ReadThrottledStreamTests.cs" />
     <Compile Include="UInt32SetTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
