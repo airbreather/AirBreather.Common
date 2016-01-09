@@ -52,7 +52,6 @@ namespace AirBreather.Common
         {
             double[] someDoubleValues =
             {
-                0,
                 0.1,
                 0.2,
                 0.25,
@@ -94,8 +93,8 @@ namespace AirBreather.Common
                 Math.Sqrt(2)
             };
 
-            DoubleBoxes = someDoubleValues.Concat(Array.ConvertAll(someDoubleValues, v => -v)).Concat(double.MinValue, double.MaxValue, double.PositiveInfinity, double.NegativeInfinity, double.Epsilon).ToDictionary(val => val, val => (object)val);
-            SingleBoxes = someDoubleValues.Concat(Array.ConvertAll(someDoubleValues, v => -v)).Select(Convert.ToSingle).Concat(float.MinValue, float.MaxValue, float.PositiveInfinity, float.NegativeInfinity, float.Epsilon).ToDictionary(val => val, val => (object)val);
+            DoubleBoxes = someDoubleValues.Concat(Array.ConvertAll(someDoubleValues, v => -v)).Concat(0, double.MinValue, double.MaxValue, double.PositiveInfinity, double.NegativeInfinity, double.Epsilon).ToDictionary(val => val, val => (object)val);
+            SingleBoxes = someDoubleValues.Concat(Array.ConvertAll(someDoubleValues, v => -v)).Select(Convert.ToSingle).Concat(0, float.MinValue, float.MaxValue, float.PositiveInfinity, float.NegativeInfinity, float.Epsilon).ToDictionary(val => val, val => (object)val);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

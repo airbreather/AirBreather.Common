@@ -43,8 +43,7 @@ namespace AirBreather.Common.Utilities
         }
 
         // http://stackoverflow.com/a/24343727/1083771
-        private static readonly uint[] byteTo32BitLookupArray = CreateLookup32Unsafe();
-        private static readonly uint* byteTo32BitLookupPtr = (uint*)GCHandle.Alloc(byteTo32BitLookupArray, GCHandleType.Pinned).AddrOfPinnedObject();
+        private static readonly uint[] byteToHex32Lookup = CreateLookup32Unsafe();
 
         private static uint[] CreateLookup32Unsafe()
         {
@@ -62,16 +61,14 @@ namespace AirBreather.Common.Utilities
 
         public static unsafe string ByteArrayToHexString(this byte[] bytes)
         {
-            uint* lookupP = byteTo32BitLookupPtr;
-            string result = new string((char)0, bytes.Length * 2);
-
-            fixed (byte* bytesP = bytes)
-            fixed (char* resultP = result)
+            string result = new string(default(char), bytes.ValidateNotNull(nameof(bytes)).Length * 2);
+            fixed (uint* byteToHexPtr = byteToHex32Lookup)
+            fixed (char* resultCharPtr = result)
             {
-                uint* resultP2 = (uint*)resultP;
+                uint* resultUInt32Ptr = (uint*)resultCharPtr;
                 for (int i = 0; i < bytes.Length; i++)
                 {
-                    resultP2[i] = lookupP[bytesP[i]];
+                    resultUInt32Ptr[i] = byteToHexPtr[bytes[i]];
                 }
             }
 
