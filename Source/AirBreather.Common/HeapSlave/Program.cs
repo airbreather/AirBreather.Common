@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
-
 using Microsoft.Diagnostics.Runtime;
 
 namespace HeapSlave
@@ -16,6 +17,12 @@ namespace HeapSlave
 
         private static int Main(string[] args)
         {
+            long afterAttach = 0;
+            long beforeEnumerateObjects = 0;
+            long afterEnumerateObjects = 0;
+            long afterEnumerateRoots = 0;
+            long[] visits = null;
+            Stopwatch sw = Stopwatch.StartNew();
             BitArray found = null;
             try
             {
@@ -31,6 +38,7 @@ namespace HeapSlave
                 byte[] guidBuffer = new byte[16];
                 using (DataTarget dataTarget = DataTarget.AttachToProcess(pid, UInt32.MaxValue))
                 {
+                    afterAttach = sw.ElapsedTicks;
                     foreach (ClrInfo clrVersion in dataTarget.ClrVersions)
                     {
                         ClrRuntime runtime = clrVersion.CreateRuntime();
@@ -42,6 +50,8 @@ namespace HeapSlave
                         ClrInstanceField storedField = cacheType.GetFieldByName("stored");
                         ClrInstanceField itemsField = listType.GetFieldByName("_items");
                         ClrInstanceField countField = listType.GetFieldByName("_size");
+
+                        beforeEnumerateObjects = sw.ElapsedTicks;
 
                         ulong cacheAddress = 0;
                         foreach (ulong obj in heap.EnumerateObjectAddresses().Where(obj => heap.GetObjectType(obj) == cacheType))
@@ -58,6 +68,7 @@ namespace HeapSlave
                             break;
                         }
 
+                        afterEnumerateObjects = sw.ElapsedTicks;
                         if (cacheAddress == 0)
                         {
                             continue;
@@ -69,7 +80,10 @@ namespace HeapSlave
                         byte[] itemAddresses = new byte[cnt * sizeof(ulong)];
                         heap.ReadMemory(items + 16, itemAddresses, 0, itemAddresses.Length);
 
-                        ulong[] rootAddresses = heap.EnumerateRoots().Select(root => root.Object).ToArray();
+                        ulong[] rootAddresses = heap.EnumerateRoots(false).Select(root => root.Object).ToArray();
+
+                        afterEnumerateRoots = sw.ElapsedTicks;
+                        visits = new long[cnt];
 
                         found = new BitArray(cnt, false);
                         for (int i = 0; i < cnt; i++)
@@ -98,7 +112,7 @@ namespace HeapSlave
                                 visited.Add(otherAddress);
                             }
 
-                            while (!found[i] && refs.Count > 0)
+                            while (refs.Count > 0)
                             {
                                 ulong r = refs.Pop();
                                 if (r == address)
@@ -126,6 +140,8 @@ namespace HeapSlave
                                     }
                                 });
                             }
+
+                            visits[i] = sw.ElapsedTicks;
                         }
 
                         break;
@@ -147,6 +163,22 @@ namespace HeapSlave
             for (int i = 0; i < found.Length; i++)
             {
                 Console.WriteLine(String.Format(CultureInfo.InvariantCulture, "{0}_{1}", i.ToString(CultureInfo.InvariantCulture), found[i] ? "1" : "0"));
+            }
+
+            sw.Stop();
+            using (var f = File.CreateText(@"C:\Users\PC\runtime.txt"))
+            {
+                double freq = Stopwatch.Frequency;
+                f.WriteLine("afterAttach: {0:N5} seconds", afterAttach / freq);
+                f.WriteLine("beforeEnumerateObjects: {0:N5} seconds", beforeEnumerateObjects / freq);
+                f.WriteLine("afterEnumerateObjects: {0:N5} seconds", afterEnumerateObjects / freq);
+                f.WriteLine("afterEnumerateRoots: {0:N5} seconds", afterEnumerateRoots / freq);
+                for (int i = 0; i < visits.Length; i++)
+                {
+                    f.WriteLine("t{1}: {0:N5} seconds", visits[i] / freq, i);
+                }
+
+                f.WriteLine("end: {0:N5} seconds", sw.ElapsedTicks / freq);
             }
 
             return 0;

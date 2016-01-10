@@ -26,7 +26,7 @@ namespace AirBreather.Common.Caching
             }
 
             // proof-of-concept.  I regret nothing.
-            var startInfo = new ProcessStartInfo(@"C:\Users\PC\src\AirBreather.Common\Source\AirBreather.Common\HeapSlave\bin\Debug\HeapSlave.exe", pid.ToString(CultureInfo.InvariantCulture) + " " + this.id.ToString("N"))
+            var startInfo = new ProcessStartInfo(@"C:\Users\PC\src\AirBreather.Common\Source\AirBreather.Common\HeapSlave\bin\Release\HeapSlave.exe", pid.ToString(CultureInfo.InvariantCulture) + " " + this.id.ToString("N"))
             {
                 CreateNoWindow = true,
                 UseShellExecute = false,
