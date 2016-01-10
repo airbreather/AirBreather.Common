@@ -41,7 +41,7 @@ namespace AirBreather.Common.Utilities
                 this.buffered = buffered;
             }
 
-            public T Current => this.buffered.buffer[idx];
+            public T Current => this.buffered.buffer[this.idx];
             object IEnumerator.Current => this.Current;
 
             public bool MoveNext()
@@ -63,14 +63,19 @@ namespace AirBreather.Common.Utilities
                         return true;
                     }
 
-                    if (this.buffered.enumerationFinished || !this.buffered.enumerator.MoveNext())
+                    if (this.buffered.enumerationFinished)
                     {
-                        this.buffered.enumerationFinished = true;
                         return false;
                     }
 
-                    this.buffered.buffer.Add(this.buffered.enumerator.Current);
-                    return true;
+                    if (this.buffered.enumerator.MoveNext())
+                    {
+                        this.buffered.buffer.Add(this.buffered.enumerator.Current);
+                        return true;
+                    }
+
+                    this.buffered.enumerationFinished = true;
+                    return false;
                 }
             }
 
