@@ -78,7 +78,9 @@
     <Compile Include="Utilities\ComparableUtility.cs" />
     <Compile Include="Utilities\DataUtility.cs" />
     <Compile Include="Utilities\EnumerableUtility.cs" />
+    <Compile Include="Utilities\GCUtility.cs" />
     <Compile Include="Utilities\HashCodeUtility.cs" />
+    <Compile Include="Utilities\LazyBufferedEnumerable.cs" />
     <Compile Include="Utilities\ResourceUtility.cs" />
     <Compile Include="Text\EncodingEx.cs" />
     <Compile Include="Utilities\StringUtility.cs" />
