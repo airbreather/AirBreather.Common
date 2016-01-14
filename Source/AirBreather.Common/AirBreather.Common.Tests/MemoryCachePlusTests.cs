@@ -60,10 +60,14 @@ namespace AirBreather.Common.Tests
             memCache.Put(shared12_16);
 
             // Everything after 16 is unshared
-            memCache.Put(new List<object> { shared13, shared14, sharedListOfUnsharedObjects15 });
             memCache.Put(new object());
             memCache.Put(new object());
             memCache.Put(new List<object> { new object() });
+
+            // a list that contains itself... spooky...
+            List<object> unsharedListOfSharedObjects = new List<object> { shared13, shared14, sharedListOfUnsharedObjects15 };
+            unsharedListOfSharedObjects.Add(unsharedListOfSharedObjects);
+            memCache.Put(unsharedListOfSharedObjects);
 
             return memCache;
         }

@@ -17,12 +17,13 @@ namespace AirBreather.Common.Random
     /// <summary>
     /// A generator of random data.  Rather than maintaining its own state, the state is maintained
     /// outside of the generators.  This allows a single generator to be used from multiple threads
-    /// at once, and it gives callers more freedom for how to .
+    /// at once, and it gives callers more freedom for how to manage state than more common "the
+    /// generator maintains its own state" implementations.
     /// </summary>
     /// <typeparam name="TState">
     /// The type of <see cref="IRandomGeneratorState"/> that stores the state.
     /// </typeparam>
-    public interface IRandomGenerator<TState> where TState: struct, IRandomGeneratorState
+    public interface IRandomGenerator<TState> where TState: IRandomGeneratorState
     {
         /// <summary>
         /// Gets the size of each "chunk" of bytes that can be generated at a time.

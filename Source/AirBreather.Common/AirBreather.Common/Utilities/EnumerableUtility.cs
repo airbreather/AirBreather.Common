@@ -158,9 +158,6 @@ namespace AirBreather.Common.Utilities
             return default(int?);
         }
 
-        public static IEnumerable<T> Concat<T>(this IEnumerable<T> enumerable, params T[] values)
-        {
-            return Enumerable.Concat(enumerable, values);
-        }
+        public static IEnumerable<T> Concat<T>(this IEnumerable<T> enumerable, params T[] values) => Enumerable.Concat(enumerable, values);
     }
 }

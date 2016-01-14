@@ -53,6 +53,17 @@ namespace AirBreather.Common.Utilities
 
             return outputSources.Select(outputSource => outputSource.Task);
         }
+
+        // https://msdn.microsoft.com/en-us/library/hh873178.aspx#Anchor_2
+        public static Task WaitOneAsync(this WaitHandle waitHandle)
+        {
+            waitHandle.ValidateNotNull(nameof(waitHandle));
+            var tcs = new TaskCompletionSource<bool>();
+            var rwh = ThreadPool.RegisterWaitForSingleObject(waitHandle, (_, __) => tcs.SetResult(true), null, -1, true);
+            var t = tcs.Task;
+            t.ContinueWith(_ => rwh.Unregister(null));
+            return t;
+        }
     }
 }
 

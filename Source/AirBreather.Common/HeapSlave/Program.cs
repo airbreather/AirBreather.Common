@@ -18,10 +18,11 @@ namespace HeapSlave
         private static int Main(string[] args)
         {
             long afterAttach = 0;
+            long afterCreateRuntime = 0;
+            long afterGetHeap = 0;
             long beforeEnumerateObjects = 0;
             long afterEnumerateObjects = 0;
             long afterEnumerateRoots = 0;
-            long[] visits = null;
             Stopwatch sw = Stopwatch.StartNew();
             BitArray found = null;
             try
@@ -42,14 +43,73 @@ namespace HeapSlave
                     foreach (ClrInfo clrVersion in dataTarget.ClrVersions)
                     {
                         ClrRuntime runtime = clrVersion.CreateRuntime();
+                        afterCreateRuntime = sw.ElapsedTicks;
                         ClrHeap heap = runtime.GetHeap();
-                        ClrType cacheType = heap.GetTypeByName("AirBreather.Common.Caching.MemoryCachePlus");
-                        ClrType listType = heap.GetTypeByName("System.Collections.Generic.List");
+                        afterGetHeap = sw.ElapsedTicks;
 
-                        ClrInstanceField idField = cacheType.GetFieldByName("id");
-                        ClrInstanceField storedField = cacheType.GetFieldByName("stored");
-                        ClrInstanceField itemsField = listType.GetFieldByName("_items");
-                        ClrInstanceField countField = listType.GetFieldByName("_size");
+                        ClrType cacheType = null, listType = null;
+                        ClrInstanceField idField = null, storedField = null, itemsField = null, countField = null;
+
+                        foreach (ClrType type in heap.EnumerateTypes())
+                        {
+                            if (type.Name == "AirBreather.Common.Caching.MemoryCachePlus")
+                            {
+                                cacheType = type;
+                                foreach (ClrInstanceField field in cacheType.Fields)
+                                {
+                                    if (field.Name == "id")
+                                    {
+                                        idField = field;
+                                    }
+                                    else if (field.Name == "stored")
+                                    {
+                                        storedField = field;
+                                    }
+                                    else
+                                    {
+                                        continue;
+                                    }
+
+                                    if (idField != null && storedField != null)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                            else if (type.Name == "System.Collections.Generic.List")
+                            {
+                                listType = type;
+                                foreach (ClrInstanceField field in listType.Fields)
+                                {
+                                    if (field.Name == "_items")
+                                    {
+                                        itemsField = field;
+                                    }
+                                    else if (field.Name == "_size")
+                                    {
+                                        countField = field;
+                                    }
+                                    else
+                                    {
+                                        continue;
+                                    }
+
+                                    if (itemsField != null && countField != null)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                continue;
+                            }
+
+                            if (listType != null && cacheType != null)
+                            {
+                                break;
+                            }
+                        }
 
                         beforeEnumerateObjects = sw.ElapsedTicks;
 
@@ -77,53 +137,66 @@ namespace HeapSlave
                         ulong stored = (ulong)storedField.GetValue(cacheAddress);
                         ulong items = (ulong)itemsField.GetValue(stored);
                         int cnt = (int)countField.GetValue(stored);
-                        byte[] itemAddresses = new byte[cnt * sizeof(ulong)];
-                        heap.ReadMemory(items + 16, itemAddresses, 0, itemAddresses.Length);
-
-                        ulong[] rootAddresses = heap.EnumerateRoots(false).Select(root => root.Object).ToArray();
-
-                        afterEnumerateRoots = sw.ElapsedTicks;
-                        visits = new long[cnt];
+                        byte[] itemAddressesBytes = new byte[cnt * sizeof(ulong)];
+                        heap.ReadMemory(items + 16, itemAddressesBytes, 0, itemAddressesBytes.Length);
+                        ulong[] itemAddresses = new ulong[cnt];
+                        Buffer.BlockCopy(itemAddressesBytes, 0, itemAddresses, 0, itemAddressesBytes.Length);
 
                         found = new BitArray(cnt, false);
-                        for (int i = 0; i < cnt; i++)
+                        HashSet<ulong> visited = new HashSet<ulong>();
+                        IEnumerable<ulong> rootAddresses = heap.EnumerateRoots(false).Select(root => root.Object).Where(visited.Add);
+
+                        Dictionary<ulong, List<int>> initialRefs = new Dictionary<ulong, List<int>>();
+                        for (int i = 0; i < itemAddresses.Length; i++)
                         {
-                            HashSet<ulong> visited = new HashSet<ulong>();
-                            ulong address = BitConverter.ToUInt64(itemAddresses, i * sizeof(ulong));
-                            Stack<ulong> refs = new Stack<ulong>(rootAddresses.Length + cnt - 1);
-
-                            foreach (ulong rootAddress in rootAddresses)
+                            ulong itemAddress = itemAddresses[i];
+                            List<int> lst;
+                            if (!initialRefs.TryGetValue(itemAddress, out lst))
                             {
-                                if (visited.Add(rootAddress))
-                                {
-                                    refs.Push(rootAddress);
-                                }
+                                initialRefs[itemAddress] = lst = new List<int>();
                             }
 
-                            for (int j = 0; j < cnt; j++)
-                            {
-                                if (j == i)
-                                {
-                                    continue;
-                                }
+                            lst.Add(i);
+                        }
 
-                                ulong otherAddress = BitConverter.ToUInt64(itemAddresses, j * sizeof(ulong));
-                                refs.Push(otherAddress);
-                                visited.Add(otherAddress);
+                        Dictionary<ulong, int> unfound = new Dictionary<ulong, int>(cnt);
+                        foreach (var kvp in initialRefs)
+                        {
+                            ulong itemAddress = kvp.Key;
+                            List<int> lst = kvp.Value;
+
+                            if (lst.Count < 2)
+                            {
+                                unfound.Add(itemAddress, lst.Single());
                             }
-
-                            while (refs.Count > 0)
+                            else
                             {
-                                ulong r = refs.Pop();
-                                if (r == address)
+                                foreach (int i in lst)
                                 {
                                     found[i] = true;
-                                    break;
                                 }
+                            }
+                        }
+
+                        Stack<ulong> refs = new Stack<ulong>();
+                        bool doingRoots = false;
+                        using (IEnumerator<ulong> rootAddressEnumerator = rootAddresses.GetEnumerator())
+                        {
+                            while (refs.Count > 0 || (doingRoots = rootAddressEnumerator.MoveNext()))
+                            {
+                                ulong r = doingRoots ? rootAddressEnumerator.Current : refs.Pop();
+                                doingRoots = false;
 
                                 if (r == items)
                                 {
                                     continue;
+                                }
+
+                                int i;
+                                if (unfound.TryGetValue(r, out i))
+                                {
+                                    unfound.Remove(r);
+                                    found[i] = true;
                                 }
 
                                 ClrType rType = heap.GetObjectType(r);
@@ -140,8 +213,65 @@ namespace HeapSlave
                                     }
                                 });
                             }
+                        }
 
-                            visits[i] = sw.ElapsedTicks;
+                        afterEnumerateRoots = sw.ElapsedTicks;
+
+                        // now look for references from within the items collection
+                        for (int i = 0; i < itemAddresses.Length; i++)
+                        {
+                            ulong targetAddress = itemAddresses[i];
+                            if (!unfound.ContainsKey(targetAddress))
+                            {
+                                continue;
+                            }
+
+                            visited.Clear();
+                            for (int j = 0; j < itemAddresses.Length; j++)
+                            {
+                                if (j == i)
+                                {
+                                    continue;
+                                }
+
+                                ulong refAddress = itemAddresses[j];
+                                refs.Push(refAddress);
+                            }
+
+                            while (refs.Count > 0)
+                            {
+                                ulong r = refs.Pop();
+
+                                if (r == items)
+                                {
+                                    continue;
+                                }
+
+                                if (r == targetAddress)
+                                {
+                                    unfound.Remove(r);
+                                    found[i] = true;
+                                }
+
+                                ClrType rType = heap.GetObjectType(r);
+                                if (rType == null || !rType.ContainsPointers)
+                                {
+                                    continue;
+                                }
+
+                                rType.EnumerateRefsOfObject(r, (addr, _) =>
+                                {
+                                    if (visited.Contains(addr))
+                                    {
+                                        return;
+                                    }
+
+                                    refs.Push(addr);
+                                    visited.Add(addr);
+                                });
+                            }
+
+                            refs.Clear();
                         }
 
                         break;
@@ -170,14 +300,11 @@ namespace HeapSlave
             {
                 double freq = Stopwatch.Frequency;
                 f.WriteLine("afterAttach: {0:N5} seconds", afterAttach / freq);
+                f.WriteLine("afterCreateRuntime: {0:N5} seconds", afterCreateRuntime / freq);
+                f.WriteLine("afterGetHeap: {0:N5} seconds", afterGetHeap / freq);
                 f.WriteLine("beforeEnumerateObjects: {0:N5} seconds", beforeEnumerateObjects / freq);
                 f.WriteLine("afterEnumerateObjects: {0:N5} seconds", afterEnumerateObjects / freq);
                 f.WriteLine("afterEnumerateRoots: {0:N5} seconds", afterEnumerateRoots / freq);
-                for (int i = 0; i < visits.Length; i++)
-                {
-                    f.WriteLine("t{1}: {0:N5} seconds", visits[i] / freq, i);
-                }
-
                 f.WriteLine("end: {0:N5} seconds", sw.ElapsedTicks / freq);
             }
 

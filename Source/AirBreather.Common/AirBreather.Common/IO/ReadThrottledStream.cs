@@ -57,9 +57,7 @@ namespace AirBreather.Common.IO
             Task waitTask = this.throttleTask;
             if (!this.throttleTask.IsCompleted && cancellationToken.CanBeCanceled)
             {
-                waitTask = Task.WhenAny(
-                    Task.Run(() => cancellationToken.WaitHandle.WaitOne()),
-                    this.throttleTask);
+                waitTask = Task.WhenAny(this.throttleTask, cancellationToken.WaitHandle.WaitOneAsync());
             }
 
             await waitTask.ConfigureAwait(false);

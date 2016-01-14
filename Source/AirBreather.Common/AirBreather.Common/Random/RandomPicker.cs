@@ -4,7 +4,7 @@ using AirBreather.Common.Utilities;
 
 namespace AirBreather.Common.Random
 {
-    public sealed class RandomPicker<TState> : IPicker where TState : struct, IRandomGeneratorState
+    public sealed class RandomPicker<TState> : IPicker where TState : IRandomGeneratorState
     {
         // Seems about right, from testing various sizes.
         private const int DesiredBufferSizeInBytes = 16384;
@@ -22,6 +22,11 @@ namespace AirBreather.Common.Random
         public RandomPicker(IRandomGenerator<TState> rng, TState initialState)
         {
             rng.ValidateNotNull(nameof(rng));
+
+            if (initialState == null)
+            {
+                throw new ArgumentNullException(nameof(initialState));
+            }
 
             if (!initialState.IsValid)
             {

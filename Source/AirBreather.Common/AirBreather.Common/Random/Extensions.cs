@@ -49,7 +49,7 @@ namespace AirBreather.Common.Random
         /// </para>
         /// </remarks>
         public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, byte[] buffer)
-            where TState : struct, IRandomGeneratorState
+            where TState : IRandomGeneratorState
         {
             generator.ValidateNotNull(nameof(generator));
             buffer.ValidateNotNull(nameof(buffer));
@@ -59,24 +59,24 @@ namespace AirBreather.Common.Random
 
         // TODO: overload for bool[] or BitArray, whichever makes more sense.
 
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, sbyte[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => generator.FillBuffer(state, (byte[])(Array)buffer, index, count);
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, short[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, index, count, sizeof(short));
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, ushort[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, index, count, sizeof(ushort));
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, int[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, index, count, sizeof(int));
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, uint[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, index, count, sizeof(uint));
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, long[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, index, count, sizeof(long));
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, ulong[] buffer, int index, int count) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, index, count, sizeof(ulong));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, sbyte[] buffer, int index, int count) where TState : IRandomGeneratorState => generator.FillBuffer(state, (byte[])(Array)buffer, index, count);
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, short[] buffer, int index, int count) where TState : IRandomGeneratorState => FillResizedBuffer(generator, ref state, buffer, index, count, sizeof(short));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, ushort[] buffer, int index, int count) where TState : IRandomGeneratorState => FillResizedBuffer(generator, ref state, buffer, index, count, sizeof(ushort));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, int[] buffer, int index, int count) where TState : IRandomGeneratorState => FillResizedBuffer(generator, ref state, buffer, index, count, sizeof(int));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, uint[] buffer, int index, int count) where TState : IRandomGeneratorState => FillResizedBuffer(generator, ref state, buffer, index, count, sizeof(uint));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, long[] buffer, int index, int count) where TState : IRandomGeneratorState => FillResizedBuffer(generator, ref state, buffer, index, count, sizeof(long));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, ulong[] buffer, int index, int count) where TState : IRandomGeneratorState => FillResizedBuffer(generator, ref state, buffer, index, count, sizeof(ulong));
 
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, sbyte[] buffer) where TState : struct, IRandomGeneratorState => generator.FillBuffer(state, (byte[])(Array)buffer);
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, short[] buffer) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, 0, null, sizeof(short));
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, ushort[] buffer) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, 0, null, sizeof(ushort));
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, int[] buffer) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, 0, null, sizeof(int));
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, uint[] buffer) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, 0, null, sizeof(uint));
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, long[] buffer) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, 0, null, sizeof(long));
-        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, ulong[] buffer) where TState : struct, IRandomGeneratorState => FillResizedBuffer(generator, state, buffer, 0, null, sizeof(ulong));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, sbyte[] buffer) where TState : IRandomGeneratorState => generator.FillBuffer(state, (byte[])(Array)buffer);
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, short[] buffer) where TState : IRandomGeneratorState => FillResizedBuffer(generator, ref state, buffer, 0, null, sizeof(short));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, ushort[] buffer) where TState : IRandomGeneratorState => FillResizedBuffer(generator, ref state, buffer, 0, null, sizeof(ushort));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, int[] buffer) where TState : IRandomGeneratorState => FillResizedBuffer(generator, ref state, buffer, 0, null, sizeof(int));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, uint[] buffer) where TState : IRandomGeneratorState => FillResizedBuffer(generator, ref state, buffer, 0, null, sizeof(uint));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, long[] buffer) where TState : IRandomGeneratorState => FillResizedBuffer(generator, ref state, buffer, 0, null, sizeof(long));
+        public static TState FillBuffer<TState>(this IRandomGenerator<TState> generator, TState state, ulong[] buffer) where TState : IRandomGeneratorState => FillResizedBuffer(generator, ref state, buffer, 0, null, sizeof(ulong));
 
-        private static TState FillResizedBuffer<TState>(IRandomGenerator<TState> generator, TState state, Array buffer, int index, int? count, int elementSize)
-            where TState : struct, IRandomGeneratorState
+        private static TState FillResizedBuffer<TState>(IRandomGenerator<TState> generator, ref TState state, Array buffer, int index, int? count, int elementSize)
+            where TState : IRandomGeneratorState
         {
             generator.ValidateNotNull(nameof(generator));
             buffer.ValidateNotNull(nameof(buffer));
