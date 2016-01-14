@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -20,11 +21,18 @@ namespace AirBreather.Common.Tests
             this.outputHelper = outputHelper.ValidateNotNull(nameof(outputHelper));
         }
 
-        [Fact]
-        public void ReadShouldThrottle()
+        [Theory]
+        [InlineData(1024)]
+        [InlineData(2005)]
+        [InlineData(3089)]
+        [InlineData(9999)]
+        [InlineData(16383)]
+        [InlineData(16384)]
+        [InlineData(16385)]
+        [InlineData(99999)]
+        [InlineData(Int32.MaxValue)]
+        public void ReadShouldThrottle(int throttleRateBytesPerSecond)
         {
-            const int ThrottleRate = 1024;
-
             byte[] data = new byte[16384];
             CryptographicRandomGenerator.FillBuffer(data);
 
@@ -35,7 +43,7 @@ namespace AirBreather.Common.Tests
             {
                 using (var readStream = new MemoryStream(data))
                 using (var bufferedStream = new BufferedStream(readStream, 1024))
-                using (var throttledStream = new ReadThrottledStream(bufferedStream, ThrottleRate))
+                using (var throttledStream = new ReadThrottledStream(bufferedStream, throttleRateBytesPerSecond))
                 {
                     throttledStream.CopyTo(outputStream);
                 }
@@ -44,14 +52,22 @@ namespace AirBreather.Common.Tests
             }
 
             sw.Stop();
-            this.outputHelper.WriteLine("It took {0} seconds to copy {1} bytes at a nominal {2} bytes per second throttle.", sw.ElapsedTicks / (double)Stopwatch.Frequency, data.Length, ThrottleRate);
+            double seconds = sw.ElapsedTicks / (double)Stopwatch.Frequency;
+            this.outputHelper.WriteLine("It took {0} seconds to copy {1} bytes at a nominal {2} bytes per second throttle, for a real {3} bytes per second throttle.", seconds, data.Length, throttleRateBytesPerSecond, data.Length / seconds);
         }
 
-        [Fact]
-        public async Task ReadAsyncShouldThrottle()
+        [Theory]
+        [InlineData(1024)]
+        [InlineData(2005)]
+        [InlineData(3089)]
+        [InlineData(9999)]
+        [InlineData(16383)]
+        [InlineData(16384)]
+        [InlineData(16385)]
+        [InlineData(99999)]
+        [InlineData(Int32.MaxValue)]
+        public async Task ReadAsyncShouldThrottle(int throttleRateBytesPerSecond)
         {
-            const int ThrottleRate = 1024;
-
             byte[] data = new byte[16384];
             CryptographicRandomGenerator.FillBuffer(data);
 
@@ -62,7 +78,7 @@ namespace AirBreather.Common.Tests
             {
                 using (var readStream = new MemoryStream(data))
                 using (var bufferedStream = new BufferedStream(readStream, 1024))
-                using (var throttledStream = new ReadThrottledStream(bufferedStream, ThrottleRate))
+                using (var throttledStream = new ReadThrottledStream(bufferedStream, throttleRateBytesPerSecond))
                 {
                     await throttledStream.CopyToAsync(outputStream);
                 }
@@ -71,7 +87,8 @@ namespace AirBreather.Common.Tests
             }
 
             sw.Stop();
-            this.outputHelper.WriteLine("It took {0} seconds to copy {1} bytes at a nominal {2} bytes per second throttle.", sw.ElapsedTicks / (double)Stopwatch.Frequency, data.Length, ThrottleRate);
+            double seconds = sw.ElapsedTicks / (double)Stopwatch.Frequency;
+            this.outputHelper.WriteLine("It took {0} seconds to copy {1} bytes at a nominal {2} bytes per second throttle, for a real {3} bytes per second throttle.", seconds, data.Length, throttleRateBytesPerSecond, data.Length / seconds);
         }
     }
 }

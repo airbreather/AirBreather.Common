@@ -9,6 +9,7 @@ namespace AirBreather.Common.Random
     // An IRandomGeneratorState type that carries no data.
     public struct EmptyRandomState : IEquatable<EmptyRandomState>, IRandomGeneratorState
     {
+        public static readonly EmptyRandomState Default = default(EmptyRandomState);
         public bool IsValid => true;
         public static bool operator ==(EmptyRandomState first, EmptyRandomState second) => true;
         public static bool operator !=(EmptyRandomState first, EmptyRandomState second) => false;

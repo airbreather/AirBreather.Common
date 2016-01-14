@@ -25,7 +25,7 @@ namespace AirBreather.Common.IO
 
             this.bytesPerSecond = bytesPerSecond.ValidateNotLessThan(nameof(bytesPerSecond), 1);
         }
-        
+
         public override bool CanRead => true;
         public override bool CanWrite => false;
         public override bool CanSeek => this.innerStream.CanSeek;
