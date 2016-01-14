@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+
+using Xunit;
+using Xunit.Abstractions;
+
 using AirBreather.Common.IO;
 using AirBreather.Common.Random;
 using AirBreather.Common.Utilities;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace AirBreather.Common.Tests
 {
@@ -30,7 +28,6 @@ namespace AirBreather.Common.Tests
             byte[] data = new byte[16384];
             CryptographicRandomGenerator.FillBuffer(data);
 
-            byte[] buf = new byte[1024];
             byte[] finalBuf = new byte[data.Length];
 
             Stopwatch sw = Stopwatch.StartNew();
@@ -58,7 +55,6 @@ namespace AirBreather.Common.Tests
             byte[] data = new byte[16384];
             CryptographicRandomGenerator.FillBuffer(data);
 
-            byte[] buf = new byte[1024];
             byte[] finalBuf = new byte[data.Length];
 
             Stopwatch sw = Stopwatch.StartNew();
