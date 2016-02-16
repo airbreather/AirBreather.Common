@@ -53,6 +53,7 @@
     <Compile Include="Caching\BufferCache.cs" />
     <Compile Include="Caching\MemoryCachePlus.cs" />
     <Compile Include="Collections\BitList.cs" />
+    <Compile Include="Collections\CallbackComparer.cs" />
     <Compile Include="Collections\FastByteArrayEqualityComparer.cs" />
     <Compile Include="Collections\ReadOnlyListSegment.cs" />
     <Compile Include="Collections\UInt32Set.cs" />
@@ -71,6 +72,7 @@
     <Compile Include="Random\IRandomGenerator.cs" />
     <Compile Include="Random\IRandomGeneratorState.cs" />
     <Compile Include="Random\MT19937_32.cs" />
+    <Compile Include="Random\WeightedRandomPicker.cs" />
     <Compile Include="Random\XorShift128Plus.cs" />
     <Compile Include="Random\XorShift1024Star.cs" />
     <Compile Include="Random\MT19937_64.cs" />
