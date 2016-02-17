@@ -7,9 +7,9 @@ namespace AirBreather.Common.Utilities
     public sealed class LazyBufferedEnumerable<T> : DisposableObject, IEnumerable<T>
     {
         private readonly List<T> buffer;
-        private readonly IEnumerator<T> enumerator;
         private readonly object syncLock = new object();
 
+        private IEnumerator<T> enumerator;
         private bool enumerationFinished;
 
         public LazyBufferedEnumerable(IEnumerable<T> enumerable)
@@ -29,7 +29,7 @@ namespace AirBreather.Common.Utilities
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-        protected override void DisposeCore() => this.enumerator.Dispose();
+        protected override void DisposeCore() => this.enumerator?.Dispose();
 
         private sealed class Enumerator : IEnumerator<T>
         {
@@ -53,9 +53,13 @@ namespace AirBreather.Common.Utilities
 
                 if (this.buffered.enumerationFinished)
                 {
+                    --this.idx;
                     return false;
                 }
 
+                // because this synchronization is necessary, try to avoid using this except when
+                // it's particularly likely to be needed... it's actually highly unlikely that we'll
+                // ever find a situation where this is the right thing.
                 lock (this.buffered.syncLock)
                 {
                     if (this.idx < this.buffered.buffer.Count)
@@ -74,8 +78,12 @@ namespace AirBreather.Common.Utilities
                         return true;
                     }
 
-                    this.buffered.enumerationFinished = true;
-                    return false;
+                    using (this.buffered.enumerator)
+                    {
+                        this.buffered.enumerator = null;
+                        this.buffered.enumerationFinished = true;
+                        return false;
+                    }
                 }
             }
 

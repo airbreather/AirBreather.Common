@@ -31,8 +31,8 @@ namespace AirBreather.Common.Random
 
         public sealed class Builder
         {
-            private readonly List<T> items = new List<T>();
-            private readonly List<double> weights = new List<double>();
+            private readonly object syncLock = new object();
+            private List<WeightedItem> weightedItems = new List<WeightedItem>();
 
             public void AddWithWeight(T item, double weight)
             {
@@ -41,25 +41,42 @@ namespace AirBreather.Common.Random
                     throw new ArgumentOutOfRangeException(nameof(weight), weight, "weight must be reasonable (and positive non-zero).  come on, be nice, I was about to make this int and everything... I'm doing you a favor by letting you use doubles, and this is how you repay me?  that's it, I give up.");
                 }
 
-                this.items.Add(item);
-                this.weights.Add(weight.ValidateNotLessThan(nameof(weight), 0));
+                lock (this.syncLock)
+                {
+                    this.weightedItems.Add(new WeightedItem(item, weight));
+                }
             }
 
             public WeightedRandomPicker<T> Build()
             {
-                if (this.items.Count == 0)
+                List<WeightedItem> finalWeightedItems;
+                lock (this.syncLock)
+                {
+                    finalWeightedItems = this.weightedItems;
+                    this.weightedItems = new List<WeightedItem>();
+                }
+
+                if (finalWeightedItems.Count == 0)
                 {
                     throw new InvalidOperationException("Must have at least one item.");
                 }
 
-                double[] newWeights = new double[this.weights.Count];
+                // sort the weighted items in increasing order by weight.  if there's a *very* large
+                // gap in weights, I *think* that sorting them like this improves how closely we'll
+                // match the expected distribution for the low ones; if not, I apologize to your CPU
+                // (but I'm pretty sure that at least it won't be *worse*).
+                finalWeightedItems.Sort((first, second) => first.Weight.CompareTo(second.Weight));
+
+                T[] items = new T[finalWeightedItems.Count];
+                double[] newWeights = new double[items.Length];
 
                 // reweight, step 1: set each weight to the sum of itself and all weights before it.
                 double weightSoFar = 0;
-                for (int i = 0; i < newWeights.Length; i++)
+                for (int i = 0; i < items.Length; i++)
                 {
-                    weightSoFar += this.weights[i];
-                    newWeights[i] = weightSoFar;
+                    WeightedItem weightedItem = finalWeightedItems[i];
+                    items[i] = weightedItem.Item;
+                    newWeights[i] = weightSoFar += weightedItem.Weight;
                 }
 
                 // reweight, step 2: divide each weight by the sum total of all weights observed.
@@ -72,8 +89,20 @@ namespace AirBreather.Common.Random
                 Debug.Assert(newWeights[newWeights.Length - 1] == 1, "Any double value divided by itself should be 1...");
                 newWeights[newWeights.Length - 1] = 1;
 
-                return new WeightedRandomPicker<T>(this.items.ToArray(), newWeights);
+                return new WeightedRandomPicker<T>(items, newWeights);
             }
+        }
+
+        private sealed class WeightedItem
+        {
+            internal WeightedItem(T item, double weight)
+            {
+                this.Item = item;
+                this.Weight = weight;
+            }
+
+            internal T Item { get; set; }
+            internal double Weight { get; set; }
         }
     }
 }
