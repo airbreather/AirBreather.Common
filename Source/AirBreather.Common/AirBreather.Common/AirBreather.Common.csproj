@@ -51,7 +51,6 @@
   <ItemGroup>
     <Compile Include="Boxes.cs" />
     <Compile Include="Caching\BufferCache.cs" />
-    <Compile Include="Caching\MemoryCachePlus.cs" />
     <Compile Include="Collections\BitList.cs" />
     <Compile Include="Collections\CallbackComparer.cs" />
     <Compile Include="Collections\FastByteArrayEqualityComparer.cs" />
@@ -78,7 +77,6 @@
     <Compile Include="Random\MT19937_64.cs" />
     <Compile Include="UnmanagedResourceContainer.cs" />
     <Compile Include="Utilities\ComparableUtility.cs" />
-    <Compile Include="Utilities\DataUtility.cs" />
     <Compile Include="Utilities\EnumerableUtility.cs" />
     <Compile Include="Utilities\GCUtility.cs" />
     <Compile Include="Utilities\HashCodeUtility.cs" />
@@ -112,5 +110,4 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <ItemGroup />
 </Project>

@@ -9,8 +9,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test Projects", "Test Proje
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AirBreather.Common.Tests", "AirBreather.Common.Tests\AirBreather.Common.Tests.csproj", "{969F41E0-929C-436D-AF91-F90DD93FA06F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeapSlave", "HeapSlave\HeapSlave.csproj", "{51AA1E18-EB67-45EF-B40D-9CED15711E1F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,10 +23,6 @@ Global
 		{969F41E0-929C-436D-AF91-F90DD93FA06F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{969F41E0-929C-436D-AF91-F90DD93FA06F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{969F41E0-929C-436D-AF91-F90DD93FA06F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{51AA1E18-EB67-45EF-B40D-9CED15711E1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{51AA1E18-EB67-45EF-B40D-9CED15711E1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{51AA1E18-EB67-45EF-B40D-9CED15711E1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{51AA1E18-EB67-45EF-B40D-9CED15711E1F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
