@@ -7,8 +7,6 @@ namespace AirBreather.Common.Utilities
 {
     public static class TaskUtility
     {
-        public static readonly Task CompletedTask = Task.FromResult(default(object));
-
         public static IEnumerable<Task<T>> InCompletionOrder<T>(this IEnumerable<Task<T>> tasks)
         {
             // Stephen Toub named his version of this method "Interleaved" in the TAP guide.

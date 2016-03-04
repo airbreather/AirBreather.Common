@@ -13,7 +13,7 @@ namespace AirBreather.Common.IO
         private readonly Stream innerStream;
         private readonly long bytesPerSecond;
 
-        private Task throttleTask = TaskUtility.CompletedTask;
+        private Task throttleTask = Task.CompletedTask;
 
         public ReadThrottledStream(Stream innerStream, long bytesPerSecond)
         {
@@ -104,7 +104,7 @@ namespace AirBreather.Common.IO
 
         private void SetupThrottleTaskForNextTime(int count, long startTimestamp)
         {
-            this.throttleTask = TaskUtility.CompletedTask;
+            this.throttleTask = Task.CompletedTask;
             if (count < 1)
             {
                 return;
