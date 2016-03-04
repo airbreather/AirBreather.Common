@@ -10,6 +10,8 @@ namespace AirBreather.Common.IO
 {
     public class ReadThrottledStream : Stream
     {
+        private static readonly double TimeSpanTicksPerStopwatchTick = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;
+
         private readonly Stream innerStream;
         private readonly long bytesPerSecond;
 
@@ -110,11 +112,11 @@ namespace AirBreather.Common.IO
                 return;
             }
 
-            long ticksRequired = (long)(((double)count / this.bytesPerSecond) * Stopwatch.Frequency);
-            long ticksSoFar = Stopwatch.GetTimestamp() - startTimestamp;
-            if (ticksSoFar < ticksRequired)
+            long ticksRequired = ((long)(((double)count / this.bytesPerSecond) * Stopwatch.Frequency)) + startTimestamp;
+            long delayTicks = ticksRequired - Stopwatch.GetTimestamp();
+            if (0 < delayTicks)
             {
-                this.throttleTask = Task.Delay(TimeSpan.FromSeconds((ticksRequired - ticksSoFar) / (double)Stopwatch.Frequency));
+                this.throttleTask = Task.Delay(TimeSpan.FromTicks((long)(delayTicks * TimeSpanTicksPerStopwatchTick)));
             }
         }
     }
