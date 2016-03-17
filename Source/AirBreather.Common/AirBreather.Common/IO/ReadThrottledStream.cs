@@ -112,11 +112,10 @@ namespace AirBreather.Common.IO
                 return;
             }
 
-            long ticksRequired = ((long)(((double)count / this.bytesPerSecond) * Stopwatch.Frequency)) + startTimestamp;
-            long delayTicks = ticksRequired - Stopwatch.GetTimestamp();
-            if (0 < delayTicks)
+            long target = ((long)(((double)count / this.bytesPerSecond) * Stopwatch.Frequency)) + startTimestamp;
+            if (Stopwatch.GetTimestamp() < target)
             {
-                this.throttleTask = Task.Delay(TimeSpan.FromTicks((long)(delayTicks * TimeSpanTicksPerStopwatchTick)));
+                this.throttleTask = TaskUtility.PreciseDelay(target);
             }
         }
     }
