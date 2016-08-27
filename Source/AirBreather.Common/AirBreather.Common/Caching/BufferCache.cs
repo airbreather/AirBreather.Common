@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Globalization;
 using System.Runtime.Caching;
 using System.Threading;
+
+using AirBreather.Common.Utilities;
 
 namespace AirBreather.Common.Caching
 {
@@ -9,7 +10,7 @@ namespace AirBreather.Common.Caching
     {
         private static long cacheInstance = -1;
         private static readonly CacheItemPolicy DefaultCacheItemPolicy = new CacheItemPolicy();
-        private readonly MemoryCache underlyingCache = new MemoryCache("BufferCache" + Interlocked.Increment(ref cacheInstance).ToString(CultureInfo.InvariantCulture));
+        private readonly MemoryCache underlyingCache = new MemoryCache("BufferCache" + Interlocked.Increment(ref cacheInstance).ToInvariantString());
 
         public void Put(Guid key, byte[] buffer) => this.underlyingCache.Set(key.ToString("N"), buffer, DefaultCacheItemPolicy);
         public bool TryGet(Guid key, out byte[] buffer) => (buffer = (byte[])this.underlyingCache.Get(key.ToString("N"))) != null;

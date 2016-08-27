@@ -34,21 +34,21 @@ namespace AirBreather.Common.Tests
             var gen = new XorShift1024StarGenerator();
 
             // stage 1: set up the initial state, output buffer, and chunk size.
-            XorShift1024StarState initialState = CreateInitialState(s0, s1);
+            RngState1024 initialState = CreateInitialState(s0, s1);
 
             const int OutputBufferLength = 1 << 30;
             var outputBuffer = new byte[OutputBufferLength];
             var chunkSize = OutputBufferLength / chunks;
 
             // stage 2: use that state to set up the parallel independent states.
-            var parallelStateBuffer = new byte[sizeof(XorShift1024StarState) * chunks];
+            var parallelStateBuffer = new byte[sizeof(RngState1024) * chunks];
             gen.FillBuffer(initialState, parallelStateBuffer);
 
-            var parallelStates = new XorShift1024StarState[chunks];
+            var parallelStates = new RngState1024[chunks];
             fixed (byte* sFixed = parallelStateBuffer)
-            fixed (XorShift1024StarState* tFixed = parallelStates)
+            fixed (RngState1024* tFixed = parallelStates)
             {
-                var s = (XorShift1024StarState*)sFixed;
+                var s = (RngState1024*)sFixed;
                 var sEnd = s + chunks;
                 var t = tFixed;
 
@@ -99,21 +99,21 @@ namespace AirBreather.Common.Tests
             var gen = new XorShift1024StarGenerator();
 
             // stage 1: set up the initial state, output buffer, and chunk size.
-            XorShift1024StarState initialState = CreateInitialState(s0, s1);
+            RngState1024 initialState = CreateInitialState(s0, s1);
 
             const int OutputBufferLength = 1 << 30;
             var outputBuffer = new byte[OutputBufferLength];
             var chunkSize = OutputBufferLength / chunks;
 
             // stage 2: use that state to set up the parallel independent states.
-            var parallelStateBuffer = new byte[sizeof(XorShift1024StarState) * chunks];
+            var parallelStateBuffer = new byte[sizeof(RngState1024) * chunks];
             gen.FillBuffer(initialState, parallelStateBuffer);
 
-            var parallelStates = new XorShift1024StarState[chunks];
+            var parallelStates = new RngState1024[chunks];
             fixed (byte* sFixed = parallelStateBuffer)
-            fixed (XorShift1024StarState* tFixed = parallelStates)
+            fixed (RngState1024* tFixed = parallelStates)
             {
-                var s = (XorShift1024StarState*)sFixed;
+                var s = (RngState1024*)sFixed;
                 var sEnd = s + chunks;
                 var t = tFixed;
 
@@ -173,11 +173,11 @@ namespace AirBreather.Common.Tests
             GC.Collect();
         }
 
-        private static unsafe XorShift1024StarState CreateInitialState(ulong s0, ulong s1)
+        private static unsafe RngState1024 CreateInitialState(ulong s0, ulong s1)
         {
             // Use xorshift128+ to generate the state for xorshift1024*.
             var gen = new XorShift128PlusGenerator();
-            var state = new XorShift128PlusState(s0, s1);
+            var state = new RngState128(s0, s1);
 
             byte[] buf = new byte[sizeof(ulong) * 16 + Math.Max(sizeof(int), XorShift128PlusGenerator.ChunkSize)];
             gen.FillBuffer(state, buf);
@@ -186,7 +186,7 @@ namespace AirBreather.Common.Tests
             {
                 // zero out "p", as it can only be 0-15.
                 *((int*)(fBuf + pOffset)) = 0;
-                return *((XorShift1024StarState*)fBuf);
+                return *((RngState1024*)fBuf);
             }
         }
     }

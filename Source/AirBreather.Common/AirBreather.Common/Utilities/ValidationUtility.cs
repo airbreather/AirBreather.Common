@@ -19,7 +19,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be between [{0}, {1}).", minInclusive, maxExclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -29,7 +29,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be greater than or equal to {0}.", minInclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -44,7 +44,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be between [{0}, {1}).", minInclusive, maxExclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -54,7 +54,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be between [{0}, {1}).", minInclusive, maxExclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -64,7 +64,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be between [{0}, {1}).", minInclusive, maxExclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -74,7 +74,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be between [{0}, {1}).", minInclusive, maxExclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -84,7 +84,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be between [{0}, {1}).", minInclusive, maxExclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -94,7 +94,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be between [{0}, {1}).", minInclusive, maxExclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -104,7 +104,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be between [{0}, {1}).", minInclusive, maxExclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -114,7 +114,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be between [{0}, {1}).", minInclusive, maxExclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -124,7 +124,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be between [{0}, {1}).", minInclusive, maxExclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -134,7 +134,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be between [{0}, {1}).", minInclusive, maxExclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -148,7 +148,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be greater than or equal to {0}.", minInclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -158,7 +158,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be greater than or equal to {0}.", minInclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -168,7 +168,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be greater than or equal to {0}.", minInclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -178,7 +178,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be greater than or equal to {0}.", minInclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -188,7 +188,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be greater than or equal to {0}.", minInclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -198,7 +198,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be greater than or equal to {0}.", minInclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -208,7 +208,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be greater than or equal to {0}.", minInclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -218,7 +218,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be greater than or equal to {0}.", minInclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -228,7 +228,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be greater than or equal to {0}.", minInclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -238,7 +238,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, String.Format(CultureInfo.InvariantCulture, "Must be greater than or equal to {0}.", minInclusive));
+                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;

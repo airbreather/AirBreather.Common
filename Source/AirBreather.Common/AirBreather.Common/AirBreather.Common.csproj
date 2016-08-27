@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="Boxes.cs" />
     <Compile Include="Caching\BufferCache.cs" />
+    <Compile Include="Collections\ArrayDictionary.cs" />
     <Compile Include="Collections\BitList.cs" />
     <Compile Include="Collections\CallbackComparer.cs" />
     <Compile Include="Collections\FastByteArrayEqualityComparer.cs" />
@@ -71,7 +72,10 @@
     <Compile Include="Random\IRandomGenerator.cs" />
     <Compile Include="Random\IRandomGeneratorState.cs" />
     <Compile Include="Random\MT19937_32.cs" />
+    <Compile Include="Random\RngState1024.cs" />
+    <Compile Include="Random\RngState128.cs" />
     <Compile Include="Random\WeightedRandomPicker.cs" />
+    <Compile Include="Random\XoroShiro128Plus.cs" />
     <Compile Include="Random\XorShift128Plus.cs" />
     <Compile Include="Random\XorShift1024Star.cs" />
     <Compile Include="Random\MT19937_64.cs" />
@@ -80,11 +84,11 @@
     <Compile Include="Utilities\EnumerableUtility.cs" />
     <Compile Include="Utilities\GCUtility.cs" />
     <Compile Include="Utilities\HashCodeUtility.cs" />
+    <Compile Include="Utilities\KeyValuePair.cs" />
     <Compile Include="Utilities\LazyBufferedEnumerable.cs" />
     <Compile Include="Utilities\ResourceUtility.cs" />
     <Compile Include="Text\EncodingEx.cs" />
     <Compile Include="Utilities\StringUtility.cs" />
-    <Compile Include="Utilities\ToStringUtility.cs" />
     <Compile Include="Collections\IReadOnlySet.cs" />
     <Compile Include="Collections\ReadOnlySet.cs" />
     <Compile Include="Collections\ReadOnlySetWrapper.cs" />

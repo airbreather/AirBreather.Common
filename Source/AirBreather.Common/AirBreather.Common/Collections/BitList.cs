@@ -309,7 +309,16 @@ namespace AirBreather.Common.Collections
             this.Modified();
         }
 
-        public BitArray ToBitArray() => new BitArray(this.values) { Length = this.count };
+        public BitArray ToBitArray()
+        {
+            BitArray result = new BitArray(this.count);
+            for (int i = 0; i < this.count; i++)
+            {
+                result[i] = this[i];
+            }
+
+            return result;
+        }
 
         public void TrimExcess() => this.Capacity = this.count;
 

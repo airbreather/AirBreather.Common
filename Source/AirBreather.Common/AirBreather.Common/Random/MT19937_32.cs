@@ -157,7 +157,7 @@ namespace AirBreather.Common.Random
             return hashCode;
         }
 
-        public static string ToString(MT19937_32State state) => ToStringUtility.Begin(state).End();
+        public static string ToString(MT19937_32State state) => FormattableString.Invariant($"{nameof(MT19937_32State)}[]");
 
         public static bool operator ==(MT19937_32State first, MT19937_32State second) => Equals(first, second);
         public static bool operator !=(MT19937_32State first, MT19937_32State second) => !Equals(first, second);

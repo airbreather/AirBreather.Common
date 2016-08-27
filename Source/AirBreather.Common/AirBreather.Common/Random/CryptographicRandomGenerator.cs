@@ -16,7 +16,7 @@ namespace AirBreather.Common.Random
         public override bool Equals(object obj) => obj is EmptyRandomState;
         public bool Equals(EmptyRandomState other) => true;
         public override int GetHashCode() => 0;
-        public override string ToString() => ToStringUtility.Begin(this).End();
+        public override string ToString() => FormattableString.Invariant($"{nameof(EmptyRandomState)}[]");
     }
 
     // RNGCryptoServiceProvider claims to be thread-safe and carries no state.

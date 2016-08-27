@@ -146,7 +146,7 @@ namespace AirBreather.Common.Random
             return hashCode;
         }
 
-        public static string ToString(MT19937_64State state) => ToStringUtility.Begin(state).End();
+        public static string ToString(MT19937_64State state) => FormattableString.Invariant($"{nameof(MT19937_64State)}[]");
 
         public static bool operator ==(MT19937_64State first, MT19937_64State second) => Equals(first, second);
         public static bool operator !=(MT19937_64State first, MT19937_64State second) => !Equals(first, second);

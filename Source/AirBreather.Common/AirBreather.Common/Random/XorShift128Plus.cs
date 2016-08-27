@@ -5,43 +5,7 @@ using AirBreather.Common.Utilities;
 
 namespace AirBreather.Common.Random
 {
-    public struct XorShift128PlusState : IEquatable<XorShift128PlusState>, IRandomGeneratorState
-    {
-        internal ulong s0; internal ulong s1;
-
-        public XorShift128PlusState(ulong s0, ulong s1)
-        {
-            if (0 == (s0 | s1))
-            {
-                throw new ArgumentException("At least one seed value must be non-zero.");
-            }
-
-            this.s0 = s0; this.s1 = s1;
-        }
-
-        public XorShift128PlusState(XorShift128PlusState copyFrom)
-            : this(copyFrom.s0, copyFrom.s1)
-        {
-        }
-
-        public bool IsValid => StateIsValid(this);
-        public ulong S0 => this.s0; public ulong S1 => this.s1;
-
-        public static bool StateIsValid(XorShift128PlusState state) => 0 != (state.s0 ^ state.s1);
-
-        public static bool Equals(XorShift128PlusState first, XorShift128PlusState second) => 0 == (first.s0 ^ second.s0 | (first.s1 ^ second.s1));
-        public static int GetHashCode(XorShift128PlusState state) => (state.s0 ^ state.s1).GetHashCode();
-        public static string ToString(XorShift128PlusState state) => ToStringUtility.Begin(state).AddProperty("S0", state.s0).AddProperty("S1", state.s1).End();
-
-        public static bool operator ==(XorShift128PlusState first, XorShift128PlusState second) => Equals(first, second);
-        public static bool operator !=(XorShift128PlusState first, XorShift128PlusState second) => !Equals(first, second);
-        public override bool Equals(object obj) => obj is XorShift128PlusState && Equals(this, (XorShift128PlusState)obj);
-        public bool Equals(XorShift128PlusState other) => Equals(this, other);
-        public override int GetHashCode() => GetHashCode(this);
-        public override string ToString() => ToString(this);
-    }
-
-    public sealed class XorShift128PlusGenerator : IRandomGenerator<XorShift128PlusState>
+    public sealed class XorShift128PlusGenerator : IRandomGenerator<RngState128>
     {
         /// <summary>
         /// The size of each "chunk" of bytes that can be generated at a time.
@@ -50,14 +14,14 @@ namespace AirBreather.Common.Random
 
         /// <inheritdoc />
         [ExcludeFromCodeCoverage]
-        int IRandomGenerator<XorShift128PlusState>.ChunkSize => ChunkSize;
+        int IRandomGenerator<RngState128>.ChunkSize => ChunkSize;
 
         /// <inheritdoc />
         [ExcludeFromCodeCoverage]
-        RandomnessKind IRandomGenerator<XorShift128PlusState>.RandomnessKind => RandomnessKind.PseudoRandom;
+        RandomnessKind IRandomGenerator<RngState128>.RandomnessKind => RandomnessKind.PseudoRandom;
 
         /// <inheritdoc />
-        public XorShift128PlusState FillBuffer(XorShift128PlusState state, byte[] buffer, int index, int count)
+        public RngState128 FillBuffer(RngState128 state, byte[] buffer, int index, int count)
         {
             buffer.ValidateNotNull(nameof(buffer));
             index.ValidateInRange(nameof(index), 0, buffer.Length);
@@ -85,7 +49,7 @@ namespace AirBreather.Common.Random
             return FillBufferCore(state, buffer, index, count);
         }
 
-        private static unsafe XorShift128PlusState FillBufferCore(XorShift128PlusState state, byte[] buffer, int index, int count)
+        private static unsafe RngState128 FillBufferCore(RngState128 state, byte[] buffer, int index, int count)
         {
             fixed (byte* fbuf = buffer)
             {

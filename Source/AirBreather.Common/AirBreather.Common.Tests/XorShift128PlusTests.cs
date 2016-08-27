@@ -27,7 +27,7 @@ namespace AirBreather.Common.Tests
             ulong[] expectedResults = { expectedResult1, expectedResult2, expectedResult3 };
 
             var gen = new XorShift128PlusGenerator();
-            var state = new XorShift128PlusState(s0, s1);
+            var state = new RngState128(s0, s1);
             byte[] buf = new byte[expectedResults.Length * 8];
 
             // First, do it in separate calls.
@@ -38,7 +38,7 @@ namespace AirBreather.Common.Tests
             }
 
             // Now, do it all in one call.
-            state = new XorShift128PlusState(s0, s1);
+            state = new RngState128(s0, s1);
             state = gen.FillBuffer(state, buf, 0, buf.Length);
             for (int i = 0; i < expectedResults.Length; i++)
             {
@@ -46,7 +46,7 @@ namespace AirBreather.Common.Tests
             }
 
             // Now, repeat the same for the extension method.
-            state = new XorShift128PlusState(s0 ,s1);
+            state = new RngState128(s0 ,s1);
             ulong[] typedBuf = new ulong[expectedResults.Length];
             for (int i = 0; i < expectedResults.Length; i++)
             {
@@ -55,7 +55,7 @@ namespace AirBreather.Common.Tests
             }
 
             // again, all in one call
-            state = new XorShift128PlusState(s0, s1);
+            state = new RngState128(s0, s1);
             typedBuf = new ulong[expectedResults.Length];
             state = gen.FillBuffer(state, typedBuf, 0, typedBuf.Length);
             for (int i = 0; i < expectedResults.Length; i++)
@@ -80,21 +80,21 @@ namespace AirBreather.Common.Tests
             var gen = new XorShift128PlusGenerator();
 
             // stage 1: set up the initial state, output buffer, and chunk size.
-            var initialState = new XorShift128PlusState(s0, s1);
+            var initialState = new RngState128(s0, s1);
 
             const int OutputBufferLength = 1 << 30;
             var outputBuffer = new byte[OutputBufferLength];
             var chunkSize = OutputBufferLength / chunks;
 
             // stage 2: use that state to set up the parallel independent states.
-            var parallelStateBuffer = new byte[sizeof(XorShift128PlusState) * chunks];
+            var parallelStateBuffer = new byte[sizeof(RngState128) * chunks];
             gen.FillBuffer(initialState, parallelStateBuffer);
 
-            var parallelStates = new XorShift128PlusState[chunks];
+            var parallelStates = new RngState128[chunks];
             fixed (byte* sFixed = parallelStateBuffer)
-            fixed (XorShift128PlusState* tFixed = parallelStates)
+            fixed (RngState128* tFixed = parallelStates)
             {
-                var s = (XorShift128PlusState*)sFixed;
+                var s = (RngState128*)sFixed;
                 var sEnd = s + chunks;
                 var t = tFixed;
 
@@ -143,21 +143,21 @@ namespace AirBreather.Common.Tests
             var gen = new XorShift128PlusGenerator();
 
             // stage 1: set up the initial state, output buffer, and chunk size.
-            var initialState = new XorShift128PlusState(s0, s1);
+            var initialState = new RngState128(s0, s1);
 
             const int OutputBufferLength = 1 << 30;
             var outputBuffer = new byte[OutputBufferLength];
             var chunkSize = OutputBufferLength / chunks;
 
             // stage 2: use that state to set up the parallel independent states.
-            var parallelStateBuffer = new byte[sizeof(XorShift128PlusState) * chunks];
+            var parallelStateBuffer = new byte[sizeof(RngState128) * chunks];
             gen.FillBuffer(initialState, parallelStateBuffer);
 
-            var parallelStates = new XorShift128PlusState[chunks];
+            var parallelStates = new RngState128[chunks];
             fixed (byte* sFixed = parallelStateBuffer)
-            fixed (XorShift128PlusState* tFixed = parallelStates)
+            fixed (RngState128* tFixed = parallelStates)
             {
-                var s = (XorShift128PlusState*)sFixed;
+                var s = (RngState128*)sFixed;
                 var sEnd = s + chunks;
                 var t = tFixed;
 
