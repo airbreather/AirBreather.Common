@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -159,5 +160,15 @@ namespace AirBreather.Common.Utilities
         }
 
         public static IEnumerable<T> Concat<T>(this IEnumerable<T> enumerable, params T[] values) => Enumerable.Concat(enumerable, values);
+
+        public static IEnumerable<T> Union<T>(this IEnumerable<T> enumerable, params T[] values) => Enumerable.Union(enumerable, values);
+
+        public static ImmutableArray<T> MoveToImmutableSafe<T>(this ImmutableArray<T>.Builder builder)
+        {
+            // sometimes, this is equivalent to MoveToImmutable() with a negligible penalty.
+            // otherwise, this is equivalent to a .ToImmutable() followed by a Clear().
+            builder.Capacity = builder.Count;
+            return builder.MoveToImmutable();
+        }
     }
 }
