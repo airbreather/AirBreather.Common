@@ -50,31 +50,6 @@ namespace AirBreather.Common.Collections
             public IEnumerator<T> GetEnumerator() => ((IEnumerable<T>)this.array).GetEnumerator();
 
             System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => ((System.Collections.IEnumerable)this.array).GetEnumerator();
-
-            private sealed class Enumerator : IEnumerator<T>
-            {
-                private readonly T[] array;
-
-                private int idx;
-
-                internal Enumerator(T[] array)
-                {
-                    this.array = array;
-                }
-
-                public T Current => this.array[this.idx];
-
-                object System.Collections.IEnumerator.Current => this.Current;
-
-                public void Dispose()
-                {
-                }
-
-                public bool MoveNext() => this.idx < this.array.Length &&
-                                          ++this.idx < this.array.Length;
-
-                public void Reset() => this.idx = -1;
-            }
         }
 
         private sealed class KeysCollection : IReadOnlyList<int>
