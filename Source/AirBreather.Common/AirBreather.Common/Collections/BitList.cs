@@ -46,10 +46,10 @@ namespace AirBreather.Common.Collections
                 return;
             }
 
-            int trueInitialCapacity = values.GetCountPropertyIfAvailable() ?? 0;
-            this.values = trueInitialCapacity == 0
-                ? Empty
-                : new BitArray(trueInitialCapacity);
+            int trueInitialCapacity;
+            this.values = values.TryGetCount(out trueInitialCapacity) && trueInitialCapacity != 0
+                ? new BitArray(trueInitialCapacity)
+                : Empty;
 
             // Don't bother with AddRange -- it does extra stuff we've already done.
             foreach (bool value in values)
@@ -200,11 +200,10 @@ namespace AirBreather.Common.Collections
         public void InsertRange(int index, IEnumerable<bool> values)
         {
             index.ValidateInRange(nameof(index), 0, this.count + 1);
-            int? insertCount = values.ValidateNotNull(nameof(values)).GetCountPropertyIfAvailable();
-
-            if (insertCount.HasValue)
+            int insertCount;
+            if (values.ValidateNotNull(nameof(values)).TryGetCount(out insertCount))
             {
-                int trueInsertCount = insertCount.Value;
+                int trueInsertCount = insertCount;
 
                 this.EnsureCapacity(this.count + trueInsertCount);
 

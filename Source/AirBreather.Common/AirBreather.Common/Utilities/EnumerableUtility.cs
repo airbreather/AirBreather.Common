@@ -79,12 +79,11 @@ namespace AirBreather.Common.Utilities
             array.ValidateNotNull(nameof(array));
             arrayIndex.ValidateInRange(nameof(arrayIndex), 0, array.Length);
 
-            int? countProperty = enumerable.GetCountPropertyIfAvailable();
-
-            bool prevalidate = countProperty.HasValue;
+            int count;
+            bool prevalidate = enumerable.TryGetCount(out count);
             if (prevalidate)
             {
-                if (array.Length - arrayIndex < countProperty.Value)
+                if (array.Length - arrayIndex < count)
                 {
                     throw new ArgumentException("Not enough room", nameof(array));
                 }
@@ -123,7 +122,7 @@ namespace AirBreather.Common.Utilities
 
         // Gets the Count property, if one is present on the type.
         // Checks interfaces it could implement, in what I expect to be the optimal order.
-        public static int? GetCountPropertyIfAvailable<T>(this IEnumerable<T> enumerable)
+        public static bool TryGetCount<T>(this IEnumerable<T> enumerable, out int count)
         {
             // I think ICollection<T> is actually more likely than IReadOnlyCollection<T>, despite
             // the former requiring more work to implement on top of IEnumerable<T> than the latter,
@@ -133,7 +132,8 @@ namespace AirBreather.Common.Utilities
             ICollection<T> collection = enumerable.ValidateNotNull(nameof(enumerable)) as ICollection<T>;
             if (collection != null)
             {
-                return collection.Count;
+                count = collection.Count;
+                return true;
             }
 
             // OK... so why ICollection next?  Seems more likely for someone to use one of the many
@@ -146,17 +146,20 @@ namespace AirBreather.Common.Utilities
             System.Collections.ICollection legacyCollection = enumerable as System.Collections.ICollection;
             if (legacyCollection != null)
             {
-                return legacyCollection.Count;
+                count = legacyCollection.Count;
+                return true;
             }
 
             IReadOnlyCollection<T> readOnlyCollection = enumerable as IReadOnlyCollection<T>;
             if (readOnlyCollection != null)
             {
-                return readOnlyCollection.Count;
+                count = readOnlyCollection.Count;
+                return true;
             }
 
             // We've exhausted all the collection-with-Count-property interfaces that I care to do.
-            return default(int?);
+            count = 0;
+            return false;
         }
 
         public static IEnumerable<T> Concat<T>(this IEnumerable<T> enumerable, params T[] values) => Enumerable.Concat(enumerable, values);

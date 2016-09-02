@@ -14,10 +14,11 @@ namespace AirBreather.Common.Utilities
 
         public LazyBufferedEnumerable(IEnumerable<T> enumerable)
         {
-            int? cnt = enumerable.ValidateNotNull(nameof(enumerable)).GetCountPropertyIfAvailable();
-            this.enumerator = enumerable.GetEnumerator();
-            this.buffer = cnt.HasValue
-                ? new List<T>(cnt.Value)
+            this.enumerator = enumerable.ValidateNotNull(nameof(enumerable)).GetEnumerator();
+
+            int cnt;
+            this.buffer = enumerable.TryGetCount(out cnt)
+                ? new List<T>(cnt)
                 : new List<T>();
         }
 
