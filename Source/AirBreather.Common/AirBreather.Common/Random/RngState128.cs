@@ -24,7 +24,7 @@ namespace AirBreather.Common.Random
         public bool IsValid => StateIsValid(this);
         public ulong S0 => this.s0; public ulong S1 => this.s1;
 
-        public static bool StateIsValid(RngState128 state) => 0 != (state.s0 ^ state.s1);
+        public static bool StateIsValid(RngState128 state) => 0 != (state.s0 | state.s1);
 
         public static bool Equals(RngState128 first, RngState128 second) => 0 == (first.s0 ^ second.s0 | (first.s1 ^ second.s1));
         public static int GetHashCode(RngState128 state) => (state.s0 ^ state.s1).GetHashCode();
