@@ -41,7 +41,7 @@ namespace AirBreather.Common.Utilities
                             break;
 
                         case TaskStatus.Faulted:
-                            outputSource.SetException(t.Exception.InnerException);
+                            outputSource.SetException(t.Exception.InnerExceptions);
                             break;
 
                         ////case TaskStatus.RanToCompletion:
