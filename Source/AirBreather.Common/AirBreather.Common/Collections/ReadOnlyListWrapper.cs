@@ -38,7 +38,7 @@ namespace AirBreather.Collections
         }
 
         public bool Contains(T item) => this.wrappedList.Contains(item);
-        public void CopyTo(T[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
+        void ICollection<T>.CopyTo(T[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
         public IEnumerator<T> GetEnumerator() => this.wrappedList.GetEnumerator();
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.wrappedList.GetEnumerator();
 

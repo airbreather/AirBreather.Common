@@ -16,6 +16,7 @@ namespace AirBreather.Tests
         public void ThrowingForBadArgs()
         {
             BitList bl = new BitList { true, true, false, false };
+            IList<bool> blInterface = bl;
 
             Assert.Throws<ArgumentOutOfRangeException>("index", () => bl[-1]);
             Assert.Throws<ArgumentOutOfRangeException>("index", () => bl[4]);
@@ -25,18 +26,18 @@ namespace AirBreather.Tests
             Assert.Throws<ArgumentOutOfRangeException>("index", () => bl.Insert(5, true));
             Assert.Throws<ArgumentOutOfRangeException>("index", () => bl.RemoveAt(-1));
             Assert.Throws<ArgumentOutOfRangeException>("index", () => bl.RemoveAt(4));
-            Assert.Throws<ArgumentNullException>("array", () => bl.CopyTo(null, 5));
+            Assert.Throws<ArgumentNullException>("array", () => blInterface.CopyTo(null, 5));
             Assert.Throws<ArgumentNullException>("bitArray", () => new BitList(default(BitArray)));
             Assert.Throws<ArgumentNullException>("values", () => new BitList(default(IEnumerable<bool>)));
 
             bool[] things = new bool[5];
-            Assert.Throws<ArgumentOutOfRangeException>("arrayIndex", () => bl.CopyTo(things, -1));
-            Assert.Throws<ArgumentException>("array", () => bl.CopyTo(things, 2));
-            Assert.Throws<ArgumentOutOfRangeException>("arrayIndex", () => bl.CopyTo(things, 5));
+            Assert.Throws<ArgumentOutOfRangeException>("arrayIndex", () => blInterface.CopyTo(things, -1));
+            Assert.Throws<ArgumentException>("array", () => blInterface.CopyTo(things, 2));
+            Assert.Throws<ArgumentOutOfRangeException>("arrayIndex", () => blInterface.CopyTo(things, 5));
 
             things = new bool[3];
-            Assert.Throws<ArgumentException>("array", () => bl.CopyTo(things, 0));
-            Assert.Throws<ArgumentOutOfRangeException>("arrayIndex", () => bl.CopyTo(things, 3));
+            Assert.Throws<ArgumentException>("array", () => blInterface.CopyTo(things, 0));
+            Assert.Throws<ArgumentOutOfRangeException>("arrayIndex", () => blInterface.CopyTo(things, 3));
         }
 
         [Fact]
@@ -140,7 +141,7 @@ namespace AirBreather.Tests
             }
 
             bool[] vals = new bool[BoolCount + ArrayOffset];
-            bl.CopyTo(vals, ArrayOffset);
+            ((IList<bool>)bl).CopyTo(vals, ArrayOffset);
 
             Assert.Equal(bl, vals.Skip(ArrayOffset));
         }

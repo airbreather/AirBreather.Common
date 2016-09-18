@@ -52,7 +52,7 @@ namespace AirBreather.Collections
         public bool Contains(KeyValuePair<TKey, TValue> item) => this.wrappedDictionary.Contains(item);
         public bool ContainsKey(TKey key) => this.wrappedDictionary.ContainsKey(key);
         public bool TryGetValue(TKey key, out TValue value) => this.wrappedDictionary.TryGetValue(key, out value);
-        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
+        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => this.wrappedDictionary.GetEnumerator();
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.wrappedDictionary.GetEnumerator();
 

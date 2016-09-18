@@ -137,7 +137,7 @@ namespace AirBreather.Collections
             return false;
         }
 
-        public void CopyTo(bool[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
+        void ICollection<bool>.CopyTo(bool[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
 
         private void EnsureCapacity(int neededSize)
         {

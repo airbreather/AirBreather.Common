@@ -22,7 +22,7 @@ namespace AirBreather.Collections
         public bool Overlaps(IEnumerable<T> other) => this.wrappedSet.Overlaps(other);
         public bool SetEquals(IEnumerable<T> other) => this.wrappedSet.SetEquals(other);
         public bool Contains(T item) => this.wrappedSet.Contains(item);
-        public void CopyTo(T[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
+        void ICollection<T>.CopyTo(T[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
         public IEnumerator<T> GetEnumerator() => this.wrappedSet.GetEnumerator();
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
 

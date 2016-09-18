@@ -19,7 +19,7 @@ namespace AirBreather.Collections
         public bool Contains(T item) => this.wrappedCollection.Contains(item);
         public IEnumerator<T> GetEnumerator() => this.wrappedCollection.GetEnumerator();
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.wrappedCollection.GetEnumerator();
-        public void CopyTo(T[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
+        void ICollection<T>.CopyTo(T[] array, int arrayIndex) => this.AsReadOnlyCollection().CopyTo(array, arrayIndex);
 
         #region Unsupported (Read-Only)
 
