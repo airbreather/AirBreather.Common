@@ -2,9 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-using AirBreather.Common.Utilities;
-
-namespace AirBreather.Common.Collections
+namespace AirBreather.Collections
 {
     public sealed class BitList : IList<bool>, IReadOnlyList<bool>
     {
@@ -13,7 +11,6 @@ namespace AirBreather.Common.Collections
         private BitArray values;
 
         private int version;
-        private int count;
 
         public BitList()
         {
@@ -33,7 +30,7 @@ namespace AirBreather.Common.Collections
                 ? Empty
                 : new BitArray(bitArray);
 
-            this.count = this.values.Length;
+            this.Count = this.values.Length;
         }
 
         public BitList(IEnumerable<bool> values)
@@ -42,7 +39,7 @@ namespace AirBreather.Common.Collections
             if (array != null)
             {
                 this.values = new BitArray(array);
-                this.count = array.Length;
+                this.Count = array.Length;
                 return;
             }
 
@@ -58,9 +55,9 @@ namespace AirBreather.Common.Collections
             }
         }
 
-        public int Count => this.count;
+        public int Count { get; private set; }
 
-        public bool IsReadOnly => false;
+        bool ICollection<bool>.IsReadOnly => false;
 
         public int Capacity
         {
@@ -71,7 +68,7 @@ namespace AirBreather.Common.Collections
 
             set
             {
-                if (value < this.count)
+                if (value < this.Count)
                 {
                     throw new ArgumentOutOfRangeException(nameof(value), value, "Too many elements.");
                 }
@@ -96,12 +93,12 @@ namespace AirBreather.Common.Collections
         {
             get
             {
-                return this.values[index.ValidateInRange(nameof(index), 0, this.count)];
+                return this.values[index.ValidateInRange(nameof(index), 0, this.Count)];
             }
 
             set
             {
-                this.values[index.ValidateInRange(nameof(index), 0, this.count)] = value;
+                this.values[index.ValidateInRange(nameof(index), 0, this.Count)] = value;
                 this.Modified();
             }
         }
@@ -114,24 +111,22 @@ namespace AirBreather.Common.Collections
 
         private void AddCore(bool value)
         {
-            this.EnsureCapacity(this.count + 1);
-            this.values[this.count++] = value;
+            this.EnsureCapacity(this.Count + 1);
+            this.values[this.Count++] = value;
         }
 
-        public void AddRange(IEnumerable<bool> values) => this.InsertRange(this.count, values);
-
-        ////public ReadOnlyCollection<bool> AsReadOnly() => new ReadOnlyCollection<bool>(this);
+        public void AddRange(IEnumerable<bool> values) => this.InsertRange(this.Count, values);
 
         public void Clear()
         {
             // unlike List<T>, we have absolutely no reason to clear the array itself.
-            this.count = 0;
+            this.Count = 0;
             this.Modified();
         }
 
         public bool Contains(bool value)
         {
-            for (int i = 0; i < this.count; i++)
+            for (int i = 0; i < this.Count; i++)
             {
                 if (this.values[i] == value)
                 {
@@ -168,7 +163,7 @@ namespace AirBreather.Common.Collections
 
         public int IndexOf(bool item)
         {
-            for (int i = 0; i < this.count; i++)
+            for (int i = 0; i < this.Count; i++)
             {
                 if (this.values[i] == item)
                 {
@@ -181,34 +176,34 @@ namespace AirBreather.Common.Collections
 
         public void Insert(int index, bool value)
         {
-            this.InsertCore(index.ValidateInRange(nameof(index), 0, this.count + 1), value);
+            this.InsertCore(index.ValidateInRange(nameof(index), 0, this.Count + 1), value);
             this.Modified();
         }
 
         private void InsertCore(int index, bool value)
         {
-            this.EnsureCapacity(this.count + 1);
-            for (int i = this.count - 1; i >= index; i--)
+            this.EnsureCapacity(this.Count + 1);
+            for (int i = this.Count - 1; i >= index; i--)
             {
                 this.values[i + 1] = this.values[i];
             }
 
             this.values[index] = value;
-            this.count++;
+            this.Count++;
         }
 
         public void InsertRange(int index, IEnumerable<bool> values)
         {
-            index.ValidateInRange(nameof(index), 0, this.count + 1);
+            index.ValidateInRange(nameof(index), 0, this.Count + 1);
             int insertCount;
             if (values.ValidateNotNull(nameof(values)).TryGetCount(out insertCount))
             {
                 int trueInsertCount = insertCount;
 
-                this.EnsureCapacity(this.count + trueInsertCount);
+                this.EnsureCapacity(this.Count + trueInsertCount);
 
                 // shift the values after the index over by the width of what we're inserting.
-                for (int i = index; i < this.count; i++)
+                for (int i = index; i < this.Count; i++)
                 {
                     this.values[i + trueInsertCount] = this.values[i];
                 }
@@ -220,7 +215,7 @@ namespace AirBreather.Common.Collections
                         this.values[i + index] = this.values[i];
                     }
 
-                    for (int i = index; i < this.count; i++)
+                    for (int i = index; i < this.Count; i++)
                     {
                         this.values[i + index + index] = this.values[i + index + trueInsertCount];
                     }
@@ -233,10 +228,11 @@ namespace AirBreather.Common.Collections
                     this.values[index++] = value;
                 }
 
-                this.count += trueInsertCount;
+                this.Count += trueInsertCount;
             }
             else
             {
+                // ugh.
                 foreach (bool value in values)
                 {
                     this.InsertCore(index++, value);
@@ -260,13 +256,13 @@ namespace AirBreather.Common.Collections
 
         public void RemoveAt(int index)
         {
-            index.ValidateInRange(nameof(index), 0, this.count);
-            for (int i = index; i < this.count - 1; i++)
+            index.ValidateInRange(nameof(index), 0, this.Count);
+            for (int i = index; i < this.Count - 1; i++)
             {
                 this.values[i] = this.values[i + 1];
             }
 
-            this.count--;
+            this.Count--;
             this.Modified();
         }
 
@@ -280,13 +276,13 @@ namespace AirBreather.Common.Collections
                 return;
             }
 
-            if (this.count - index < count)
+            if (this.Count - index < count)
             {
                 throw new ArgumentException("Not enough values to remove", nameof(count));
             }
 
-            this.count -= count;
-            for (int i = index; i < this.count; i++)
+            this.Count -= count;
+            for (int i = index; i < this.Count; i++)
             {
                 this.values[i] = this.values[i + count];
             }
@@ -297,7 +293,7 @@ namespace AirBreather.Common.Collections
         public void Reverse()
         {
             int i = 0;
-            int j = this.count - 1;
+            int j = this.Count - 1;
             while (i < j)
             {
                 bool temp = this.values[i];
@@ -310,8 +306,8 @@ namespace AirBreather.Common.Collections
 
         public BitArray ToBitArray()
         {
-            BitArray result = new BitArray(this.count);
-            for (int i = 0; i < this.count; i++)
+            BitArray result = new BitArray(this.Count);
+            for (int i = 0; i < this.Count; i++)
             {
                 result[i] = this[i];
             }
@@ -319,9 +315,10 @@ namespace AirBreather.Common.Collections
             return result;
         }
 
-        public void TrimExcess() => this.Capacity = this.count;
+        public void TrimExcess() => this.Capacity = this.Count;
 
         public IEnumerator<bool> GetEnumerator() => new Enumerator(this);
+
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
         private void Modified() => this.version++;
@@ -334,8 +331,6 @@ namespace AirBreather.Common.Collections
 
             private int currIndex;
 
-            private bool current;
-
             internal Enumerator(BitList lst)
             {
                 this.lst = lst;
@@ -343,8 +338,9 @@ namespace AirBreather.Common.Collections
                 this.currIndex = 0;
             }
 
-            public bool Current => this.current;
-            object IEnumerator.Current => Boxes.Boolean(this.current);
+            public bool Current { get; private set; }
+
+            object IEnumerator.Current => Boxes.Boolean(this.Current);
 
             public bool MoveNext()
             {
@@ -353,12 +349,12 @@ namespace AirBreather.Common.Collections
                     throw new InvalidOperationException("Collection was modified during enumeration.");
                 }
 
-                if (this.lst.count <= this.currIndex)
+                if (this.lst.Count <= this.currIndex)
                 {
                     return false;
                 }
 
-                this.current = this.lst[this.currIndex++];
+                this.Current = this.lst[this.currIndex++];
                 return true;
             }
 

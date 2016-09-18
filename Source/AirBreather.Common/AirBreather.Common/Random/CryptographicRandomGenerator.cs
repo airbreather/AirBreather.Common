@@ -1,51 +1,15 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 
-using AirBreather.Common.Utilities;
-
-namespace AirBreather.Common.Random
+namespace AirBreather.Random
 {
-    // An IRandomGeneratorState type that carries no data.
-    public struct EmptyRandomState : IEquatable<EmptyRandomState>, IRandomGeneratorState
-    {
-        public static readonly EmptyRandomState Default = default(EmptyRandomState);
-        public bool IsValid => true;
-        public static bool operator ==(EmptyRandomState first, EmptyRandomState second) => true;
-        public static bool operator !=(EmptyRandomState first, EmptyRandomState second) => false;
-        public override bool Equals(object obj) => obj is EmptyRandomState;
-        public bool Equals(EmptyRandomState other) => true;
-        public override int GetHashCode() => 0;
-        public override string ToString() => FormattableString.Invariant($"{nameof(EmptyRandomState)}[]");
-    }
-
     // RNGCryptoServiceProvider claims to be thread-safe and carries no state.
-    // Thus, we use EmptyRandomState as a placeholder.
-    public sealed class CryptographicRandomGenerator : IRandomGenerator<EmptyRandomState>
+    public sealed class CryptographicRandomGenerator
     {
-        /// <summary>
-        /// The size of each "chunk" of bytes that can be generated at a time.
-        /// </summary>
-        public static readonly int ChunkSize = 1;
-
         private static readonly Lazy<RNGCryptoServiceProvider> SingletonProvider = new Lazy<RNGCryptoServiceProvider>();
 
-        /// <inheritdoc />
-        [ExcludeFromCodeCoverage]
-        int IRandomGenerator<EmptyRandomState>.ChunkSize => ChunkSize;
-
-        /// <inheritdoc />
-        [ExcludeFromCodeCoverage]
-        RandomnessKind IRandomGenerator<EmptyRandomState>.RandomnessKind => RandomnessKind.Random;
-
-        /// <inheritdoc />
-        public EmptyRandomState FillBuffer(EmptyRandomState state, byte[] buffer, int index, int count)
-        {
-            FillBuffer(buffer, index, count);
-            return state;
-        }
-
         public static void FillBuffer(byte[] buffer) => FillBuffer(buffer, 0, buffer?.Length ?? 0);
+
         public static void FillBuffer(byte[] buffer, int index, int count)
         {
             buffer.ValidateNotNull(nameof(buffer));

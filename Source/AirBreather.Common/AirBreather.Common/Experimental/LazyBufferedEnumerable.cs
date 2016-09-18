@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace AirBreather.Common.Utilities
+namespace AirBreather
 {
     public sealed class LazyBufferedEnumerable<T> : DisposableObject, IEnumerable<T>
     {

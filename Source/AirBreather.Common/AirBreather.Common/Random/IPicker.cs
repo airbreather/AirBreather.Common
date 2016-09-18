@@ -1,4 +1,4 @@
-﻿namespace AirBreather.Common.Random
+﻿namespace AirBreather.Random
 {
     // IMO, the idea of "randomness" is not something that is commonly needed
     // as a dependency in APIs.  Rather, most APIs should depend on something

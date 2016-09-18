@@ -3,9 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
-using AirBreather.Common.Utilities;
-
-namespace AirBreather.Common.Collections
+namespace AirBreather.Collections
 {
     public struct SortedSetValue<T> : IReadOnlySet<T>, IImmutableSet<T>, IEquatable<SortedSetValue<T>>
     {
@@ -57,7 +55,7 @@ namespace AirBreather.Common.Collections
         public override int GetHashCode() => GetHashCode(this);
         public static int GetHashCode(SortedSetValue<T> value)
         {
-            int hashCode = HashCodeUtility.Seed;
+            int hashCode = HashCode.Seed;
 
             hashCode = hashCode.HashWith(value.Count);
 

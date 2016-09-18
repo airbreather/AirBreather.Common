@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Globalization;
 
-using AirBreather.Common.Utilities;
-
-namespace AirBreather.Common.Logging
+namespace AirBreather.Logging
 {
     public static class Extensions
     {

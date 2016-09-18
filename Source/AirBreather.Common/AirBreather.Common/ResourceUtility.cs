@@ -2,13 +2,14 @@
 using System.IO;
 using System.Reflection;
 
-namespace AirBreather.Common.Utilities
+namespace AirBreather
 {
     // I use embedded resources whenever I reasonably can...
     // so making them just a tiny bit easier to use helps.
     public static class ResourceUtility
     {
         public static Stream OpenEmbeddedResourceFile(string resourceKey) => OpenEmbeddedResourceFile(resourceKey, Assembly.GetCallingAssembly());
+
         public static Stream OpenEmbeddedResourceFile(string resourceKey, Assembly assembly)
         {
             assembly.ValidateNotNull(nameof(assembly));

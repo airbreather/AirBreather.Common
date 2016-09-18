@@ -1,10 +1,10 @@
 ﻿using System;
 
-using AirBreather.Common.Utilities;
+using AirBreather.Random;
 
-namespace AirBreather.Common.Random
+namespace AirBreather.Tests
 {
-    public static class Extensions
+    internal static class Extensions
     {
         /// <summary>
         /// Fills the specified range of the specified buffer with random or pseudorandom data.

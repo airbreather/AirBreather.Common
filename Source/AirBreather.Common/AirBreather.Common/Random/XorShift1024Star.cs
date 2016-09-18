@@ -1,9 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-using AirBreather.Common.Utilities;
-
-namespace AirBreather.Common.Random
+namespace AirBreather.Random
 {
     public sealed class XorShift1024StarGenerator : IRandomGenerator<RngState1024>
     {
@@ -15,10 +13,6 @@ namespace AirBreather.Common.Random
         /// <inheritdoc />
         [ExcludeFromCodeCoverage]
         int IRandomGenerator<RngState1024>.ChunkSize => ChunkSize;
-
-        /// <inheritdoc />
-        [ExcludeFromCodeCoverage]
-        RandomnessKind IRandomGenerator<RngState1024>.RandomnessKind => RandomnessKind.PseudoRandom;
 
         /// <inheritdoc />
         public RngState1024 FillBuffer(RngState1024 state, byte[] buffer, int index, int count)

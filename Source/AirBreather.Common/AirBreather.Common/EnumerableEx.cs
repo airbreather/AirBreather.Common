@@ -4,11 +4,11 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-using AirBreather.Common.Collections;
+using AirBreather.Collections;
 
-namespace AirBreather.Common.Utilities
+namespace AirBreather
 {
-    public static class EnumerableUtility
+    public static class EnumerableEx
     {
         public static IEnumerable<uint> Range(uint start, uint count)
         {

@@ -1,7 +1,7 @@
-﻿namespace AirBreather.Common.Utilities
+﻿namespace AirBreather
 {
     // Inspired by http://stackoverflow.com/a/5450717/1083771
-    public static class HashCodeUtility
+    public static class HashCode
     {
         // static readonly instead of const
         // means I can change it without having to recompile.

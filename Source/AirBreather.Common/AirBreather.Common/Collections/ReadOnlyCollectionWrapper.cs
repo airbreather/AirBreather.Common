@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using AirBreather.Common.Utilities;
-
-namespace AirBreather.Common.Collections
+namespace AirBreather.Collections
 {
     public sealed class ReadOnlyCollectionWrapper<T> : IReadOnlyCollection<T>, ICollection<T>
     {

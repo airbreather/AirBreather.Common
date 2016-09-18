@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace AirBreather.Common.Utilities
+namespace AirBreather
 {
     public static class GCUtility
     {

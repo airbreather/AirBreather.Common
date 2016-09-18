@@ -1,8 +1,6 @@
 ﻿using System;
 
-using AirBreather.Common.Utilities;
-
-namespace AirBreather.Common.Random
+namespace AirBreather.Random
 {
     public sealed class RandomPicker<TState> : IPicker where TState : IRandomGeneratorState
     {

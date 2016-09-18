@@ -3,9 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
-using AirBreather.Common.Utilities;
-
-namespace AirBreather.Common.Collections
+namespace AirBreather.Collections
 {
     public struct HashSetValue<T> : IReadOnlySet<T>, IImmutableSet<T>, IEquatable<HashSetValue<T>>
     {
@@ -59,14 +57,16 @@ namespace AirBreather.Common.Collections
         {
             ImmutableHashSet<T> underlyingSet = value.UnderlyingSet;
 
-            int hashCode = underlyingSet.Count;
+            int dataHashCode = 0;
             foreach (T element in underlyingSet)
             {
                 // XOR, because the ordering must not matter.
-                hashCode ^= EqualityComparer<T>.Default.GetHashCode(element);
+                dataHashCode ^= EqualityComparer<T>.Default.GetHashCode(element);
             }
 
-            return hashCode;
+            return HashCode.Seed
+                           .HashWith(underlyingSet.Count)
+                           .HashWith(dataHashCode);
         }
     }
 }

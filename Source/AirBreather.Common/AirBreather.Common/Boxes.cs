@@ -4,9 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-using AirBreather.Common.Utilities;
-
-namespace AirBreather.Common
+namespace AirBreather
 {
     public static class Boxes
     {

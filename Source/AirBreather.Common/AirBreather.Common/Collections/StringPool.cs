@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AirBreather.Common.Collections
+namespace AirBreather.Collections
 {
     public sealed class StringPool
     {

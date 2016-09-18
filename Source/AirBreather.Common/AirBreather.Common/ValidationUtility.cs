@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Globalization;
 
-namespace AirBreather.Common.Utilities
+using static System.FormattableString;
+
+namespace AirBreather
 {
     public static class ValidationUtility
     {
@@ -19,7 +20,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -29,7 +30,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -44,7 +45,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -54,7 +55,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -64,7 +65,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -74,7 +75,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -84,7 +85,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -94,7 +95,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -104,7 +105,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -114,7 +115,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -124,7 +125,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -134,7 +135,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
             }
 
             return value;
@@ -148,7 +149,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -158,7 +159,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -168,7 +169,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -178,7 +179,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -188,7 +189,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -198,7 +199,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -208,7 +209,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -218,7 +219,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -228,7 +229,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;
@@ -238,7 +239,7 @@ namespace AirBreather.Common.Utilities
         {
             if (!value.IsNotLessThan(minInclusive))
             {
-                throw new ArgumentOutOfRangeException(paramName, value, FormattableString.Invariant($"Must be greater than or equal to {minInclusive}."));
+                throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be greater than or equal to {minInclusive}."));
             }
 
             return value;

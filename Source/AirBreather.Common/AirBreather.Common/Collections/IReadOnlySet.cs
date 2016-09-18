@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace AirBreather.Common.Collections
+namespace AirBreather.Collections
 {
     public interface IReadOnlySet<T> : IReadOnlyCollection<T>
     {

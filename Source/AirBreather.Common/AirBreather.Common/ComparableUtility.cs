@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-namespace AirBreather.Common.Utilities
+namespace AirBreather
 {
     public static class ComparableUtility
     {

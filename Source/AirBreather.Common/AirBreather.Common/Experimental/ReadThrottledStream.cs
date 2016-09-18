@@ -4,9 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-using AirBreather.Common.Utilities;
-
-namespace AirBreather.Common.IO
+namespace AirBreather
 {
     public class ReadThrottledStream : Stream
     {
@@ -115,7 +113,7 @@ namespace AirBreather.Common.IO
             long target = ((long)(((double)count / this.bytesPerSecond) * Stopwatch.Frequency)) + startTimestamp;
             if (Stopwatch.GetTimestamp() < target)
             {
-                this.throttleTask = TaskUtility.PreciseDelay(target);
+                this.throttleTask = TaskUtilityExperimental.PreciseDelay(target);
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿namespace AirBreather.Common.Random
+﻿namespace AirBreather.Random
 {
     public interface IRandomGeneratorState
     {

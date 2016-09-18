@@ -5,10 +5,10 @@ using System.Linq;
 
 using Xunit;
 
-using AirBreather.Common.Collections;
-using AirBreather.Common.Random;
+using AirBreather.Collections;
+using AirBreather.Random;
 
-namespace AirBreather.Common.Tests
+namespace AirBreather.Tests
 {
     public sealed class BitListTests
     {
@@ -77,7 +77,7 @@ namespace AirBreather.Common.Tests
         [Fact]
         public void ShouldNotBeReadOnly()
         {
-            BitList bl = new BitList();
+            IList<bool> bl = new BitList();
 
             Assert.False(bl.IsReadOnly);
         }

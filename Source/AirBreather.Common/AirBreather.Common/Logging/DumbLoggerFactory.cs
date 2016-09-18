@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AirBreather.Common.Logging
+namespace AirBreather.Logging
 {
     public sealed class DumbLoggerFactory : ILoggerFactory
     {

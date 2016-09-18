@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using AirBreather.Common.Utilities;
-
-namespace AirBreather.Common.Collections
+namespace AirBreather.Collections
 {
     public sealed class ReadOnlySetWrapper<T> : IReadOnlySet<T>, ISet<T>
     {

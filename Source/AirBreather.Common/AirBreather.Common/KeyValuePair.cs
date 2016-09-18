@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 
-namespace AirBreather.Common.Utilities
+namespace AirBreather
 {
     public static class KeyValuePair
     {
         public static KeyValuePair<TKey, TValue> Create<TKey, TValue>(TKey key, TValue value) => new KeyValuePair<TKey, TValue>(key, value);
+
+        public static KeyValuePair<TKey, TValue> CreateInverted<TKey, TValue>(TValue value, TKey key) => new KeyValuePair<TKey, TValue>(key, value);
     }
 }

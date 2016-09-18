@@ -2,9 +2,7 @@
 using System.Runtime.Caching;
 using System.Threading;
 
-using AirBreather.Common.Utilities;
-
-namespace AirBreather.Common.Caching
+namespace AirBreather.Caching
 {
     public sealed class BufferCache : DisposableObject
     {

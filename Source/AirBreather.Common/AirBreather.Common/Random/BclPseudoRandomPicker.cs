@@ -2,7 +2,7 @@
 
 using BclRandom = System.Random;
 
-namespace AirBreather.Common.Random
+namespace AirBreather.Random
 {
     // Note that the BCL random provider is slightly biased.
     // It's extremely easy to use, which is why this exists,
@@ -14,7 +14,7 @@ namespace AirBreather.Common.Random
 
         private readonly object lockObject = new object();
 
-        // Unlike System.Random, a seed MUST be provided.
+        // Unlike System.Random, a seed MUST be provided explicitly.
         public BclPseudorandomPicker(int seed)
         {
             this.random = new BclRandom(seed);

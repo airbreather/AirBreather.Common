@@ -4,9 +4,9 @@ using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
 
-using AirBreather.Common.Random;
+using AirBreather.Random;
 
-namespace AirBreather.Common.Tests
+namespace AirBreather.Tests
 {
     public sealed class WeightedRandomPickerTests
     {
@@ -32,7 +32,7 @@ namespace AirBreather.Common.Tests
 
             foreach (var kvp in valsWithWeights)
             {
-                builder.AddWithWeight(kvp.Key, kvp.Value);
+                builder = builder.AddWithWeight(kvp.Key, kvp.Value);
             }
 
             var picker = builder.Build();
@@ -46,7 +46,8 @@ namespace AirBreather.Common.Tests
                 dct[picker.Pick(rnd.NextDouble())]++;
             }
 
-            var expect = valsWithWeights.ToDictionary(kvp => kvp.Key, kvp => kvp.Value * (TrialCount / valsWithWeights.Values.Sum()));
+            double scalar = TrialCount / (double)valsWithWeights.Values.Sum();
+            var expect = valsWithWeights.ToDictionary(kvp => kvp.Key, kvp => kvp.Value * scalar);
 
             foreach (var kvp in dct)
             {

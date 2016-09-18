@@ -7,7 +7,7 @@
     <ProjectGuid>{F04C8BB5-8838-4472-9B64-FAFDB5A27EBC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AirBreather.Common</RootNamespace>
+    <RootNamespace>AirBreather</RootNamespace>
     <AssemblyName>AirBreather.Common</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -50,25 +50,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Boxes.cs" />
-    <Compile Include="Caching\BufferCache.cs" />
+    <Compile Include="Experimental\BufferCache.cs" />
     <Compile Include="Collections\ArrayDictionary.cs" />
     <Compile Include="Collections\BitList.cs" />
     <Compile Include="Collections\CallbackComparer.cs" />
-    <Compile Include="Collections\FastByteArrayEqualityComparer.cs" />
     <Compile Include="Collections\ReadOnlyListSegment.cs" />
     <Compile Include="Collections\StringPool.cs" />
-    <Compile Include="Collections\UInt32Set.cs" />
-    <Compile Include="Collections\PriorityQueue.cs" />
-    <Compile Include="Collections\PriorityQueueNode.cs" />
     <Compile Include="Collections\ReadOnlyCollectionWrapper.cs" />
     <Compile Include="Collections\ReadOnlyDictionaryWrapper.cs" />
     <Compile Include="Collections\ReadOnlyListWrapper.cs" />
     <Compile Include="DisposableObject.cs" />
-    <Compile Include="IO\ReadThrottledStream.cs" />
+    <Compile Include="Experimental\TaskUtility.cs" />
+    <Compile Include="Experimental\ReadThrottledStream.cs" />
     <Compile Include="Collections\ObjectReferenceEqualityComparer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Random\BclPseudoRandomPicker.cs" />
-    <Compile Include="Random\Extensions.cs" />
     <Compile Include="Random\IPicker.cs" />
     <Compile Include="Random\IRandomGenerator.cs" />
     <Compile Include="Random\IRandomGeneratorState.cs" />
@@ -81,15 +77,15 @@
     <Compile Include="Random\XorShift1024Star.cs" />
     <Compile Include="Random\MT19937_64.cs" />
     <Compile Include="UnmanagedResourceContainer.cs" />
-    <Compile Include="Utilities\ComparableUtility.cs" />
-    <Compile Include="Utilities\EnumerableUtility.cs" />
-    <Compile Include="Utilities\GCUtility.cs" />
-    <Compile Include="Utilities\HashCodeUtility.cs" />
-    <Compile Include="Utilities\KeyValuePair.cs" />
-    <Compile Include="Utilities\LazyBufferedEnumerable.cs" />
-    <Compile Include="Utilities\ResourceUtility.cs" />
+    <Compile Include="ComparableUtility.cs" />
+    <Compile Include="EnumerableEx.cs" />
+    <Compile Include="GCUtility.cs" />
+    <Compile Include="HashCode.cs" />
+    <Compile Include="KeyValuePair.cs" />
+    <Compile Include="Experimental\LazyBufferedEnumerable.cs" />
+    <Compile Include="ResourceUtility.cs" />
     <Compile Include="Text\EncodingEx.cs" />
-    <Compile Include="Utilities\StringUtility.cs" />
+    <Compile Include="StringUtility.cs" />
     <Compile Include="Collections\IReadOnlySet.cs" />
     <Compile Include="Collections\ReadOnlySet.cs" />
     <Compile Include="Collections\ReadOnlySetWrapper.cs" />
@@ -99,8 +95,8 @@
     <Compile Include="Random\RandomPicker.cs" />
     <Compile Include="Collections\HashSetValue.cs" />
     <Compile Include="Collections\SortedSetValue.cs" />
-    <Compile Include="Utilities\ValidationUtility.cs" />
-    <Compile Include="Utilities\TaskUtility.cs" />
+    <Compile Include="ValidationUtility.cs" />
+    <Compile Include="TaskUtility.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\Extensions.cs" />
     <Compile Include="Logging\ILoggerFactory.cs" />

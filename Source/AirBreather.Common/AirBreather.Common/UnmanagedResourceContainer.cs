@@ -1,8 +1,8 @@
 ﻿using System;
 
-using AirBreather.Common.Logging;
+using AirBreather.Logging;
 
-namespace AirBreather.Common
+namespace AirBreather
 {
     // my own IDisposable pattern, part 2 of 2
     // nothing IDisposable will directly own unmanaged resources

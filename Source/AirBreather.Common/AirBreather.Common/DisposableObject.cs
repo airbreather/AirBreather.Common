@@ -1,8 +1,8 @@
 ﻿using System;
 
-using AirBreather.Common.Logging;
+using AirBreather.Logging;
 
-namespace AirBreather.Common
+namespace AirBreather
 {
     // my own IDisposable pattern, part 1 of 2
     // almost everything of mine that needs to be IDisposable will be this.

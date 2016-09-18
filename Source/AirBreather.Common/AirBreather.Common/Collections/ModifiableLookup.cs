@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace AirBreather.Common
+namespace AirBreather
 {
     public sealed class ModifiableLookup<TKey, TValue> : IModifiableLookup<TKey, TValue>
     {

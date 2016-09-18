@@ -6,11 +6,9 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
-using AirBreather.Common.IO;
-using AirBreather.Common.Random;
-using AirBreather.Common.Utilities;
+using AirBreather.Random;
 
-namespace AirBreather.Common.Tests
+namespace AirBreather.Tests
 {
     public sealed class ReadThrottledStreamTests
     {

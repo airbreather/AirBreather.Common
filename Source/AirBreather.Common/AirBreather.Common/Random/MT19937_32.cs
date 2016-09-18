@@ -44,9 +44,9 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-using AirBreather.Common.Utilities;
+using static System.FormattableString;
 
-namespace AirBreather.Common.Random
+namespace AirBreather.Random
 {
     public struct MT19937_32State : IEquatable<MT19937_32State>, IRandomGeneratorState
     {
@@ -137,7 +137,7 @@ namespace AirBreather.Common.Random
 
         public static int GetHashCode(MT19937_32State state)
         {
-            int hashCode = HashCodeUtility.Seed;
+            int hashCode = HashCode.Seed;
 
             hashCode = hashCode.HashWith(state.idx);
 
@@ -157,7 +157,7 @@ namespace AirBreather.Common.Random
             return hashCode;
         }
 
-        public static string ToString(MT19937_32State state) => FormattableString.Invariant($"{nameof(MT19937_32State)}[]");
+        public static string ToString(MT19937_32State state) => Invariant($"{nameof(MT19937_32State)}[]");
 
         public static bool operator ==(MT19937_32State first, MT19937_32State second) => Equals(first, second);
         public static bool operator !=(MT19937_32State first, MT19937_32State second) => !Equals(first, second);
@@ -177,10 +177,6 @@ namespace AirBreather.Common.Random
         /// <inheritdoc />
         [ExcludeFromCodeCoverage]
         int IRandomGenerator<MT19937_32State>.ChunkSize => ChunkSize;
-
-        /// <inheritdoc />
-        [ExcludeFromCodeCoverage]
-        RandomnessKind IRandomGenerator<MT19937_32State>.RandomnessKind => RandomnessKind.PseudoRandom;
 
         /// <inheritdoc />
         public MT19937_32State FillBuffer(MT19937_32State state, byte[] buffer, int index, int count)

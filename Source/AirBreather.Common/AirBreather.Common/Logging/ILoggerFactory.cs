@@ -1,4 +1,4 @@
-﻿namespace AirBreather.Common.Logging
+﻿namespace AirBreather.Logging
 {
     public interface ILoggerFactory
     {

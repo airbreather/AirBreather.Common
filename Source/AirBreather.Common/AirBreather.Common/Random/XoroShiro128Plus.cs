@@ -27,9 +27,8 @@ See <http://creativecommons.org/publicdomain/zero/1.0/>. */
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-using AirBreather.Common.Utilities;
 
-namespace AirBreather.Common.Random
+namespace AirBreather.Random
 {
     // TODO: fully replace XorShift128Plus with this, once it's been proven out more rigorously.
     public sealed class XoroShiro128PlusGenerator : IRandomGenerator<RngState128>
@@ -42,10 +41,6 @@ namespace AirBreather.Common.Random
         /// <inheritdoc />
         [ExcludeFromCodeCoverage]
         int IRandomGenerator<RngState128>.ChunkSize => ChunkSize;
-
-        /// <inheritdoc />
-        [ExcludeFromCodeCoverage]
-        RandomnessKind IRandomGenerator<RngState128>.RandomnessKind => RandomnessKind.PseudoRandom;
 
 #if false
         public static RngState128 Jump(RngState128 state)

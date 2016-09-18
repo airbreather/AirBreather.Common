@@ -1,6 +1,8 @@
 ﻿using System;
 
-namespace AirBreather.Common.Random
+using static System.FormattableString;
+
+namespace AirBreather.Random
 {
     public struct RngState128 : IEquatable<RngState128>, IRandomGeneratorState
     {
@@ -28,7 +30,7 @@ namespace AirBreather.Common.Random
 
         public static bool Equals(RngState128 first, RngState128 second) => 0 == (first.s0 ^ second.s0 | (first.s1 ^ second.s1));
         public static int GetHashCode(RngState128 state) => (state.s0 ^ state.s1).GetHashCode();
-        public static string ToString(RngState128 state) => FormattableString.Invariant($"{nameof(RngState128)}[S0 = {state.s0}, S1 = {state.s1}]");
+        public static string ToString(RngState128 state) => Invariant($"{nameof(RngState128)}[S0 = {state.s0}, S1 = {state.s1}]");
 
         public static bool operator ==(RngState128 first, RngState128 second) => Equals(first, second);
         public static bool operator !=(RngState128 first, RngState128 second) => !Equals(first, second);
