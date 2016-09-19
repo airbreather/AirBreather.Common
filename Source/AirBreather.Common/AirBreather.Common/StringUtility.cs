@@ -63,7 +63,7 @@ namespace AirBreather
             uint[] result = new uint[256];
             for (int i = 0; i < result.Length; i++)
             {
-                string s = i.ToString("X2");
+                string s = i.ToString("x2");
                 result[i] = BitConverter.IsLittleEndian
                     ? s[0] + ((uint)s[1] << 16)
                     : s[1] + ((uint)s[0] << 16);
