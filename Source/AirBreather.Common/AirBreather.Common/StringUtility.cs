@@ -74,12 +74,29 @@ namespace AirBreather
 
         public static unsafe string ByteArrayToHexString(this byte[] bytes)
         {
-            string result = new string(default(char), bytes.ValidateNotNull(nameof(bytes)).Length * 2);
+            if (bytes.ValidateNotNull(nameof(bytes)).Length == 0)
+            {
+                return String.Empty;
+            }
+
+            fixed (byte* bytesPtr = bytes)
+            {
+                return BytesToHexStringUnsafeCore(bytesPtr, bytes.Length);
+            }
+        }
+
+        public static unsafe string BytesToHexStringUnsafe(byte* bytes, int cnt) => cnt.ValidateNotLessThan(nameof(cnt), 0) == 0
+            ? String.Empty
+            : BytesToHexStringUnsafeCore(bytes, cnt);
+
+        private static unsafe string BytesToHexStringUnsafeCore(byte* bytes, int cnt)
+        {
+            string result = new string(default(char), cnt * 2);
             fixed (uint* byteToHexPtr = byteToHex32Lookup)
             fixed (char* resultCharPtr = result)
             {
                 uint* resultUInt32Ptr = (uint*)resultCharPtr;
-                for (int i = 0; i < bytes.Length; i++)
+                for (int i = 0; i < cnt; i++)
                 {
                     resultUInt32Ptr[i] = byteToHexPtr[bytes[i]];
                 }
