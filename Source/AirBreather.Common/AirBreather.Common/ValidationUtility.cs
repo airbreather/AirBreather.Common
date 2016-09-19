@@ -245,7 +245,7 @@ namespace AirBreather
             return value;
         }
 
-        #endregion Primitives
+        #endregion ValidateNotLessThan
 
         #endregion Primitives
     }
