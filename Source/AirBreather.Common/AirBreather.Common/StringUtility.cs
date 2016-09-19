@@ -65,8 +65,8 @@ namespace AirBreather
             {
                 string s = i.ToString("x2");
                 result[i] = BitConverter.IsLittleEndian
-                    ? s[0] + ((uint)s[1] << 16)
-                    : s[1] + ((uint)s[0] << 16);
+                    ? s[0] | ((uint)s[1] << 16)
+                    : s[1] | ((uint)s[0] << 16);
             }
 
             return result;
