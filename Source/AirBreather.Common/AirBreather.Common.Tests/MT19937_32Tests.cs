@@ -45,24 +45,6 @@ namespace AirBreather.Tests
                 Assert.Equal(expectedResults[i], BitConverter.ToUInt32(buf, i * 4));
             }
 
-            // Now, repeat the same for the extension method.
-            state = new MT19937_32State(5489);
-            uint[] typedBuf = new uint[expectedResults.Length];
-            for (int i = 0; i < expectedResults.Length; i++)
-            {
-                state = gen.FillBuffer(state, typedBuf, i, 1);
-                Assert.Equal(expectedResults[i], typedBuf[i]);
-            }
-
-            // again, all in one call
-            state = new MT19937_32State(5489);
-            typedBuf = new uint[expectedResults.Length];
-            state = gen.FillBuffer(state, typedBuf, 0, typedBuf.Length);
-            for (int i = 0; i < expectedResults.Length; i++)
-            {
-                Assert.Equal(expectedResults[i], typedBuf[i]);
-            }
-
             // Now, ensure that it throws if we're out of alignment.
             Assert.Throws<ArgumentException>("index", () => state = gen.FillBuffer(state, buf, 3, 4));
         }
