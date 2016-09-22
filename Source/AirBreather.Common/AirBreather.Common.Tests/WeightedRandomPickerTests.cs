@@ -39,7 +39,7 @@ namespace AirBreather.Tests
 
             var dct = valsWithWeights.Keys.ToDictionary(x => x, x => 0);
 
-            var rnd = new System.Random(new CryptographicRandomGenerator().NextInt32());
+            var rnd = new System.Random(CryptographicRandomGenerator.NextInt32());
             const int TrialCount = 100000;
             for (int i = 0; i < TrialCount; i++)
             {

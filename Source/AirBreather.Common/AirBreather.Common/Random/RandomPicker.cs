@@ -69,15 +69,14 @@ namespace AirBreather.Random
             int sample;
             lock (this.lockObject)
             {
-                int offset = this.nextOffset;
                 do
                 {
-                    if (offset == 0)
+                    if (this.nextOffset == 0)
                     {
                         this.rngState = this.rng.FillBuffer(this.rngState, this.buffer, 0, bufferLength);
                     }
 
-                    sample = BitConverter.ToInt32(this.buffer, offset);
+                    sample = BitConverter.ToInt32(this.buffer, this.nextOffset);
 
                     // range of sample is [Int32.MinValue, Int32.MaxValue].
                     // we need [0, Int32.MaxValue - rerollThreshold].
@@ -85,11 +84,9 @@ namespace AirBreather.Random
                     // it's silly to discard a perfectly good random bit,
                     // but it's even sillier to bend over backwards to save it.
                     sample &= 0x7FFFFFFF;
-                    offset = (offset + 4) % bufferLength;
+                    this.nextOffset = (this.nextOffset + 4) % bufferLength;
                 }
                 while (Int32.MaxValue - rerollThreshold < sample);
-
-                this.nextOffset = offset;
             }
 
             sample %= rangeSize;

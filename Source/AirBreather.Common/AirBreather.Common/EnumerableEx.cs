@@ -173,5 +173,7 @@ namespace AirBreather
             builder.Capacity = builder.Count;
             return builder.MoveToImmutable();
         }
+
+        public static IEnumerable<IndexTaggedValue<T>> TagIndexes<T>(this IEnumerable<T> source) => source.ValidateNotNull(nameof(source)).Select(IndexTaggedValue.Create);
     }
 }

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Globalization;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -8,18 +6,6 @@ namespace AirBreather
 {
     public static unsafe class StringUtility
     {
-        // spend a few megs to preallocate strings for "low" numeric values.
-        // the thresholds are exactly where they need to be in order for me
-        // not to need extra crap for types narrower than Int32.
-        private const int MinCachedString = -32768;
-
-        private const int MaxCachedString = 65536;
-
-        private static readonly string[] CachedStrings =
-            Enumerable.Range(MinCachedString, MaxCachedString - MinCachedString)
-                      .Select(i => i.ToString(CultureInfo.InvariantCulture))
-                      .ToArray();
-
         private static readonly Lazy<Regex> hexStringRegex = new Lazy<Regex>(() => new Regex("^([A-Fa-f0-9]{2})*$",
                                                                                              RegexOptions.CultureInvariant |
                                                                                              RegexOptions.Compiled |
@@ -40,6 +26,11 @@ namespace AirBreather
         // http://stackoverflow.com/a/17923942/1083771
         public static byte[] HexStringToByteArrayUnchecked(this string s)
         {
+            if (s.Length == 0)
+            {
+                return Array.Empty<byte>();
+            }
+
             byte[] bytes = new byte[s.Length / 2];
             for (int i = 0; i < bytes.Length; i++)
             {
@@ -49,7 +40,7 @@ namespace AirBreather
                 int lo = s[i * 2 + 1] - 65;
                 lo = lo + 10 + ((lo >> 31) & 7) & 0x0f;
 
-                bytes[i] = (byte)(lo | hi << 4);
+                bytes[i] = unchecked((byte)(lo | hi << 4));
             }
 
             return bytes;
@@ -104,21 +95,5 @@ namespace AirBreather
 
             return result;
         }
-
-        public static string ToInvariantString(this sbyte value) => CachedStrings[value - MinCachedString];
-
-        public static string ToInvariantString(this short value) => CachedStrings[value - MinCachedString];
-
-        public static string ToInvariantString(this int value) => value.IsInRange(MinCachedString, MaxCachedString) ? CachedStrings[unchecked(value - MinCachedString)] : value.ToString(CultureInfo.InvariantCulture);
-
-        public static string ToInvariantString(this long value) => value.IsInRange(MinCachedString, MaxCachedString) ? CachedStrings[unchecked(value - MinCachedString)] : value.ToString(CultureInfo.InvariantCulture);
-
-        public static string ToInvariantString(this byte value) => CachedStrings[value - MinCachedString];
-
-        public static string ToInvariantString(this ushort value) => CachedStrings[value - MinCachedString];
-
-        public static string ToInvariantString(this uint value) => value.IsInRange(0, MaxCachedString) ? CachedStrings[unchecked((int)value - MinCachedString)] : value.ToString(CultureInfo.InvariantCulture);
-
-        public static string ToInvariantString(this ulong value) => value.IsInRange(0, MaxCachedString) ? CachedStrings[unchecked((int)value - MinCachedString)] : value.ToString(CultureInfo.InvariantCulture);
     }
 }

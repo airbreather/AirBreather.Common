@@ -1,14 +1,28 @@
 ﻿namespace AirBreather.Random
 {
     /// <summary>
-    /// A generator of random data.  Rather than maintaining its own state, the state is maintained
-    /// outside of the generators.  This allows a single generator to be used from multiple threads
-    /// at once, and it gives callers more freedom for how to manage state than more common "the
-    /// generator maintains its own state" implementations.
+    /// A generator of pseudorandom data.  Rather than maintaining its own state, the state is
+    /// maintained outside of the generators.  This allows a single generator to be used from
+    /// multiple threads at once, and it gives callers more freedom for how to manage state than
+    /// more common "the generator maintains its own state" implementations.
     /// </summary>
     /// <typeparam name="TState">
     /// The type of <see cref="IRandomGeneratorState"/> that stores the state.
     /// </typeparam>
+    /// <remarks>
+    /// This is a bit of a "low-level" interface.  Callers must request chunk-sized blocks, mainly
+    /// because the implementations tend to be well-defined algorithms that should exactly match
+    /// counterparts in other languages which return one "chunk" (i.e., 64- or 32-bit integer) per
+    /// method call.  Callers must also request chunk-aligned blocks, because the implementations
+    /// tend to use unsafe code to eliminate what would otherwise involve extra allocations.  So,
+    /// supporting partial or unaligned chunks gets complicated, especially if we want this to be
+    /// fast and correct.  Furthermore, very few meaningful applications actually *need* streams of
+    /// pseudorandom bytes themselves, but rather streams of higher-level pseudorandom concepts like
+    /// "integer in range" or "random HLS / HSV color" that can be *produced* by reinterpreting a
+    /// stream of bytes a particular way.  Those services can build off of this kind of provider.
+    /// For these reasons, the "weirdness" of this interface should be isolated to providers of
+    /// intermediate pseudorandom services rather than applications themselves.
+    /// </remarks>
     public interface IRandomGenerator<TState> where TState: IRandomGeneratorState
     {
         /// <summary>

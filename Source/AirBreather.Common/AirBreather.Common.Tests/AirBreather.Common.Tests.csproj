@@ -56,7 +56,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WeightedRandomPickerTests.cs" />
     <Compile Include="XorShift128PlusTests.cs" />
-    <Compile Include="XorShift1024StarTests.cs" />
     <Compile Include="MT19937_64Tests.cs" />
   </ItemGroup>
   <ItemGroup>

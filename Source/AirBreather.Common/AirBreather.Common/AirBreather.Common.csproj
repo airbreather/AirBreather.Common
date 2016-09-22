@@ -60,6 +60,8 @@
     <Compile Include="Collections\ReadOnlyListWrapper.cs" />
     <Compile Include="DisposableObject.cs" />
     <Compile Include="Collections\ObjectReferenceEqualityComparer.cs" />
+    <Compile Include="IndexTaggedValue.cs" />
+    <Compile Include="IO\AsyncFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Random\BclPseudoRandomPicker.cs" />
     <Compile Include="Random\IPicker.cs" />
@@ -92,7 +94,6 @@
     <Compile Include="Collections\HashSetValue.cs" />
     <Compile Include="Collections\SortedSetValue.cs" />
     <Compile Include="ValidationUtility.cs" />
-    <Compile Include="TaskUtility.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\Extensions.cs" />
     <Compile Include="Logging\ILoggerFactory.cs" />
