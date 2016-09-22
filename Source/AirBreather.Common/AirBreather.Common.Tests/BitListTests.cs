@@ -127,9 +127,7 @@ namespace AirBreather.Tests
             const int BoolCount = ByteCount * 8;
             const int ArrayOffset = 3871;
 
-            byte[] someStuff = new byte[ByteCount];
-
-            CryptographicRandomGenerator.FillBuffer(someStuff);
+            byte[] someStuff = CryptographicRandomGenerator.GetBuffer(ByteCount);
 
             BitList bl = new BitList();
             foreach (byte val in someStuff)
@@ -151,9 +149,7 @@ namespace AirBreather.Tests
         {
             const int ByteCount = 1927;
 
-            byte[] someStuff = new byte[ByteCount];
-
-            CryptographicRandomGenerator.FillBuffer(someStuff);
+            byte[] someStuff = CryptographicRandomGenerator.GetBuffer(ByteCount);
 
             BitList bl = new BitList();
             foreach (byte val in someStuff)
@@ -178,9 +174,7 @@ namespace AirBreather.Tests
         [InlineData(32 * 12 + 19)]
         public void CopyFromBitArrayShouldWork(int byteCount)
         {
-            byte[] someStuff = new byte[byteCount];
-
-            CryptographicRandomGenerator.FillBuffer(someStuff);
+            byte[] someStuff = CryptographicRandomGenerator.GetBuffer(byteCount);
 
             BitArray ba = new BitArray(someStuff);
             BitList bl = new BitList(ba);
