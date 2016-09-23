@@ -75,6 +75,7 @@
     <Compile Include="Random\XorShift128Plus.cs" />
     <Compile Include="Random\XorShift1024Star.cs" />
     <Compile Include="Random\MT19937_64.cs" />
+    <Compile Include="StreamUtility.cs" />
     <Compile Include="UnmanagedResourceContainer.cs" />
     <Compile Include="ComparableUtility.cs" />
     <Compile Include="EnumerableEx.cs" />
