@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,5 +43,24 @@ namespace AirBreather.IO
         public static FileStream CreateSequential(string path) => Create(path, extraOptions: FileOptions.SequentialScan);
 
         public static FileStream Create(string path, FileOptions extraOptions) => new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.None, PrimaryBufferSize, FileOptions.Asynchronous | extraOptions);
+
+        public static Task<byte[]> ReadAllBytesAsync(string path) => ReadAllBytesAsync(path, CancellationToken.None);
+
+        public static async Task<byte[]> ReadAllBytesAsync(string path, CancellationToken cancellationToken)
+        {
+            using (FileStream sourceStream = OpenReadSequential(path))
+            {
+                long longLen = sourceStream.Length;
+                if (longLen > Int32.MaxValue)
+                {
+                    throw new IOException("Too long (supports no more than 2 GB).");
+                }
+
+                int len = unchecked((int)longLen);
+                byte[] buf = new byte[len];
+                await sourceStream.LoopedReadAsync(buf, 0, len, cancellationToken).ConfigureAwait(false);
+                return buf;
+            }
+        }
     }
 }

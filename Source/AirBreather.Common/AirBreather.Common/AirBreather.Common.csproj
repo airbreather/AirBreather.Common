@@ -38,15 +38,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable, Version=1.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\..\..\StepperUpper\packages\System.Collections.Immutable.1.2.0\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="System.Collections.Immutable">
-      <HintPath>..\..\..\External\System.Collections.Immutable.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Boxes.cs" />
@@ -54,6 +55,7 @@
     <Compile Include="Collections\BitList.cs" />
     <Compile Include="Collections\CallbackComparer.cs" />
     <Compile Include="Collections\ReadOnlyListSegment.cs" />
+    <Compile Include="Collections\SlimList.cs" />
     <Compile Include="Collections\StringPool.cs" />
     <Compile Include="Collections\ReadOnlyCollectionWrapper.cs" />
     <Compile Include="Collections\ReadOnlyDictionaryWrapper.cs" />
@@ -100,6 +102,9 @@
     <Compile Include="Logging\ILoggerFactory.cs" />
     <Compile Include="Logging\Log.cs" />
     <Compile Include="Logging\DumbLoggerFactory.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
