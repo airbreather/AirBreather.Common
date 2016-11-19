@@ -33,6 +33,9 @@ namespace AirBreather
             return enumerable.Where(x => !predicate(x));
         }
 
+        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IDictionary<TKey, TValue> dictionary) => ToDictionary(dictionary, null);
+        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey> equalityComparer) => new Dictionary<TKey, TValue>(dictionary.ValidateNotNull(nameof(dictionary)), equalityComparer);
+
         public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable) => ToHashSet(enumerable, null);
         public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable, IEqualityComparer<T> equalityComparer) => new HashSet<T>(enumerable.ValidateNotNull(nameof(enumerable)), equalityComparer);
 
