@@ -11,8 +11,6 @@ namespace AirBreather.Random
 
         private readonly byte[] buffer;
 
-        private readonly object lockObject = new object();
-
         private TState rngState;
 
         private int nextOffset;
@@ -41,15 +39,8 @@ namespace AirBreather.Random
 
         public int PickFromRange(int minValueInclusive, int rangeSize)
         {
-            if (rangeSize < 1)
-            {
-                throw new ArgumentOutOfRangeException(nameof(rangeSize), rangeSize, "Must be positive");
-            }
-
-            if (Int32.MaxValue - rangeSize < minValueInclusive)
-            {
-                throw new ArgumentOutOfRangeException(nameof(minValueInclusive), minValueInclusive, "Must be small enough to avoid overflow");
-            }
+            rangeSize.ValidateNotLessThan(nameof(rangeSize), 1);
+            (Int32.MaxValue - rangeSize).ValidateNotLessThan(nameof(minValueInclusive), minValueInclusive);
 
             int bufferLength = this.buffer.Length;
 
@@ -67,7 +58,7 @@ namespace AirBreather.Random
             // can't add 1 to Int32.MaxValue.
             int rerollThreshold = ((Int32.MaxValue % rangeSize) + 1) % rangeSize;
             int sample;
-            lock (this.lockObject)
+            lock (this.buffer)
             {
                 do
                 {

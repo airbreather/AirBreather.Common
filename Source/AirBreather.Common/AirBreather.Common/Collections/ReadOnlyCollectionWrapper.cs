@@ -8,10 +8,7 @@ namespace AirBreather.Collections
     {
         private readonly IReadOnlyCollection<T> wrappedCollection;
 
-        public ReadOnlyCollectionWrapper(IReadOnlyCollection<T> collection)
-        {
-            this.wrappedCollection = collection.ValidateNotNull(nameof(collection));
-        }
+        public ReadOnlyCollectionWrapper(IReadOnlyCollection<T> collection) => this.wrappedCollection = collection.ValidateNotNull(nameof(collection));
 
         public bool IsReadOnly => true;
         public int Count => this.wrappedCollection.Count;
@@ -23,20 +20,9 @@ namespace AirBreather.Collections
 
         #region Unsupported (Read-Only)
 
-        void ICollection<T>.Add(T item)
-        {
-            throw new NotSupportedException();
-        }
-
-        void ICollection<T>.Clear()
-        {
-            throw new NotSupportedException();
-        }
-
-        bool ICollection<T>.Remove(T item)
-        {
-            throw new NotSupportedException();
-        }
+        void ICollection<T>.Add(T item) => throw new NotSupportedException();
+        void ICollection<T>.Clear() => throw new NotSupportedException();
+        bool ICollection<T>.Remove(T item) => throw new NotSupportedException();
 
         #endregion
     }

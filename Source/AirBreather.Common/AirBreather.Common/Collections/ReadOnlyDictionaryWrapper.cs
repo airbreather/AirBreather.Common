@@ -8,10 +8,7 @@ namespace AirBreather.Collections
     {
         private readonly IReadOnlyDictionary<TKey, TValue> wrappedDictionary;
 
-        public ReadOnlyDictionaryWrapper(IReadOnlyDictionary<TKey, TValue> dictionary)
-        {
-            this.wrappedDictionary = dictionary.ValidateNotNull(nameof(dictionary));
-        }
+        public ReadOnlyDictionaryWrapper(IReadOnlyDictionary<TKey, TValue> dictionary) => this.wrappedDictionary = dictionary.ValidateNotNull(nameof(dictionary));
 
         public bool IsReadOnly => true;
         public int Count => this.wrappedDictionary.Count;
@@ -21,32 +18,13 @@ namespace AirBreather.Collections
         public IEnumerable<TKey> Keys => this.wrappedDictionary.Keys;
         public IEnumerable<TValue> Values => this.wrappedDictionary.Values;
 
-        ICollection<TKey> IDictionary<TKey, TValue>.Keys
-        {
-            get
-            {
-                IEnumerable<TKey> result = this.wrappedDictionary.Keys;
-                return result == null
-                    ? null
-                    : result as ICollection<TKey> ?? result.ToList();
-            }
-        }
-
-        ICollection<TValue> IDictionary<TKey, TValue>.Values
-        {
-            get
-            {
-                IEnumerable<TValue> result = this.wrappedDictionary.Values;
-                return result == null
-                    ? null
-                    : result as ICollection<TValue> ?? result.ToList();
-            }
-        }
+        ICollection<TKey> IDictionary<TKey, TValue>.Keys => AsCollection(this.wrappedDictionary.Keys);
+        ICollection<TValue> IDictionary<TKey, TValue>.Values => AsCollection(this.wrappedDictionary.Values);
 
         TValue IDictionary<TKey, TValue>.this[TKey key]
         {
-            get { return this[key]; }
-            set { throw new NotSupportedException(); }
+            get => this[key];
+            set => throw new NotSupportedException();
         }
 
         public bool Contains(KeyValuePair<TKey, TValue> item) => this.wrappedDictionary.Contains(item);
@@ -58,31 +36,14 @@ namespace AirBreather.Collections
 
         #region Unsupported (Read-Only)
 
-        void IDictionary<TKey, TValue>.Add(TKey key, TValue value)
-        {
-            throw new NotSupportedException();
-        }
-
-        void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item)
-        {
-            throw new NotSupportedException();
-        }
-
-        bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
-        {
-            throw new NotSupportedException();
-        }
-
-        bool IDictionary<TKey, TValue>.Remove(TKey key)
-        {
-            throw new NotSupportedException();
-        }
-
-        void ICollection<KeyValuePair<TKey, TValue>>.Clear()
-        {
-            throw new NotSupportedException();
-        }
+        void IDictionary<TKey, TValue>.Add(TKey key, TValue value) => throw new NotSupportedException();
+        void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => throw new NotSupportedException();
+        bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) => throw new NotSupportedException();
+        bool IDictionary<TKey, TValue>.Remove(TKey key) => throw new NotSupportedException();
+        void ICollection<KeyValuePair<TKey, TValue>>.Clear() => throw new NotSupportedException();
 
         #endregion
+
+        private static ICollection<T> AsCollection<T>(IEnumerable<T> seq) => (seq as ICollection<T>) ?? seq?.ToList();
     }
 }

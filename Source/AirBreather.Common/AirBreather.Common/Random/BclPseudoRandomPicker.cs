@@ -15,24 +15,14 @@ namespace AirBreather.Random
         private readonly object lockObject = new object();
 
         // Unlike System.Random, a seed MUST be provided explicitly.
-        public BclPseudorandomPicker(int seed)
-        {
-            this.random = new BclRandom(seed);
-        }
+        public BclPseudorandomPicker(int seed) => this.random = new BclRandom(seed);
 
         public int PickFromRange(int minValueInclusive, int rangeSize)
         {
             // System.Random also permits 0, which is ridiculous
             // because it's a special-case that doesn't need to exist.
-            if (rangeSize < 1)
-            {
-                throw new ArgumentOutOfRangeException(nameof(rangeSize), rangeSize, "Must be positive");
-            }
-
-            if (minValueInclusive > Int32.MaxValue - rangeSize)
-            {
-                throw new ArgumentOutOfRangeException(nameof(minValueInclusive), minValueInclusive, "Must be small enough to avoid overflow");
-            }
+            rangeSize.ValidateNotLessThan(nameof(rangeSize), 1);
+            (Int32.MaxValue - rangeSize).ValidateNotLessThan(nameof(minValueInclusive), minValueInclusive);
 
             int pick;
 

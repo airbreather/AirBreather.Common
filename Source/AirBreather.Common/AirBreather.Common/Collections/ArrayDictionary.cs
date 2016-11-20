@@ -7,10 +7,7 @@ namespace AirBreather.Collections
     {
         private readonly T[] array;
 
-        public ArrayDictionary(T[] array)
-        {
-            this.array = array.ValidateNotNull(nameof(array));
-        }
+        public ArrayDictionary(T[] array) => this.array = array.ValidateNotNull(nameof(array));
 
         public T this[int key] => this.array[key.ValidateInRange(nameof(key), 0, this.array.Length)];
 

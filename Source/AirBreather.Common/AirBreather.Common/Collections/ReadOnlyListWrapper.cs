@@ -8,10 +8,7 @@ namespace AirBreather.Collections
     {
         private readonly IReadOnlyList<T> wrappedList;
 
-        public ReadOnlyListWrapper(IReadOnlyList<T> list)
-        {
-            this.wrappedList = list.ValidateNotNull(nameof(list));
-        }
+        public ReadOnlyListWrapper(IReadOnlyList<T> list) => this.wrappedList = list.ValidateNotNull(nameof(list));
 
         public bool IsReadOnly => true;
         public int Count => this.wrappedList.Count;
@@ -33,8 +30,8 @@ namespace AirBreather.Collections
 
         T IList<T>.this[int index]
         {
-            get { return this[index]; }
-            set { throw new NotSupportedException(); }
+            get => this[index];
+            set => throw new NotSupportedException();
         }
 
         public bool Contains(T item) => this.wrappedList.Contains(item);
@@ -44,30 +41,11 @@ namespace AirBreather.Collections
 
         #region Unsupported (Read-Only)
 
-        void ICollection<T>.Add(T item)
-        {
-            throw new NotSupportedException();
-        }
-
-        void ICollection<T>.Clear()
-        {
-            throw new NotSupportedException();
-        }
-
-        bool ICollection<T>.Remove(T item)
-        {
-            throw new NotSupportedException();
-        }
-
-        void IList<T>.Insert(int index, T item)
-        {
-            throw new NotSupportedException();
-        }
-
-        void IList<T>.RemoveAt(int index)
-        {
-            throw new NotSupportedException();
-        }
+        void ICollection<T>.Add(T item) => throw new NotSupportedException();
+        void ICollection<T>.Clear() => throw new NotSupportedException();
+        bool ICollection<T>.Remove(T item) => throw new NotSupportedException();
+        void IList<T>.Insert(int index, T item) => throw new NotSupportedException();
+        void IList<T>.RemoveAt(int index) => throw new NotSupportedException();
 
         #endregion
     }

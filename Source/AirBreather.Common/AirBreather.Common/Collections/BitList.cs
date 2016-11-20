@@ -12,17 +12,11 @@ namespace AirBreather.Collections
 
         private int version;
 
-        public BitList()
-        {
-            this.values = Empty;
-        }
+        public BitList() => this.values = Empty;
 
-        public BitList(int capacity)
-        {
-            this.values = capacity.ValidateNotLessThan(nameof(capacity), 0) == 0
-                ? Empty
-                : new BitArray(capacity);
-        }
+        public BitList(int capacity) => this.values = capacity.ValidateNotLessThan(nameof(capacity), 0) == 0
+            ? Empty
+            : new BitArray(capacity);
 
         public BitList(BitArray bitArray)
         {
@@ -61,10 +55,7 @@ namespace AirBreather.Collections
 
         public int Capacity
         {
-            get
-            {
-                return this.values.Length;
-            }
+            get => this.values.Length;
 
             set
             {
@@ -91,10 +82,7 @@ namespace AirBreather.Collections
 
         public bool this[int index]
         {
-            get
-            {
-                return this.values[index.ValidateInRange(nameof(index), 0, this.Count)];
-            }
+            get => this.values[index.ValidateInRange(nameof(index), 0, this.Count)];
 
             set
             {
@@ -358,19 +346,11 @@ namespace AirBreather.Collections
                 return true;
             }
 
-            public void Reset()
-            {
-                if (this.version != this.lst.version)
-                {
-                    throw new InvalidOperationException("Collection was modified during enumeration.");
-                }
+            public void Reset() => this.currIndex = this.version == this.lst.version
+                ? 0
+                : throw new InvalidOperationException("Collection was modified during enumeration.");
 
-                this.currIndex = 0;
-            }
-
-            void IDisposable.Dispose()
-            {
-            }
+            void IDisposable.Dispose() { }
         }
     }
 }

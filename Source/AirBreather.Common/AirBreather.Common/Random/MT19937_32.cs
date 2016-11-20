@@ -204,56 +204,55 @@ namespace AirBreather.Random
                 throw new ArgumentException("State is not valid; use the parameterized constructor to initialize a new instance with the given seed values.", nameof(state));
             }
 
-            FillBufferCore(ref state, buffer, index, count);
-            return state;
-        }
-
-        private static unsafe void FillBufferCore(ref MT19937_32State state, byte[] buffer, int index, int count)
-        {
             state = new MT19937_32State(state);
+            FillBufferCore();
+            return state;
 
-            fixed (uint* fData = state.data)
-            fixed (byte* fbuf = buffer)
+            unsafe void FillBufferCore()
             {
-                // count has already been validated to be a multiple of ChunkSize,
-                // and so has index, so we can do this fanciness without fear.
-                uint* pbuf = (uint*)(fbuf + index);
-                uint* pend = pbuf + (count / ChunkSize);
-                while (pbuf < pend)
+                fixed (uint* fData = state.data)
+                fixed (byte* fbuf = buffer)
                 {
-                    if (state.idx == 624)
+                    // count has already been validated to be a multiple of ChunkSize,
+                    // and so has index, so we can do this fanciness without fear.
+                    uint* pbuf = (uint*)(fbuf + index);
+                    uint* pend = pbuf + (count / ChunkSize);
+                    while (pbuf < pend)
                     {
-                        Twist(fData);
-                        state.idx = 0;
+                        if (state.idx == 624)
+                        {
+                            Twist(fData);
+                            state.idx = 0;
+                        }
+
+                        uint x = fData[state.idx++];
+
+                        x ^= (x >> 11);
+                        x ^= (x << 7) & 0x9D2C5680;
+                        x ^= (x << 15) & 0xEFC60000;
+                        x ^= (x >> 18);
+
+                        *(pbuf++) = x;
                     }
-
-                    uint x = fData[state.idx++];
-
-                    x ^= (x >> 11);
-                    x ^= (x << 7) & 0x9D2C5680;
-                    x ^= (x << 15) & 0xEFC60000;
-                    x ^= (x >> 18);
-
-                    *(pbuf++) = x;
                 }
-            }
-        }
 
-        private static unsafe void Twist(uint* vals)
-        {
-            const uint Upper01 = 0x80000000;
-            const uint Lower31 = 0x7FFFFFFF;
+                unsafe void Twist(uint* vals)
+                {
+                    const uint Upper01 = 0x80000000;
+                    const uint Lower31 = 0x7FFFFFFF;
 
-            for (int curr = 0; curr < 624; curr++)
-            {
-                int near = (curr + 1) % 624;
-                int far = (curr + 397) % 624;
+                    for (int curr = 0; curr < 624; curr++)
+                    {
+                        int near = (curr + 1) % 624;
+                        int far = (curr + 397) % 624;
 
-                uint x = vals[curr] & Upper01;
-                uint y = vals[near] & Lower31;
-                uint z = vals[far] ^ ((x | y) >> 1);
+                        uint x = vals[curr] & Upper01;
+                        uint y = vals[near] & Lower31;
+                        uint z = vals[far] ^ ((x | y) >> 1);
 
-                vals[curr] = z ^ ((y & 1) * 0x9908B0DF);
+                        vals[curr] = z ^ ((y & 1) * 0x9908B0DF);
+                    }
+                }
             }
         }
     }

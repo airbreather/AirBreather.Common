@@ -7,25 +7,13 @@ namespace AirBreather
     {
         private readonly Dictionary<TKey, ModifiableGrouping> backingStore;
 
-        public ModifiableLookup()
-        {
-            this.backingStore = new Dictionary<TKey, ModifiableGrouping>();
-        }
+        public ModifiableLookup() => this.backingStore = new Dictionary<TKey, ModifiableGrouping>();
 
-        public ModifiableLookup(IEqualityComparer<TKey> keyComparer)
-        {
-            this.backingStore = new Dictionary<TKey, ModifiableGrouping>(keyComparer);
-        }
+        public ModifiableLookup(IEqualityComparer<TKey> keyComparer) => this.backingStore = new Dictionary<TKey, ModifiableGrouping>(keyComparer);
 
-        public ModifiableLookup(int capacity)
-        {
-            this.backingStore = new Dictionary<TKey, ModifiableGrouping>(capacity);
-        }
+        public ModifiableLookup(int capacity) => this.backingStore = new Dictionary<TKey, ModifiableGrouping>(capacity);
 
-        public ModifiableLookup(int capacity, IEqualityComparer<TKey> keyComparer)
-        {
-            this.backingStore = new Dictionary<TKey, ModifiableGrouping>(capacity, keyComparer);
-        }
+        public ModifiableLookup(int capacity, IEqualityComparer<TKey> keyComparer) => this.backingStore = new Dictionary<TKey, ModifiableGrouping>(capacity, keyComparer);
 
         public void Add(TKey key, TValue value)
         {
@@ -92,16 +80,10 @@ namespace AirBreather
         public bool Contains(TKey key) => this.backingStore.ContainsKey(key);
         public int Count => this.backingStore.Count;
 
-        public IEnumerable<TValue> this[TKey index]
-        {
-            get
-            {
-                ModifiableGrouping grouping;
-                return this.backingStore.TryGetValue(index, out grouping)
-                    ? grouping
-                    : Enumerable.Empty<TValue>();
-            }
-        }
+        public IEnumerable<TValue> this[TKey index] =>
+            this.backingStore.TryGetValue(index, out var grouping)
+                ? grouping
+                : Enumerable.Empty<TValue>();
 
         public IEnumerator<IGrouping<TKey, TValue>> GetEnumerator() => this.backingStore.Values.GetEnumerator();
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();

@@ -7,10 +7,7 @@ namespace AirBreather.Collections
     {
         private readonly ISet<T> set;
 
-        public ReadOnlySet(ISet<T> set)
-        {
-            this.set = set.ValidateNotNull(nameof(set));
-        }
+        public ReadOnlySet(ISet<T> set) => this.set = set.ValidateNotNull(nameof(set));
 
         public bool IsReadOnly => true;
         public int Count => this.set.Count;
@@ -28,45 +25,14 @@ namespace AirBreather.Collections
 
         #region Unsupported (Read-Only)
 
-        bool ISet<T>.Add(T item)
-        {
-            throw new NotSupportedException("Set is read-only.");
-        }
-
-        void ICollection<T>.Add(T item)
-        {
-            throw new NotSupportedException("Set is read-only.");
-        }
-
-        void ISet<T>.UnionWith(IEnumerable<T> other)
-        {
-            throw new NotSupportedException("Set is read-only.");
-        }
-
-        void ISet<T>.IntersectWith(IEnumerable<T> other)
-        {
-            throw new NotSupportedException("Set is read-only.");
-        }
-
-        void ISet<T>.ExceptWith(IEnumerable<T> other)
-        {
-            throw new NotSupportedException("Set is read-only.");
-        }
-
-        void ISet<T>.SymmetricExceptWith(IEnumerable<T> other)
-        {
-            throw new NotSupportedException("Set is read-only.");
-        }
-
-        void ICollection<T>.Clear()
-        {
-            throw new NotSupportedException("Set is read-only.");
-        }
-
-        bool ICollection<T>.Remove(T item)
-        {
-            throw new NotSupportedException("Set is read-only.");
-        }
+        bool ISet<T>.Add(T item) => throw new NotSupportedException("Set is read-only.");
+        void ICollection<T>.Add(T item) => throw new NotSupportedException("Set is read-only.");
+        void ISet<T>.UnionWith(IEnumerable<T> other) => throw new NotSupportedException("Set is read-only.");
+        void ISet<T>.IntersectWith(IEnumerable<T> other) => throw new NotSupportedException("Set is read-only.");
+        void ISet<T>.ExceptWith(IEnumerable<T> other) => throw new NotSupportedException("Set is read-only.");
+        void ISet<T>.SymmetricExceptWith(IEnumerable<T> other) => throw new NotSupportedException("Set is read-only.");
+        void ICollection<T>.Clear() => throw new NotSupportedException("Set is read-only.");
+        bool ICollection<T>.Remove(T item) => throw new NotSupportedException("Set is read-only.");
 
         #endregion
     }

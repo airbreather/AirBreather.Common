@@ -12,16 +12,10 @@ namespace AirBreather
                                                                                              RegexOptions.ExplicitCapture),
                                                                              LazyThreadSafetyMode.PublicationOnly);
 
-        public static byte[] HexStringToByteArrayChecked(this string s)
-        {
-            s.ValidateNotNull(nameof(s));
-            if (!hexStringRegex.Value.IsMatch(s))
-            {
-                throw new ArgumentException("Must provide a hex string.", nameof(s));
-            }
-
-            return s.HexStringToByteArrayUnchecked();
-        }
+        public static byte[] HexStringToByteArrayChecked(this string s) =>
+            hexStringRegex.Value.IsMatch(s.ValidateNotNull(nameof(s)))
+                ? s.HexStringToByteArrayUnchecked()
+                : throw new ArgumentException("Must provide a hex string.", nameof(s));
 
         // http://stackoverflow.com/a/17923942/1083771
         public static byte[] HexStringToByteArrayUnchecked(this string s)

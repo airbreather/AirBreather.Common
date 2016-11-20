@@ -104,27 +104,26 @@ namespace AirBreather.Random
                 throw new ArgumentException("State is not valid; use the parameterized constructor to initialize a new instance with the given seed values.", nameof(state));
             }
 
-            return FillBufferCore(state, buffer, index, count);
-        }
-
-        private static unsafe RngState128 FillBufferCore(RngState128 state, byte[] buffer, int index, int count)
-        {
-            fixed (byte* fbuf = buffer)
+            unsafe void FillBufferCore()
             {
-                // count has already been validated to be a multiple of ChunkSize,
-                // and so has index, so we can do this fanciness without fear.
-                ulong* pbuf = (ulong*)(fbuf + index);
-                ulong* pend = pbuf + (count / ChunkSize);
-                while (pbuf < pend)
+                fixed (byte* fbuf = buffer)
                 {
-                    *(pbuf++) = unchecked(state.s0 + state.s1);
+                    // count has already been validated to be a multiple of ChunkSize,
+                    // and so has index, so we can do this fanciness without fear.
+                    ulong* pbuf = (ulong*)(fbuf + index);
+                    ulong* pend = pbuf + (count / ChunkSize);
+                    while (pbuf < pend)
+                    {
+                        *(pbuf++) = unchecked(state.s0 + state.s1);
 
-                    ulong t = state.s0 ^ state.s1;
-                    state.s0 = ((state.s0 << 55) | (state.s0 >> 9)) ^ t ^ (t << 14);
-                    state.s1 = (t << 36) | (t >> 28);
+                        ulong t = state.s0 ^ state.s1;
+                        state.s0 = ((state.s0 << 55) | (state.s0 >> 9)) ^ t ^ (t << 14);
+                        state.s1 = (t << 36) | (t >> 28);
+                    }
                 }
             }
 
+            FillBufferCore();
             return state;
         }
     }

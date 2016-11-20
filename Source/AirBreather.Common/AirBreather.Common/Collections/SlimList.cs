@@ -5,57 +5,59 @@ using System.Linq;
 
 namespace AirBreather.Collections
 {
+    /// <summary>
+    /// A slimmer analog of <see cref="List{T}"/> that tries to optimize for minimum size overhead
+    /// beyond <c>T[]</c>, while still providing the same core functionality.  This can have a speed
+    /// cost (compared to equivalent <see cref="List{T}"/> usage) when used naively, and it can be
+    /// more dangerous because it intentionally skips "modified while iterating" checks.
+    /// </summary>
+    /// <typeparam name="T">
+    /// The type of element stored in the list.
+    /// </typeparam>
+    /// <remarks>
+    /// This is almost entirely untested at this point.
+    /// </remarks>
     public sealed class SlimList<T> : IList<T>, IReadOnlyList<T>
     {
         private T[] arr = Array.Empty<T>();
 
-        private int pos;
+        public SlimList() { }
 
-        public SlimList()
-        {
-        }
+        public SlimList(int capacity) => this.arr = new T[capacity];
 
-        public SlimList(int capacity)
-        {
-            this.arr = new T[capacity];
-        }
-
-        public SlimList(IEnumerable<T> items)
-        {
-            this.arr = items.ToArray();
-            this.pos = this.arr.Length;
-        }
+        public SlimList(IEnumerable<T> items) => this.AddRange(items.ValidateNotNull(nameof(items)));
 
         public T this[int index]
         {
-            get { return this.arr[index]; }
-            set { this.arr[index] = value; }
+            get => this.arr[index];
+            set => this.arr[index] = value;
         }
 
-        public int Count => this.pos;
+        public T[] DangerousCurrentArray => this.arr;
+
+        public int Count { get; private set; }
 
         public int Capacity
         {
-            get { return this.arr.Length; }
-            set { Array.Resize(ref this.arr, value); }
+            get => this.arr.Length;
+            set => Array.Resize(ref this.arr, value);
         }
 
         bool ICollection<T>.IsReadOnly => false;
 
         public void Add(T item)
         {
-            if (this.pos++ == this.arr.Length)
+            if (this.Count++ == this.arr.Length)
             {
-                Array.Resize(ref this.arr, this.pos);
+                Array.Resize(ref this.arr, this.Count);
             }
 
-            this.arr[this.pos - 1] = item;
+            this.arr[this.Count - 1] = item;
         }
 
         public void AddRange(IEnumerable<T> items)
         {
-            int cnt;
-            if (!items.TryGetCount(out cnt))
+            if (!items.TryGetCount(out var cnt))
             {
                 // it's too inefficient to just add one-by-one.  just buffer it.
                 List<T> itemsList = items.ToList();
@@ -63,30 +65,29 @@ namespace AirBreather.Collections
                 cnt = itemsList.Count;
             }
 
-            if (this.pos + cnt > this.arr.Length)
+            int newCount = this.Count + cnt;
+            if (newCount > this.arr.Length)
             {
-                Array.Resize(ref this.arr, this.pos + cnt);
+                Array.Resize(ref this.arr, newCount);
             }
 
-            foreach (var item in items)
-            {
-                this.arr[this.pos++] = item;
-            }
+            items.CopyTo(this.arr, this.Count);
+            this.Count = newCount;
         }
 
         public void Clear()
         {
             this.arr = Array.Empty<T>();
-            this.pos = 0;
+            this.Count = 0;
         }
 
         public bool Contains(T item) => 0 <= this.IndexOf(item);
 
-        public void CopyTo(T[] array, int arrayIndex) => Array.Copy(this.arr, 0, array, arrayIndex, this.pos);
+        public void CopyTo(T[] array, int arrayIndex) => Array.Copy(this.arr, 0, array, arrayIndex, this.Count);
 
         public T Find(Predicate<T> pred)
         {
-            for (int i = 0; i < this.pos; i++)
+            for (int i = 0; i < this.Count; i++)
             {
                 if (pred(this.arr[i]))
                 {
@@ -101,25 +102,25 @@ namespace AirBreather.Collections
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => this.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-        public int IndexOf(T item) => Array.IndexOf(this.arr, item, 0, this.pos);
+        public int IndexOf(T item) => Array.IndexOf(this.arr, item, 0, this.Count);
 
         public void Insert(int index, T item)
         {
-            if (index == this.pos)
+            if (index == this.Count)
             {
                 this.Add(item);
                 return;
             }
 
-            if (this.pos++ == this.arr.Length)
+            if (this.Count++ == this.arr.Length)
             {
-                T[] newArr = new T[this.pos];
+                T[] newArr = new T[this.Count];
                 Array.Copy(this.arr, 0, newArr, 0, index);
-                Array.Copy(this.arr, index, newArr, index + 1, this.pos - index - 1);
+                Array.Copy(this.arr, index, newArr, index + 1, this.Count - index - 1);
             }
             else
             {
-                for (int i = this.pos - 2; i >= index; i--)
+                for (int i = this.Count - 2; i >= index; i--)
                 {
                     this.arr[i + 1] = this.arr[i];
                 }
@@ -142,17 +143,17 @@ namespace AirBreather.Collections
 
         public void RemoveAt(int index)
         {
-            if (index < --this.pos)
+            if (index < --this.Count)
             {
-                Array.Copy(this.arr, index + 1, this.arr, index, this.pos - index);
+                Array.Copy(this.arr, index + 1, this.arr, index, this.Count - index);
             }
 
-            this.arr[this.pos] = default(T);
+            this.arr[this.Count] = default(T);
         }
 
-        public void Sort(IComparer<T> comparer) => Array.Sort(this.arr, 0, this.pos, comparer);
+        public void Sort(IComparer<T> comparer) => Array.Sort(this.arr, 0, this.Count, comparer);
 
-        public void Trim() => Array.Resize(ref this.arr, this.pos);
+        public void Trim() => Array.Resize(ref this.arr, this.Count);
 
         public struct Enumerator : IEnumerator<T>
         {
@@ -163,11 +164,11 @@ namespace AirBreather.Collections
             internal Enumerator(SlimList<T> lst)
             {
                 this.lst = lst;
-                this.pos = 0;
+                this.pos = -1;
             }
 
-            public bool MoveNext() => this.pos < this.lst.pos &&
-                                      ++this.pos < this.lst.pos;
+            public bool MoveNext() => this.pos < this.lst.Count &&
+                                      ++this.pos < this.lst.Count;
 
             public T Current => this.lst[this.pos];
 
@@ -175,7 +176,7 @@ namespace AirBreather.Collections
 
             public void Dispose() { }
 
-            public void Reset() => this.pos = 0;
+            public void Reset() => this.pos = -1;
         }
     }
 }

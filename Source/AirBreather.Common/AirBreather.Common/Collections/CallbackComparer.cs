@@ -7,10 +7,7 @@ namespace AirBreather.Collections
     {
         private readonly Func<T, T, int> callback;
 
-        public CallbackComparer(Func<T, T, int> callback)
-        {
-            this.callback = callback.ValidateNotNull(nameof(callback));
-        }
+        public CallbackComparer(Func<T, T, int> callback) => this.callback = callback.ValidateNotNull(nameof(callback));
 
         public override int Compare(T x, T y) => this.callback(x, y);
     }

@@ -4,19 +4,13 @@ namespace AirBreather.Logging
 {
     public sealed class DumbLoggerFactory : ILoggerFactory
     {
-        public ILogger Create(string category)
-        {
-            return new DumbLogger(category);
-        }
+        public ILogger Create(string category) => new DumbLogger(category);
 
         private sealed class DumbLogger : ILogger
         {
             private readonly string category;
 
-            internal DumbLogger(string category)
-            {
-                this.category = category;
-            }
+            internal DumbLogger(string category) => this.category = category;
 
             public void Verbose(IFormatProvider formatProvider, string message, params object[] args) => Console.WriteLine(String.Format(formatProvider, "[Verbose] [" + this.category + "] " + message, args));
             public void Info(IFormatProvider formatProvider, string message, params object[] args) => Console.WriteLine(String.Format(formatProvider, "[Info] [" + this.category + "] " + message, args));

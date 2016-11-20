@@ -31,24 +31,14 @@ namespace AirBreather.Random
         {
             private readonly ImmutableList<WeightedItem> weightedItems = ImmutableList<WeightedItem>.Empty;
 
-            public Builder()
-            {
-            }
+            public Builder() { }
 
-            private Builder(ImmutableList<WeightedItem> weightedItems)
-            {
-                this.weightedItems = weightedItems;
-            }
+            private Builder(ImmutableList<WeightedItem> weightedItems) => this.weightedItems = weightedItems;
 
-            public Builder AddWithWeight(T item, double weight)
-            {
-                if (Double.IsNaN(weight) || Double.IsInfinity(weight) || weight <= 0)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(weight), weight, "weight must be reasonable (and positive non-zero).  come on, be nice, I was about to make this int and everything... I'm doing you a favor by letting you use doubles, and this is how you repay me?  that's it, I give up.");
-                }
-
-                return new Builder(this.weightedItems.Add(new WeightedItem(item, weight)));
-            }
+            public Builder AddWithWeight(T item, double weight) =>
+                Double.IsNaN(weight) || Double.IsInfinity(weight) || weight <= 0
+                    ? throw new ArgumentOutOfRangeException(nameof(weight), weight, "weight must be reasonable (and positive non-zero).  come on, be nice, I was about to make this int and everything... I'm doing you a favor by letting you use doubles, and this is how you repay me?  that's it, I give up.")
+                    : new Builder(this.weightedItems.Add(new WeightedItem(item, weight)));
 
             public WeightedRandomPicker<T> Build()
             {
@@ -90,6 +80,8 @@ namespace AirBreather.Random
             }
         }
 
+        // class, instead of just a named tuple, so that when we sort, we sort pointers instead of a
+        // 64-bit weight and whatever payload T is holding for us.
         private sealed class WeightedItem
         {
             internal WeightedItem(T item, double weight)
@@ -98,8 +90,8 @@ namespace AirBreather.Random
                 this.Weight = weight;
             }
 
-            internal T Item { get; set; }
-            internal double Weight { get; set; }
+            internal T Item { get; }
+            internal double Weight { get; }
         }
     }
 }

@@ -9,11 +9,7 @@ namespace AirBreather.Collections
     {
         private ImmutableSortedSet<T> values;
 
-        public SortedSetValue(IEnumerable<T> values)
-        {
-            values.ValidateNotNull(nameof(values));
-            this.values = values.ToImmutableSortedSet(Comparer<T>.Default);
-        }
+        public SortedSetValue(IEnumerable<T> values) => this.values = values.ValidateNotNull(nameof(values)).ToImmutableSortedSet(Comparer<T>.Default);
 
         public ImmutableSortedSet<T> UnderlyingSet => this.values ?? ImmutableSortedSet<T>.Empty;
         public int Count => this.UnderlyingSet.Count;

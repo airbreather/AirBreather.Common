@@ -78,12 +78,17 @@ namespace AirBreather
 
         public static void CopyTo<T>(this IEnumerable<T> enumerable, T[] array, int arrayIndex)
         {
+            if (enumerable is ICollection<T> coll)
+            {
+                coll.CopyTo(array, arrayIndex);
+                return;
+            }
+
             enumerable.ValidateNotNull(nameof(enumerable));
             array.ValidateNotNull(nameof(array));
             arrayIndex.ValidateInRange(nameof(arrayIndex), 0, array.Length);
 
-            int count;
-            bool prevalidate = enumerable.TryGetCount(out count);
+            bool prevalidate = enumerable.TryGetCount(out var count);
             if (prevalidate)
             {
                 if (array.Length - arrayIndex < count)
@@ -108,6 +113,12 @@ namespace AirBreather
         // than the other one, but it's still cheap and easy to do it this way.
         public static void CopyTo<T>(this IReadOnlyCollection<T> collection, T[] array, int arrayIndex)
         {
+            if (collection is ICollection<T> coll)
+            {
+                coll.CopyTo(array, arrayIndex);
+                return;
+            }
+
             collection.ValidateNotNull(nameof(collection));
             array.ValidateNotNull(nameof(array));
             arrayIndex.ValidateInRange(nameof(arrayIndex), 0, array.Length);
@@ -127,42 +138,38 @@ namespace AirBreather
         // Checks interfaces it could implement, in what I expect to be the optimal order.
         public static bool TryGetCount<T>(this IEnumerable<T> enumerable, out int count)
         {
-            // I think ICollection<T> is actually more likely than IReadOnlyCollection<T>, despite
-            // the former requiring more work to implement on top of IEnumerable<T> than the latter,
-            // because it's been around for several more years.  Furthermore, the fact that LINQ-to-
-            // Objects itself uses this and not IReadOnlyCollection<T> for its own optimizations is
-            // a pretty good incentive for someone to implement ICollection<T> when they can.
-            ICollection<T> collection = enumerable.ValidateNotNull(nameof(enumerable)) as ICollection<T>;
-            if (collection != null)
+            switch (enumerable.ValidateNotNull(nameof(enumerable)))
             {
-                count = collection.Count;
-                return true;
-            }
+                // I think ICollection<T> is actually more likely than IReadOnlyCollection<T>,
+                // despite the former requiring more work to implement on top of IEnumerable<T> than
+                // the latter, because it's been around for several more years.  Furthermore, the
+                // fact that LINQ-to-Objects itself uses this and not IReadOnlyCollection<T> for its
+                // own optimizations is a good incentive for someone to implement ICollection<T>
+                // when they can.
+                case ICollection<T> collection:
+                    count = collection.Count;
+                    return true;
 
-            // OK... so why ICollection next?  Seems more likely for someone to use one of the many
-            // types that implement ICollection but not ICollection<T> or IReadOnlyCollection<T>
-            // than it is for someone to be using a type that implements IReadOnlyCollection<T> but
-            // not ICollection<T> or ICollection, AND even *notice* the difference in the ordering
-            // of these calls (more likely, they've got a user-defined collection type that's got
-            // even slightly sub-optimal client code that, if optimized, would do literally millions
-            // of times better than switching this order).
-            System.Collections.ICollection legacyCollection = enumerable as System.Collections.ICollection;
-            if (legacyCollection != null)
-            {
-                count = legacyCollection.Count;
-                return true;
-            }
+                // OK... so why ICollection next?  Seems more likely for someone to use one of the
+                // types that implement ICollection but not ICollection<T> or IReadOnlyCollection<T>
+                // than it is for someone to be using a type that implements IReadOnlyCollection<T>
+                // but not ICollection<T> or ICollection, AND even *notice* the difference in the
+                // ordering of these calls (more likely, they've got a user-defined collection type
+                // that's got even slightly sub-optimal client code that, if optimized, would do
+                // literally millions of times better than switching this order).
+                case System.Collections.ICollection legacyCollection:
+                    count = legacyCollection.Count;
+                    return true;
 
-            IReadOnlyCollection<T> readOnlyCollection = enumerable as IReadOnlyCollection<T>;
-            if (readOnlyCollection != null)
-            {
-                count = readOnlyCollection.Count;
-                return true;
-            }
+                case IReadOnlyCollection<T> readOnlyCollection:
+                    count = readOnlyCollection.Count;
+                    return true;
 
-            // We've exhausted all the collection-with-Count-property interfaces that I care to do.
-            count = 0;
-            return false;
+                // We've exhausted all the collection-with-Count-property interfaces that I care to do.
+                default:
+                    count = 0;
+                    return false;
+            }
         }
 
         public static IEnumerable<T> Concat<T>(this IEnumerable<T> enumerable, params T[] values) => Enumerable.Concat(enumerable, values);
@@ -178,5 +185,7 @@ namespace AirBreather
         }
 
         public static IEnumerable<IndexTaggedValue<T>> TagIndexes<T>(this IEnumerable<T> source) => source.ValidateNotNull(nameof(source)).Select(IndexTaggedValue.Create);
+
+        public static IEnumerable<(T1 x1, T2 x2)> Zip<T1, T2>(this IEnumerable<T1> first, IEnumerable<T2> second) => Enumerable.Zip(first, second, (x1, x2) => (x1, x2));
     }
 }

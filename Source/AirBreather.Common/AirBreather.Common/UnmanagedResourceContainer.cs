@@ -21,27 +21,16 @@ namespace AirBreather
     {
         private readonly T resource;
 
-        protected UnmanagedResourceContainer(T resource)
-        {
-            this.resource = resource;
-        }
+        protected UnmanagedResourceContainer(T resource) => this.resource = resource;
 
-        ~UnmanagedResourceContainer()
-        {
-            // this won't happen if we get disposed properly,
-            // because of the SuppressFinalize call,
-            // so we don't check IsDisposed.
-            this.Release(this.resource);
-        }
+        // this won't happen if we get disposed properly,
+        // because of the SuppressFinalize call,
+        // so we don't check IsDisposed.
+        ~UnmanagedResourceContainer() => this.Release(this.resource);
 
-        public T Resource
-        {
-            get
-            {
-                this.ThrowIfDisposed();
-                return this.resource;
-            }
-        }
+        public T Resource => this.IsDisposed
+            ? throw new ObjectDisposedException(this.GetType().Name).Log(this.GetType())
+            : this.resource;
 
         public bool IsDisposed { get; private set; }
 
@@ -59,13 +48,5 @@ namespace AirBreather
         }
 
         protected abstract void Release(T resource);
-
-        private void ThrowIfDisposed()
-        {
-            if (this.IsDisposed)
-            {
-                throw new ObjectDisposedException(this.GetType().Name).Log(this.GetType());
-            }
-        }
     }
 }

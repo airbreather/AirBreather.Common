@@ -9,11 +9,7 @@ namespace AirBreather.Collections
     {
         private ImmutableHashSet<T> values;
 
-        public HashSetValue(IEnumerable<T> values)
-        {
-            values.ValidateNotNull(nameof(values));
-            this.values = values.ToImmutableHashSet(EqualityComparer<T>.Default);
-        }
+        public HashSetValue(IEnumerable<T> values) => this.values = values.ValidateNotNull(nameof(values)).ToImmutableHashSet(EqualityComparer<T>.Default);
 
         public ImmutableHashSet<T> UnderlyingSet => this.values ?? ImmutableHashSet<T>.Empty;
         public int Count => this.UnderlyingSet.Count;
