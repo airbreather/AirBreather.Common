@@ -6,11 +6,6 @@ namespace AirBreather
 {
     public static class ValidationUtility
     {
-        public static T ValidateNotNull<T>(this T value, string paramName) where T : class =>
-            value != null
-                ? value
-                : throw new ArgumentNullException(paramName);
-
         public static T ValidateInRange<T>(this T value, string paramName, T minInclusive, T maxExclusive) where T : IComparable<T> =>
             value.IsInRange(minInclusive, maxExclusive)
                 ? value
@@ -133,6 +128,21 @@ namespace AirBreather
         #endregion ValidateNotLessThan
 
         #endregion Primitives
+
+        public static T ValidateNotNull<T>(this T value, string paramName) where T : class =>
+            value != null
+                ? value
+                : throw new ArgumentNullException(paramName);
+
+        // if it's null, we want ArgumentNullException instead.
+        public static string ValidateNotNullOrEmpty(this string value, string paramName) =>
+            value.ValidateNotNull(nameof(value)).Length != 0
+                ? value
+                : throw new ArgumentException("Must be non-empty.", paramName);
+
+        public static string ValidateNotBlank(this string value, string paramName) =>
+            !String.IsNullOrWhiteSpace(value.ValidateNotNull(nameof(value)))
+                ? value
+                : throw new ArgumentException("Must be non-blank.", paramName);
     }
 }
-

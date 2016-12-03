@@ -29,23 +29,30 @@ namespace AirBreather.Collections
 
         public BitList(IEnumerable<bool> values)
         {
-            bool[] array = values.ValidateNotNull(nameof(values)) as bool[];
-            if (array != null)
+            switch (values.ValidateNotNull(nameof(values)))
             {
-                this.values = new BitArray(array);
-                this.Count = array.Length;
-                return;
-            }
+                case bool[] array:
+                    this.values = new BitArray(array);
+                    this.Count = array.Length;
+                    break;
 
-            int trueInitialCapacity;
-            this.values = values.TryGetCount(out trueInitialCapacity) && trueInitialCapacity != 0
-                ? new BitArray(trueInitialCapacity)
-                : Empty;
+                case BitList lst:
+                    this.values = new BitArray(lst.values);
+                    this.Count = lst.Count;
+                    break;
 
-            // Don't bother with AddRange -- it does extra stuff we've already done.
-            foreach (bool value in values)
-            {
-                this.AddCore(value);
+                default:
+                    this.values = values.TryGetCount(out var trueInitialCapacity) && trueInitialCapacity != 0
+                        ? new BitArray(trueInitialCapacity)
+                        : Empty;
+
+                    // Don't bother with AddRange -- it does extra stuff we've already done.
+                    foreach (bool value in values)
+                    {
+                        this.AddCore(value);
+                    }
+
+                    break;
             }
         }
 
@@ -183,27 +190,26 @@ namespace AirBreather.Collections
         public void InsertRange(int index, IEnumerable<bool> values)
         {
             index.ValidateInRange(nameof(index), 0, this.Count + 1);
-            int insertCount;
-            if (values.ValidateNotNull(nameof(values)).TryGetCount(out insertCount))
+            if (values.ValidateNotNull(nameof(values)).TryGetCount(out var insertCount))
             {
                 int trueInsertCount = insertCount;
 
                 this.EnsureCapacity(this.Count + trueInsertCount);
 
                 // shift the values after the index over by the width of what we're inserting.
-                for (int i = index; i < this.Count; i++)
+                for (int i = this.Count - 1; i >= index; --i)
                 {
                     this.values[i + trueInsertCount] = this.values[i];
                 }
 
                 if (this == values)
                 {
-                    for (int i = 0; i < index; i++)
+                    for (int i = index - 1; i >= 0; --i)
                     {
                         this.values[i + index] = this.values[i];
                     }
 
-                    for (int i = index; i < this.Count; i++)
+                    for (int i = this.Count - 1; i >= index; --i)
                     {
                         this.values[i + index + index] = this.values[i + index + trueInsertCount];
                     }

@@ -15,4 +15,3 @@ namespace AirBreather
         void Clear();
     }
 }
-    

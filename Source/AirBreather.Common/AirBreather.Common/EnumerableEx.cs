@@ -18,6 +18,22 @@ namespace AirBreather
             }
         }
 
+        public static IEnumerable<long> Range(long start, long count)
+        {
+            for (long end = start + count; start < end; start++)
+            {
+                yield return start;
+            }
+        }
+
+        public static IEnumerable<ulong> Range(ulong start, ulong count)
+        {
+            for (ulong end = start + count; start < end; start++)
+            {
+                yield return start;
+            }
+        }
+
         // lets me write this:
         //     someEnumerable.ExceptWhere(someSet.Contains)
         // instead of this:
@@ -78,12 +94,6 @@ namespace AirBreather
 
         public static void CopyTo<T>(this IEnumerable<T> enumerable, T[] array, int arrayIndex)
         {
-            if (enumerable is ICollection<T> coll)
-            {
-                coll.CopyTo(array, arrayIndex);
-                return;
-            }
-
             enumerable.ValidateNotNull(nameof(enumerable));
             array.ValidateNotNull(nameof(array));
             arrayIndex.ValidateInRange(nameof(arrayIndex), 0, array.Length);
@@ -113,12 +123,6 @@ namespace AirBreather
         // than the other one, but it's still cheap and easy to do it this way.
         public static void CopyTo<T>(this IReadOnlyCollection<T> collection, T[] array, int arrayIndex)
         {
-            if (collection is ICollection<T> coll)
-            {
-                coll.CopyTo(array, arrayIndex);
-                return;
-            }
-
             collection.ValidateNotNull(nameof(collection));
             array.ValidateNotNull(nameof(array));
             arrayIndex.ValidateInRange(nameof(arrayIndex), 0, array.Length);
@@ -184,7 +188,7 @@ namespace AirBreather
             return builder.MoveToImmutable();
         }
 
-        public static IEnumerable<IndexTaggedValue<T>> TagIndexes<T>(this IEnumerable<T> source) => source.ValidateNotNull(nameof(source)).Select(IndexTaggedValue.Create);
+        public static IEnumerable<(T value, int index)> TagIndexes<T>(this IEnumerable<T> source) => source.Select((value, index) => (value, index));
 
         public static IEnumerable<(T1 x1, T2 x2)> Zip<T1, T2>(this IEnumerable<T1> first, IEnumerable<T2> second) => Enumerable.Zip(first, second, (x1, x2) => (x1, x2));
     }

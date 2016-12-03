@@ -17,8 +17,7 @@ namespace AirBreather
 
         public void Add(TKey key, TValue value)
         {
-            ModifiableGrouping grouping;
-            if (this.backingStore.TryGetValue(key, out grouping))
+            if (this.backingStore.TryGetValue(key, out var grouping))
             {
                 grouping.Add(value);
             }
@@ -30,8 +29,7 @@ namespace AirBreather
 
         public void AddRange(TKey key, IEnumerable<TValue> values)
         {
-            ModifiableGrouping grouping;
-            if (this.backingStore.TryGetValue(key, out grouping))
+            if (this.backingStore.TryGetValue(key, out var grouping))
             {
                 grouping.AddRange(values);
             }
@@ -57,8 +55,7 @@ namespace AirBreather
 
         public bool Remove(TKey key, TValue value)
         {
-            ModifiableGrouping grouping;
-            if (!this.backingStore.TryGetValue(key, out grouping))
+            if (!this.backingStore.TryGetValue(key, out var grouping))
             {
                 return false;
             }

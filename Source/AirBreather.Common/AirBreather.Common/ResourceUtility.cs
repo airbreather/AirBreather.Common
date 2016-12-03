@@ -13,10 +13,7 @@ namespace AirBreather
         public static Stream OpenEmbeddedResourceFile(string resourceKey, Assembly assembly)
         {
             assembly.ValidateNotNull(nameof(assembly));
-            if (String.IsNullOrWhiteSpace(resourceKey))
-            {
-                throw new ArgumentException("Must be a somewhat reasonably valid key.", nameof(resourceKey));
-            }
+            resourceKey.ValidateNotBlank(nameof(resourceKey));
 
             // Assumes the assembly's default namespace is equal to its name,
             // which is ridiculous in the extremely general case, but fine for me.

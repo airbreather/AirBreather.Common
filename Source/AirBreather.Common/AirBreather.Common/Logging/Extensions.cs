@@ -14,4 +14,3 @@ namespace AirBreather.Logging
         public static Exception Log(this Exception exception, Type type) => Logging.Log.For(type).Exception(exception);
     }
 }
-
