@@ -62,5 +62,16 @@ namespace AirBreather.IO
                 return buf;
             }
         }
+
+        public static Task WriteAllBytesAsync(string path, byte[] bytes) => WriteAllBytesAsync(path, bytes, CancellationToken.None);
+
+        public static async Task WriteAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken)
+        {
+            using (MemoryStream sourceStream = new MemoryStream(bytes, writable: false))
+            using (FileStream destinationStream = CreateSequential(path))
+            {
+                await sourceStream.CopyToAsync(destinationStream, FullCopyBufferSize, cancellationToken).ConfigureAwait(false);
+            }
+        }
     }
 }
