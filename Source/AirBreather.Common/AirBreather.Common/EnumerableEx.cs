@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 using AirBreather.Collections;
 
@@ -191,5 +192,96 @@ namespace AirBreather
         public static IEnumerable<(T value, int index)> TagIndexes<T>(this IEnumerable<T> source) => source.Select((value, index) => (value, index));
 
         public static IEnumerable<(T1 x1, T2 x2)> Zip<T1, T2>(this IEnumerable<T1> first, IEnumerable<T2> second) => Enumerable.Zip(first, second, (x1, x2) => (x1, x2));
+
+        public static bool EqualsData(this byte[] first, byte[] second) => new ArraySegment<byte>(first).EqualsData(new ArraySegment<byte>(second));
+        public static bool EqualsData(this byte[] first, ArraySegment<byte> second) => new ArraySegment<byte>(first).EqualsData(second);
+        public static bool EqualsData(this ArraySegment<byte> first, byte[] second) => first.EqualsData(new ArraySegment<byte>(second));
+        public static unsafe bool EqualsData(this ArraySegment<byte> first, ArraySegment<byte> second)
+        {
+            if (first == second)
+            {
+                return true;
+            }
+
+            if (first.Array == null || second.Array == null || first.Count != second.Count)
+            {
+                return false;
+            }
+
+            fixed (byte* p1 = &first.Array[first.Offset])
+            fixed (byte* p2 = &second.Array[second.Offset])
+            {
+                return UnsafeNativeMethods.memcmp(p1, p2, new IntPtr(first.Count)) == 0;
+            }
+        }
+
+        // https://en.wikipedia.org/wiki/MurmurHash#Algorithm
+        public static int Murmur3_32(this byte[] data, int seed = 0) => new ArraySegment<byte>(data).Murmur3_32(seed);
+        public static int Murmur3_32(this ArraySegment<byte> data, int seed = 0)
+        {
+            unchecked
+            {
+                const uint C1 = 0xcc9e2d51;
+                const uint C2 = 0x1b873593;
+                const int R1 = 15;
+                const int R2 = 13;
+                const uint M = 5;
+                const uint N = 0xe6546b64;
+
+                // language has no ROL operator
+                const int R1C = 32 - R1;
+                const int R2C = 32 - R2;
+
+                byte[] arr = data.Array;
+                int off = data.Offset;
+                int len = data.Count;
+                int end = len / 4;
+
+                uint h = (uint)seed;
+
+                // hash the variable section of data, one 4-byte word at a time.
+                for (int i = 0; i < end; i += 4)
+                {
+                    // NON-PORTABLE: Nehalem and above will handle unaligned reads not worse than we
+                    // could (and probably other microarchitectures in the x86 / x64 family as
+                    // well), but apparently there's this notion that some microarchitectures expect
+                    // us to fix up unaligned reads in software.  Note that if off is a multiple of
+                    // 4 (including 0), then all reads will be aligned.
+                    uint k = Unsafe.As<byte, uint>(ref arr[off + i]);
+                    k *= C1;
+                    k = (k << R1) | (k >> R1C); // k = k ROL R1
+                    k *= C2;
+
+                    h ^= k;
+                    h = (h << R2) | (h >> R2C); // h = h ROL R2
+                    h = (h * M) + N;
+                }
+
+                // handle the last incomplete word, if any.
+                if (len % 4 != 0)
+                {
+                    uint k = 0;
+                    for (int i = len % 4 - 1; i >= 0; --i)
+                    {
+                        k = (k << 8) | arr[off + end + i];
+                    }
+
+                    k *= C1;
+                    k = (k << R1) | (k >> R1C); // k = k ROL R1
+                    k *= C2;
+                    h ^= k;
+                }
+
+                // finalize
+                h ^= (uint)len;
+                h ^= h >> 16;
+                h *= 0x85ebca6b;
+                h ^= h >> 13;
+                h *= 0xc2b2ae35;
+                h ^= h >> 16;
+
+                return (int)h;
+            }
+        }
     }
 }
