@@ -42,7 +42,7 @@ namespace AirBreather.Text
 
                     for (int j = 0; j < charsUsed; j++)
                     {
-                        yield return Unsafe.As<byte, char>(ref tmpBuf[j]);
+                        yield return Unsafe.Add(ref Unsafe.As<byte, char>(ref tmpBuf[0]), j);
                     }
                 }
             }

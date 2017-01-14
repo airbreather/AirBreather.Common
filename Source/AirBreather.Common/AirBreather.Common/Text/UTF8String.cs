@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 
 namespace AirBreather.Text
 {
@@ -15,23 +13,23 @@ namespace AirBreather.Text
     // - speed and/or portability, since most APIs use CLR strings which have to be copied
     // ideally, we'd use the corefxlab type of the same name, but Span<T> isn't available on all
     // runtimes that I care about... yet.
-    public struct Utf8String : IEquatable<Utf8String>, IEnumerable<char>
+    public struct UTF8String : IEquatable<UTF8String>, IEnumerable<char>
     {
-        public Utf8String(string clrString) => this.EncodedData = new ArraySegment<byte>(EncodingEx.UTF8NoBOM.GetBytes(clrString));
+        public UTF8String(string clrString) => this.EncodedData = new ArraySegment<byte>(EncodingEx.UTF8NoBOM.GetBytes(clrString));
 
-        public Utf8String(Utf8String copyFrom) => this.EncodedData = new ArraySegment<byte>(copyFrom.EncodedData.ToArray());
+        public UTF8String(UTF8String copyFrom) => this.EncodedData = new ArraySegment<byte>(copyFrom.EncodedData.ToArray());
 
-        public Utf8String(ArraySegment<byte> encodedData) => this.EncodedData = encodedData;
+        public UTF8String(ArraySegment<byte> encodedData) => this.EncodedData = encodedData;
 
         public ArraySegment<byte> EncodedData { get; }
 
         public int Length => EncodingEx.UTF8NoBOM.GetCharCount(this.EncodedData.Array, this.EncodedData.Offset, this.EncodedData.Count);
 
-        public static implicit operator string(Utf8String utf8String) => EncodingEx.UTF8NoBOM.GetString(utf8String.EncodedData.Array, utf8String.EncodedData.Offset, utf8String.EncodedData.Count);
+        public static implicit operator string(UTF8String utf8String) => EncodingEx.UTF8NoBOM.GetString(utf8String.EncodedData.Array, utf8String.EncodedData.Offset, utf8String.EncodedData.Count);
 
-        public static implicit operator Utf8String(string clrString) => new Utf8String(clrString);
+        public static implicit operator UTF8String(string clrString) => new UTF8String(clrString);
 
-        public static Utf8String CreateRented(string clrString, ByteArrayPool pool = null)
+        public static UTF8String CreateRented(string clrString, ByteArrayPool pool = null)
         {
             pool = pool ?? ByteArrayPool.Instance;
             int byteCount = EncodingEx.UTF8NoBOM.GetByteCount(clrString);
@@ -39,7 +37,7 @@ namespace AirBreather.Text
             try
             {
                 EncodingEx.UTF8NoBOM.GetBytes(clrString, 0, clrString.Length, buffer, 0);
-                return new Utf8String(new ArraySegment<byte>(buffer, 0, byteCount));
+                return new UTF8String(new ArraySegment<byte>(buffer, 0, byteCount));
             }
             catch
             {
@@ -52,9 +50,9 @@ namespace AirBreather.Text
 
         public override string ToString() => this;
 
-        public override bool Equals(object obj) => obj is Utf8String other && this.Equals(other);
+        public override bool Equals(object obj) => obj is UTF8String other && this.Equals(other);
 
-        public bool Equals(Utf8String other) => this.EncodedData.EqualsData(other.EncodedData);
+        public bool Equals(UTF8String other) => this.EncodedData.EqualsData(other.EncodedData);
 
         public override int GetHashCode() => this.EncodedData.Murmur3_32();
 
