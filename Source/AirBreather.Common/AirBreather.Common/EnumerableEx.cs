@@ -240,14 +240,14 @@ namespace AirBreather
                 uint h = (uint)seed;
 
                 // hash the variable section of data, one 4-byte word at a time.
-                for (int i = 0; i < end; i += 4)
+                for (int i = 0; i < end; ++i)
                 {
                     // NON-PORTABLE: Nehalem and above will handle unaligned reads not worse than we
                     // could (and probably other microarchitectures in the x86 / x64 family as
                     // well), but apparently there's this notion that some microarchitectures expect
                     // us to fix up unaligned reads in software.  Note that if off is a multiple of
                     // 4 (including 0), then all reads will be aligned.
-                    uint k = Unsafe.As<byte, uint>(ref arr[off + i]);
+                    uint k = Unsafe.Add(ref Unsafe.As<byte, uint>(ref arr[off]), i);
                     k *= C1;
                     k = (k << R1) | (k >> R1C); // k = k ROL R1
                     k *= C2;
@@ -258,10 +258,10 @@ namespace AirBreather
                 }
 
                 // handle the last incomplete word, if any.
-                if (len % 4 != 0)
+                if ((len & 3) != 0)
                 {
                     uint k = 0;
-                    for (int i = len % 4 - 1; i >= 0; --i)
+                    for (int i = (len & 3) - 1; i >= 0; --i)
                     {
                         k = (k << 8) | arr[off + end + i];
                     }
