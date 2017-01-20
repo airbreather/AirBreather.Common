@@ -19,7 +19,7 @@ namespace AirBreather.Text
 
         public UTF8String(UTF8String copyFrom) => this.EncodedData = new ArraySegment<byte>(copyFrom.EncodedData.ToArray());
 
-        public UTF8String(ArraySegment<byte> encodedData) => this.EncodedData = encodedData;
+        private UTF8String(ArraySegment<byte> encodedData) => this.EncodedData = encodedData;
 
         public ArraySegment<byte> EncodedData { get; }
 
@@ -28,6 +28,8 @@ namespace AirBreather.Text
         public static implicit operator string(UTF8String utf8String) => EncodingEx.UTF8NoBOM.GetString(utf8String.EncodedData.Array, utf8String.EncodedData.Offset, utf8String.EncodedData.Count);
 
         public static implicit operator UTF8String(string clrString) => new UTF8String(clrString);
+
+        public static UTF8String Wrap(ArraySegment<byte> encodedData) => new UTF8String(encodedData);
 
         public static UTF8String CreateRented(string clrString, ByteArrayPool pool = null)
         {

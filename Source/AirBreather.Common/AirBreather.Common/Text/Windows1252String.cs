@@ -10,7 +10,7 @@ namespace AirBreather.Text
 
         public Windows1252String(Windows1252String copyFrom) => this.EncodedData = new ArraySegment<byte>(copyFrom.EncodedData.ToArray());
 
-        public Windows1252String(ArraySegment<byte> encodedData) => this.EncodedData = encodedData;
+        private Windows1252String(ArraySegment<byte> encodedData) => this.EncodedData = encodedData;
 
         public ArraySegment<byte> EncodedData { get; }
 
@@ -19,6 +19,8 @@ namespace AirBreather.Text
         public static implicit operator string(Windows1252String Windows1252String) => EncodingEx.Windows1252.GetString(Windows1252String.EncodedData.Array, Windows1252String.EncodedData.Offset, Windows1252String.EncodedData.Count);
 
         public static implicit operator Windows1252String(string clrString) => new Windows1252String(clrString);
+
+        public static Windows1252String Wrap(ArraySegment<byte> encodedData) => new Windows1252String(encodedData);
 
         public static Windows1252String CreateRented(string clrString, ByteArrayPool pool = null)
         {
