@@ -1,6 +1,8 @@
 ﻿using System.Collections.Immutable;
+using System.IO;
 
 using AirBreather.Danger;
+using AirBreather.Random;
 
 using Xunit;
 
@@ -25,6 +27,27 @@ namespace AirBreather.Tests
             // this is exactly what you're not supposed to do.
             ++origBuf[2];
             Assert.Equal(origBuf, fakeImmutableBuf);
+        }
+
+        [Fact]
+        public void TestToReadableStream()
+        {
+            var bld = ImmutableArray.CreateBuilder<byte>(80000);
+            for (int i = 0; i < 80000; ++i)
+            {
+                bld.Add(CryptographicRandomGenerator.NextByte());
+            }
+
+            var data = bld.ToImmutable();
+            using (var dst = new MemoryStream())
+            {
+                using (var src = data.ToReadableStream())
+                {
+                    src.CopyTo(dst);
+                }
+
+                Assert.Equal(data, dst.ToArray());
+            }
         }
     }
 }
