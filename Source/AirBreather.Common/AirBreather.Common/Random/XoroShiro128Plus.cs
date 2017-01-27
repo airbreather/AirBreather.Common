@@ -91,26 +91,16 @@ namespace AirBreather.Random
                 throw new ArgumentException("State is not valid; use the parameterized constructor to initialize a new instance with the given seed values.", nameof(state));
             }
 
-            unsafe void FillBufferCore()
+            Span<ulong> chunkBuffer = buffer.NonPortableCast<byte, ulong>();
+            for (int i = 0; i < chunkBuffer.Length; ++i)
             {
-                fixed (byte* fbuf = &buffer.DangerousGetPinnableReference())
-                {
-                    // count has already been validated to be a multiple of ChunkSize,
-                    // and so has index, so we can do this fanciness without fear.
-                    ulong* pbuf = (ulong*)fbuf;
-                    ulong* pend = pbuf + (buffer.Length / ChunkSize);
-                    while (pbuf < pend)
-                    {
-                        *(pbuf++) = unchecked(state.s0 + state.s1);
+                chunkBuffer[i] = unchecked(state.s0 + state.s1);
 
-                        ulong t = state.s0 ^ state.s1;
-                        state.s0 = ((state.s0 << 55) | (state.s0 >> 9)) ^ t ^ (t << 14);
-                        state.s1 = (t << 36) | (t >> 28);
-                    }
-                }
+                ulong t = state.s0 ^ state.s1;
+                state.s0 = ((state.s0 << 55) | (state.s0 >> 9)) ^ t ^ (t << 14);
+                state.s1 = (t << 36) | (t >> 28);
             }
 
-            FillBufferCore();
             return state;
         }
     }

@@ -226,54 +226,43 @@ namespace AirBreather.Random
             }
 
             state = new MT19937_32State(state);
-            FillBufferCore();
-            return state;
-
-            unsafe void FillBufferCore()
+            Span<uint> chunkBuffer = buffer.NonPortableCast<byte, uint>();
+            for (int i = 0; i < chunkBuffer.Length; ++i)
             {
-                fixed (uint* fData = state.data)
-                fixed (byte* fbuf = &buffer.DangerousGetPinnableReference())
+                if (state.idx == 624)
                 {
-                    // count has already been validated to be a multiple of ChunkSize,
-                    // and so has index, so we can do this fanciness without fear.
-                    uint* pbuf = (uint*)fbuf;
-                    uint* pend = pbuf + (buffer.Length / ChunkSize);
-                    while (pbuf < pend)
-                    {
-                        if (state.idx == 624)
-                        {
-                            Twist(fData);
-                            state.idx = 0;
-                        }
-
-                        uint x = fData[state.idx++];
-
-                        x ^= (x >> 11);
-                        x ^= (x << 7) & 0x9D2C5680;
-                        x ^= (x << 15) & 0xEFC60000;
-                        x ^= (x >> 18);
-
-                        *(pbuf++) = x;
-                    }
+                    Twist(state.data);
+                    state.idx = 0;
                 }
 
-                unsafe void Twist(uint* vals)
-                {
-                    const uint Upper01 = 0x80000000;
-                    const uint Lower31 = 0x7FFFFFFF;
+                uint x = state.data[state.idx++];
 
-                    for (int curr = 0; curr < 624; curr++)
-                    {
-                        int near = (curr + 1) % 624;
-                        int far = (curr + 397) % 624;
+                x ^= (x >> 11);
+                x ^= (x << 7) & 0x9D2C5680;
+                x ^= (x << 15) & 0xEFC60000;
+                x ^= (x >> 18);
 
-                        uint x = vals[curr] & Upper01;
-                        uint y = vals[near] & Lower31;
-                        uint z = vals[far] ^ ((x | y) >> 1);
+                chunkBuffer[i] = x;
+            }
 
-                        vals[curr] = z ^ ((y & 1) * 0x9908B0DF);
-                    }
-                }
+            return state;
+        }
+
+        private static void Twist(uint[] vals)
+        {
+            const uint Upper01 = 0x80000000;
+            const uint Lower31 = 0x7FFFFFFF;
+
+            for (int curr = 0; curr < 624; curr++)
+            {
+                int near = (curr + 1) % 624;
+                int far = (curr + 397) % 624;
+
+                uint x = vals[curr] & Upper01;
+                uint y = vals[near] & Lower31;
+                uint z = vals[far] ^ ((x | y) >> 1);
+
+                vals[curr] = z ^ ((y & 1) * 0x9908B0DF);
             }
         }
     }

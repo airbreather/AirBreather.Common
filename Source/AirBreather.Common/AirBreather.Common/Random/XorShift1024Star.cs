@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace AirBreather.Random
 {
@@ -27,37 +28,22 @@ namespace AirBreather.Random
                 throw new ArgumentException("State is not valid; use the parameterized constructor to initialize a new instance with the given seed values.", nameof(state));
             }
 
-            FillBufferCore(ref state);
-            return state;
-
-            unsafe void FillBufferCore(ref RngState1024 state2)
+            ref ulong rState = ref Unsafe.As<RngState1024, ulong>(ref state);
+            Span<ulong> chunkBuffer = buffer.NonPortableCast<byte, ulong>();
+            for (int i = 0; i < chunkBuffer.Length; ++i)
             {
-                fixed (byte* fbuf = &buffer.DangerousGetPinnableReference())
-                fixed (RngState1024* fState = &state2)
-                {
-                    // count has already been validated to be a multiple of ChunkSize,
-                    // and so has index, so we can do this fanciness without fear.
-                    ulong* pbuf = (ulong*)fbuf;
-                    ulong* pend = pbuf + (buffer.Length / ChunkSize);
+                ulong s0 = Unsafe.Add(ref rState, state.p++);
+                state.p = state.p & 15;
 
-                    ulong* pState = (ulong*)fState;
+                ref ulong s1 = ref Unsafe.Add(ref rState, state.p);
 
-                    while (pbuf < pend)
-                    {
-                        ulong s0 = *(pState + (state.p++));
-                        state.p = state.p & 15;
-
-                        ulong* pCurr = pState + state.p;
-                        ulong s1 = *(pCurr);
-
-                        s1 ^= s1 << 31;
-                        s1 ^= s1 >> 11;
-                        s0 ^= s0 >> 30;
-                        *pCurr = s0 ^ s1;
-                        *(pbuf++) = unchecked(1181783497276652981 * *(pCurr));
-                    }
-                }
+                s1 ^= s1 << 31;
+                s1 ^= s1 >> 11;
+                s1 ^= s0 >> 30;
+                chunkBuffer[i] = unchecked(1181783497276652981 * s1);
             }
+
+            return state;
         }
     }
 }

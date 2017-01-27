@@ -215,54 +215,43 @@ namespace AirBreather.Random
             }
 
             state = new MT19937_64State(state);
-            FillBufferCore();
-            return state;
-
-            unsafe void FillBufferCore()
+            Span<ulong> chunkBuffer = buffer.NonPortableCast<byte, ulong>();
+            for (int i = 0; i < chunkBuffer.Length; ++i)
             {
-                fixed (ulong* fData = state.data)
-                fixed (byte* fbuf = &buffer.DangerousGetPinnableReference())
+                if (state.idx == 312)
                 {
-                    // count has already been validated to be a multiple of ChunkSize,
-                    // and so has index, so we can do this fanciness without fear.
-                    ulong* pbuf = (ulong*)fbuf;
-                    ulong* pend = pbuf + (buffer.Length / ChunkSize);
-                    while (pbuf < pend)
-                    {
-                        if (state.idx == 312)
-                        {
-                            Twist(fData);
-                            state.idx = 0;
-                        }
-
-                        ulong x = fData[state.idx++];
-
-                        x ^= (x >> 29) & 0x5555555555555555;
-                        x ^= (x << 17) & 0x71D67FFFEDA60000;
-                        x ^= (x << 37) & 0xFFF7EEE000000000;
-                        x ^= (x >> 43);
-
-                        *(pbuf++) = x;
-                    }
+                    Twist(state.data);
+                    state.idx = 0;
                 }
 
-                unsafe void Twist(ulong* vals)
-                {
-                    const ulong Upper33 = 0xFFFFFFFF80000000;
-                    const ulong Lower31 = 0x000000007FFFFFFF;
+                ulong x = state.data[state.idx++];
 
-                    for (int curr = 0; curr < 312; curr++)
-                    {
-                        int near = (curr + 1) % 312;
-                        int far = (curr + 156) % 312;
+                x ^= (x >> 29) & 0x5555555555555555;
+                x ^= (x << 17) & 0x71D67FFFEDA60000;
+                x ^= (x << 37) & 0xFFF7EEE000000000;
+                x ^= (x >> 43);
 
-                        ulong x = vals[curr] & Upper33;
-                        ulong y = vals[near] & Lower31;
-                        ulong z = vals[far] ^ ((x | y) >> 1);
+                chunkBuffer[i] = x;
+            }
 
-                        vals[curr] = z ^ ((y & 1) * 0xB5026F5AA96619E9);
-                    }
-                }
+            return state;
+        }
+
+        private static void Twist(ulong[] vals)
+        {
+            const ulong Upper33 = 0xFFFFFFFF80000000;
+            const ulong Lower31 = 0x000000007FFFFFFF;
+
+            for (int curr = 0; curr < 312; curr++)
+            {
+                int near = (curr + 1) % 312;
+                int far = (curr + 156) % 312;
+
+                ulong x = vals[curr] & Upper33;
+                ulong y = vals[near] & Lower31;
+                ulong z = vals[far] ^ ((x | y) >> 1);
+
+                vals[curr] = z ^ ((y & 1) * 0xB5026F5AA96619E9);
             }
         }
     }
