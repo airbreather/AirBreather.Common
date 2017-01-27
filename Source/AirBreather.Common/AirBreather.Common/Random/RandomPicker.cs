@@ -64,7 +64,7 @@ namespace AirBreather.Random
                 {
                     if (this.nextOffset == 0)
                     {
-                        this.rngState = this.rng.FillBuffer(this.rngState, this.buffer, 0, bufferLength);
+                        this.rngState = this.rng.FillBuffer(this.rngState, this.buffer);
                     }
 
                     sample = BitConverter.ToInt32(this.buffer, this.nextOffset);

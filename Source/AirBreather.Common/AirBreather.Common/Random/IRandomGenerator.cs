@@ -1,4 +1,6 @@
-﻿namespace AirBreather.Random
+﻿using System;
+
+namespace AirBreather.Random
 {
     /// <summary>
     /// A generator of pseudorandom data.  Rather than maintaining its own state, the state is
@@ -30,7 +32,7 @@
         /// This value must remain constant throughout the lifetime of an instance.
         /// </summary>
         /// <remarks>
-        /// Implementations of <see cref="FillBuffer"/> may reject count values that are not
+        /// Implementations of <see cref="FillBuffer"/> may reject spans with lengths that are not
         /// multiples of this value.
         /// </remarks>
         int ChunkSize { get; }
@@ -45,27 +47,14 @@
         /// <param name="buffer">
         /// A buffer that this method should populate with pseudorandom bytes.
         /// </param>
-        /// <param name="index">
-        /// The index of <paramref name="buffer"/> at which to start populating pseudorandom data.
-        /// </param>
-        /// <param name="count">
-        /// The number of bytes in <paramref name="buffer"/>, starting at <paramref name="index"/>,
-        /// to populate with pseudorandom data.
-        /// </param>
         /// <returns>
         /// A <typeparamref name="TState"/> value to use for subsequent calls, if needed.
         /// </returns>
         /// <exception cref="ArgumentNullException">
-        /// <paramref name="buffer"/> is <see langword="null"/>.
-        /// </exception>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// <paramref name="index"/> or <paramref name="count"/> is negative.
+        /// <paramref name="buffer"/> is <see cref="Span{T}.Empty"/>.
         /// </exception>
         /// <exception cref="ArgumentException">
-        /// <paramref name="index"/> plus <paramref name="count"/> is greater than or equal to the
-        /// length of <paramref name="buffer"/>, <paramref name="state"/> is not
-        /// <see cref="IRandomGeneratorState.IsValid">valid</see>, or <paramref name="index"/> or
-        /// <paramref name="count" /> is not a multiple of <see cref="ChunkSize"/>.
+        /// <paramref name="state"/> is not <see cref="IRandomGeneratorState.IsValid">valid</see>.
         /// </exception>
         /// <remarks>
         /// <para>
@@ -76,15 +65,11 @@
         /// bytes will return the same state as requesting 24 bytes at once for the original state.
         /// </para>
         /// <para>
-        /// Data in <paramref name="buffer"/> outside of the range given by <paramref name="index"/>
-        /// and <paramref name="count"/> will not be modified by this method.
-        /// </para>
-        /// <para>
         /// Implementations are not <b>required</b> to throw <see cref="ArgumentException"/> when
         /// <paramref name="state"/> is not <see cref="IRandomGeneratorState.IsValid">valid</see>,
         /// but callers should still avoid calling this with such a state.
         /// </para>
         /// </remarks>
-        TState FillBuffer(TState state, byte[] buffer, int index, int count);
+        TState FillBuffer(TState state, Span<byte> buffer);
     }
 }

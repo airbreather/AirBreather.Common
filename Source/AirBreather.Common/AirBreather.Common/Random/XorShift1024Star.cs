@@ -15,24 +15,11 @@ namespace AirBreather.Random
         int IRandomGenerator<RngState1024>.ChunkSize => ChunkSize;
 
         /// <inheritdoc />
-        public RngState1024 FillBuffer(RngState1024 state, byte[] buffer, int index, int count)
+        public RngState1024 FillBuffer(RngState1024 state, Span<byte> buffer)
         {
-            buffer.ValidateNotNull(nameof(buffer));
-            index.ValidateInRange(nameof(index), 0, buffer.Length);
-
-            if (buffer.Length - index < count)
+            if (buffer.Length % ChunkSize != 0)
             {
-                throw new ArgumentException("Not enough room", nameof(buffer));
-            }
-
-            if (index % ChunkSize != 0)
-            {
-                throw new ArgumentException("Must be a multiple of ChunkSize.", nameof(index));
-            }
-
-            if (count % ChunkSize != 0)
-            {
-                throw new ArgumentException("Must be a multiple of ChunkSize.", nameof(count));
+                throw new ArgumentException("Length must be a multiple of ChunkSize.", nameof(buffer));
             }
 
             if (!state.IsValid)
@@ -45,13 +32,13 @@ namespace AirBreather.Random
 
             unsafe void FillBufferCore(ref RngState1024 state2)
             {
-                fixed (byte* fbuf = buffer)
+                fixed (byte* fbuf = &buffer.DangerousGetPinnableReference())
                 fixed (RngState1024* fState = &state2)
                 {
                     // count has already been validated to be a multiple of ChunkSize,
                     // and so has index, so we can do this fanciness without fear.
-                    ulong* pbuf = (ulong*)(fbuf + index);
-                    ulong* pend = pbuf + (count / ChunkSize);
+                    ulong* pbuf = (ulong*)fbuf;
+                    ulong* pend = pbuf + (buffer.Length / ChunkSize);
 
                     ulong* pState = (ulong*)fState;
 

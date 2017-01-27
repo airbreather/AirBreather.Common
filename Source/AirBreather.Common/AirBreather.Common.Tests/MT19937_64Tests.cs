@@ -32,21 +32,18 @@ namespace AirBreather.Tests
             // First, do it in separate calls.
             for (int i = 0; i < expectedResults.Length; i++)
             {
-                state = gen.FillBuffer(state, buf, i * 8, 8);
+                state = gen.FillBuffer(state, new Span<byte>(buf, i * 8, 8));
                 Assert.Equal(expectedResults[i], BitConverter.ToUInt64(buf, i * 8));
             }
 
             // Now, do it all in one call.
             state = new MT19937_64State(5489);
             buf = new byte[expectedResults.Length * 8];
-            state = gen.FillBuffer(state, buf, 0, buf.Length);
+            state = gen.FillBuffer(state, new Span<byte>(buf));
             for (int i = 0; i < expectedResults.Length; i++)
             {
                 Assert.Equal(expectedResults[i], BitConverter.ToUInt64(buf, i * 8));
             }
-
-            // Now, ensure that it throws if we're out of alignment.
-            Assert.Throws<ArgumentException>("index", () => state = gen.FillBuffer(state, buf, 3, 8));
         }
     }
 }
