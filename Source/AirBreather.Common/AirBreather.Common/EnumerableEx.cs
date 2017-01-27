@@ -194,41 +194,25 @@ namespace AirBreather
 
         public static IEnumerable<(T1 x1, T2 x2)> Zip<T1, T2>(this IEnumerable<T1> first, IEnumerable<T2> second) => Enumerable.Zip(first, second, (x1, x2) => (x1, x2));
 
-        public static bool EqualsData(this ReadOnlySpan<byte> first, ReadOnlySpan<byte> second)
+        public static bool EqualsData(this byte[] first, ReadOnlySpan<byte> second) => EqualsData((ReadOnlySpan<byte>)first, second);
+        public static bool EqualsData(this ArraySegment<byte> first, ReadOnlySpan<byte> second) => EqualsData((ReadOnlySpan<byte>)first, second);
+        public static unsafe bool EqualsData(this ReadOnlySpan<byte> first, ReadOnlySpan<byte> second)
         {
             if (first.Length != second.Length)
             {
                 return false;
             }
 
-            if ((first == second) | (first.Length == 0) | (second.Length == 0))
+            if ((first == second) | (first.Length == 0))
             {
                 return true;
             }
 
-            ref byte firstRef = ref first.DangerousGetPinnableReference();
-            ref byte secondRef = ref second.DangerousGetPinnableReference();
-
-            int end = first.Length - (first.Length % Vector<byte>.Count);
-            for (int i = 0; i < end; i += Vector<byte>.Count)
+            fixed (byte* firstP = &first.DangerousGetPinnableReference())
+            fixed (byte* secondP = &second.DangerousGetPinnableReference())
             {
-                if (!Vector.EqualsAll(
-                        Unsafe.Add(ref Unsafe.As<byte, Vector<byte>>(ref firstRef), i),
-                        Unsafe.Add(ref Unsafe.As<byte, Vector<byte>>(ref secondRef), i)))
-                {
-                    return false;
-                }
+                return UnsafeNativeMethods.memcmp(firstP, secondP, new IntPtr(first.Length)) == 0;
             }
-
-            for (int i = end; i < first.Length; ++i)
-            {
-                if (first[i] != second[i])
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         // https://en.wikipedia.org/wiki/MurmurHash#Algorithm

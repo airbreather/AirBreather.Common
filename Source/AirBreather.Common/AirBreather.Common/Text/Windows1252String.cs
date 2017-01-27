@@ -44,7 +44,7 @@ namespace AirBreather.Text
 
         public override bool Equals(object obj) => obj is Windows1252String other && this.Equals(other);
 
-        public bool Equals(Windows1252String other) => ((ReadOnlySpan<byte>)this.EncodedData).EqualsData(other.EncodedData);
+        public bool Equals(Windows1252String other) => this.EncodedData.EqualsData(other.EncodedData);
 
         public override int GetHashCode() => this.EncodedData.Murmur3_32();
 

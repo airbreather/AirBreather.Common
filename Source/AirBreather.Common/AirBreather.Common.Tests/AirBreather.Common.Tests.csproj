@@ -54,6 +54,7 @@
     <Compile Include="AsyncBinaryReaderTests.cs" />
     <Compile Include="BitListTests.cs" />
     <Compile Include="DangerTests.cs" />
+    <Compile Include="MiscTests.cs" />
     <Compile Include="MT19937_32Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WeightedRandomPickerTests.cs" />
