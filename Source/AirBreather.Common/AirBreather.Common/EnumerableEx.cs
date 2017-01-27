@@ -94,6 +94,8 @@ namespace AirBreather
             }
         }
 
+        public static void CopyTo<T>(this T[] src, Span<T> dst) => ((ReadOnlySpan<T>)src).CopyTo(dst);
+        public static void CopyTo<T>(this ArraySegment<T> src, Span<T> dst) => ((ReadOnlySpan<T>)src).CopyTo(dst);
         public static void CopyTo<T>(this IEnumerable<T> enumerable, T[] array, int arrayIndex)
         {
             enumerable.ValidateNotNull(nameof(enumerable));

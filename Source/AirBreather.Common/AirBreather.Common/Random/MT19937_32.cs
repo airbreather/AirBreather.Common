@@ -43,6 +43,7 @@
 */
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 using static System.FormattableString;
 
@@ -77,7 +78,7 @@ namespace AirBreather.Random
             else
             {
                 this.data = new uint[624];
-                Buffer.BlockCopy(copyFrom.data, 0, this.data, 0, 624 * sizeof(uint));
+                copyFrom.data.CopyTo(this.data);
             }
         }
 
@@ -96,10 +97,22 @@ namespace AirBreather.Random
                 return false;
             }
 
-            uint accumulator = 0;
-            foreach (uint value in state.data)
+            int end = 624 - (624 % Vector<uint>.Count);
+            Vector<uint> accumulatorVector = Vector<uint>.Zero;
+            for (int i = 0; i < end; i += Vector<uint>.Count)
             {
-                accumulator |= value;
+                accumulatorVector |= new Vector<uint>(state.data, i);
+            }
+
+            uint accumulator = 0;
+            for (int i = end; i < 624; ++i)
+            {
+                accumulator |= state.data[i];
+            }
+
+            for (int i = 0; i < Vector<uint>.Count; ++i)
+            {
+                accumulator |= accumulatorVector[i];
             }
 
             return accumulator != 0;
@@ -125,11 +138,22 @@ namespace AirBreather.Random
                 return true;
             }
 
-            uint accumulator = 0;
-            for (int i = 0; i < 624; i++)
+            int end = 624 - (624 % Vector<uint>.Count);
+            Vector<uint> accumulatorVector = Vector<uint>.Zero;
+            for (int i = 0; i < end; i += Vector<uint>.Count)
             {
-                uint differentBits = first.data[i] ^ second.data[i];
-                accumulator |= differentBits;
+                accumulatorVector |= (new Vector<uint>(first.data, i) ^ new Vector<uint>(second.data, i));
+            }
+
+            uint accumulator = 0;
+            for (int i = end; i < 624; ++i)
+            {
+                accumulator |= (first.data[i] ^ second.data[i]);
+            }
+
+            for (int i = 0; i < Vector<uint>.Count; ++i)
+            {
+                accumulator |= accumulatorVector[i];
             }
 
             return accumulator == 0;
@@ -146,15 +170,25 @@ namespace AirBreather.Random
                 return hashCode;
             }
 
-            uint accumulator = 0;
-            foreach (uint value in state.data)
+            int end = 624 - (624 % Vector<uint>.Count);
+            Vector<uint> accumulatorVector = Vector<uint>.Zero;
+            for (int i = 0; i < end; i += Vector<uint>.Count)
             {
-                accumulator ^= value;
+                accumulatorVector ^= new Vector<uint>(state.data, i);
             }
 
-            hashCode = hashCode.HashWith(accumulator);
+            uint accumulator = 0;
+            for (int i = end; i < 624; ++i)
+            {
+                accumulator ^= state.data[i];
+            }
 
-            return hashCode;
+            for (int i = 0; i < Vector<uint>.Count; ++i)
+            {
+                accumulator ^= accumulatorVector[i];
+            }
+
+            return hashCode.HashWith(accumulator);
         }
 
         public static string ToString(MT19937_32State state) => Invariant($"{nameof(MT19937_32State)}[]");
