@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
 namespace AirBreather.Random
@@ -35,18 +36,32 @@ namespace AirBreather.Random
         // Offer quick-and-easy ways of generating random value types, because this is often going
         // to be used just to get a random seed for a PRNG. Allocate a new array each time because
         // these are expected to be used infrequently.
-        public static byte NextByte() => GetBuffer(1)[0];
-        public static short NextInt16() => BitConverter.ToInt16(GetBuffer(2), 0);
-        public static int NextInt32() => BitConverter.ToInt32(GetBuffer(4), 0);
-        public static long NextInt64() => BitConverter.ToInt64(GetBuffer(8), 0);
+        public static byte NextByte() => Next<byte>();
+        public static short NextInt16() => Next<short>();
+        public static int NextInt32() => Next<int>();
+        public static long NextInt64() => Next<long>();
 
-        public static sbyte NextSByte() => unchecked((sbyte)NextByte());
-        public static ushort NextUInt16() => unchecked((ushort)NextInt16());
-        public static uint NextUInt32() => unchecked((uint)NextInt32());
-        public static ulong NextUInt64() => unchecked((ulong)NextInt64());
+        public static sbyte NextSByte() => Next<sbyte>();
+        public static ushort NextUInt16() => Next<ushort>();
+        public static uint NextUInt32() => Next<uint>();
+        public static ulong NextUInt64() => Next<ulong>();
 
         public static double NextDouble() => NextUInt64() / (double)ulong.MaxValue;
         public static float NextSingle() => (float)NextDouble();
+
+        private static T Next<T>()
+        {
+            byte[] buf = ByteArrayPool.Instance.Rent(Unsafe.SizeOf<T>());
+            try
+            {
+                FillBuffer(buf);
+                return Unsafe.As<byte, T>(ref buf[0]);
+            }
+            finally
+            {
+                ByteArrayPool.Instance.Return(buf);
+            }
+        }
     }
 }
 
