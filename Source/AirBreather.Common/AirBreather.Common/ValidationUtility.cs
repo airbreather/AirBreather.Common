@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 
 using static System.FormattableString;
 
@@ -144,5 +145,10 @@ namespace AirBreather
             !String.IsNullOrWhiteSpace(value.ValidateNotNull(nameof(value)))
                 ? value
                 : throw new ArgumentException("Must be non-blank.", paramName);
+
+        public static ImmutableArray<T> ValidateNotDefault<T>(this ImmutableArray<T> array, string paramName) =>
+            array.IsDefault
+                ? throw new ArgumentNullException(paramName)
+                : array;
     }
 }
