@@ -32,6 +32,7 @@
 */
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 using static System.FormattableString;
 
@@ -66,7 +67,7 @@ namespace AirBreather.Random
             else
             {
                 this.data = new ulong[312];
-                Buffer.BlockCopy(copyFrom.data, 0, this.data, 0, 312 * sizeof(ulong));
+                copyFrom.data.CopyTo(this.data);
             }
         }
 
@@ -85,10 +86,22 @@ namespace AirBreather.Random
                 return false;
             }
 
-            ulong accumulator = 0;
-            foreach (ulong value in state.data)
+            int end = 312 - (312 % Vector<ulong>.Count);
+            Vector<ulong> accumulatorVector = Vector<ulong>.Zero;
+            for (int i = 0; i < end; i += Vector<ulong>.Count)
             {
-                accumulator |= value;
+                accumulatorVector |= new Vector<ulong>(state.data, i);
+            }
+
+            ulong accumulator = 0;
+            for (int i = end; i < 312; ++i)
+            {
+                accumulator |= state.data[i];
+            }
+
+            for (int i = 0; i < Vector<ulong>.Count; ++i)
+            {
+                accumulator |= accumulatorVector[i];
             }
 
             return accumulator != 0;
@@ -114,11 +127,22 @@ namespace AirBreather.Random
                 return true;
             }
 
-            ulong accumulator = 0;
-            for (int i = 0; i < 312; i++)
+            int end = 312 - (312 % Vector<ulong>.Count);
+            Vector<ulong> accumulatorVector = Vector<ulong>.Zero;
+            for (int i = 0; i < end; i += Vector<ulong>.Count)
             {
-                ulong differentBits = first.data[i] ^ second.data[i];
-                accumulator |= differentBits;
+                accumulatorVector |= (new Vector<ulong>(first.data, i) ^ new Vector<ulong>(second.data, i));
+            }
+
+            ulong accumulator = 0;
+            for (int i = end; i < 312; ++i)
+            {
+                accumulator |= (first.data[i] ^ second.data[i]);
+            }
+
+            for (int i = 0; i < Vector<ulong>.Count; ++i)
+            {
+                accumulator |= accumulatorVector[i];
             }
 
             return accumulator == 0;
@@ -135,15 +159,25 @@ namespace AirBreather.Random
                 return hashCode;
             }
 
-            ulong accumulator = 0;
-            foreach (ulong value in state.data)
+            int end = 312 - (312 % Vector<ulong>.Count);
+            Vector<ulong> accumulatorVector = Vector<ulong>.Zero;
+            for (int i = 0; i < end; i += Vector<ulong>.Count)
             {
-                accumulator ^= value;
+                accumulatorVector ^= new Vector<ulong>(state.data, i);
             }
 
-            hashCode = hashCode.HashWith(accumulator);
+            ulong accumulator = 0;
+            for (int i = end; i < 312; ++i)
+            {
+                accumulator ^= state.data[i];
+            }
 
-            return hashCode;
+            for (int i = 0; i < Vector<ulong>.Count; ++i)
+            {
+                accumulator ^= accumulatorVector[i];
+            }
+
+            return hashCode.HashWith(accumulator);
         }
 
         public static string ToString(MT19937_64State state) => Invariant($"{nameof(MT19937_64State)}[]");
