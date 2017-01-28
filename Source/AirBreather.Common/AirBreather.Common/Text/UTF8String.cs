@@ -58,6 +58,8 @@ namespace AirBreather.Text
 
         public override int GetHashCode() => this.EncodedData.Murmur3_32();
 
+        public int GetHashCode(int seed) => this.EncodedData.Murmur3_32(seed);
+
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
 
         public IEnumerator<char> GetEnumerator() => Helpers.CreateCharEnumerator(this.EncodedData, EncodingEx.UTF8NoBOM);

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Numerics;
-using System.Runtime.CompilerServices;
 
 using AirBreather.Collections;
 
@@ -218,8 +216,9 @@ namespace AirBreather
         }
 
         // https://en.wikipedia.org/wiki/MurmurHash#Algorithm
-        public static int Murmur3_32(this byte[] data, int seed = 0) => new ArraySegment<byte>(data).Murmur3_32(seed);
-        public static int Murmur3_32(this ArraySegment<byte> data, int seed = 0)
+        public static int Murmur3_32(this byte[] data, int seed = 0) => Murmur3_32((ReadOnlySpan<byte>)data, seed);
+        public static int Murmur3_32(this ArraySegment<byte> data, int seed = 0) => Murmur3_32((ReadOnlySpan<byte>)data, seed);
+        public static int Murmur3_32(this ReadOnlySpan<byte> data, int seed = 0)
         {
             unchecked
             {
@@ -234,22 +233,14 @@ namespace AirBreather
                 const int R1C = 32 - R1;
                 const int R2C = 32 - R2;
 
-                byte[] arr = data.Array;
-                int off = data.Offset;
-                int len = data.Count;
-                int end = len / 4;
-
+                ReadOnlySpan<uint> chunkedData = data.NonPortableCast<byte, uint>();
+                ReadOnlySpan<byte> residue = data.Slice(chunkedData.Length << 2);
                 uint h = (uint)seed;
 
-                // hash the variable section of data, one 4-byte word at a time.
-                for (int i = 0; i < end; ++i)
+                // hash the variable section of data, one 4-byte chunk at a time.
+                for (int i = 0; i < chunkedData.Length; ++i)
                 {
-                    // NON-PORTABLE: Nehalem and above will handle unaligned reads not worse than we
-                    // could (and probably other microarchitectures in the x86 / x64 family as
-                    // well), but apparently there's this notion that some microarchitectures expect
-                    // us to fix up unaligned reads in software.  Note that if off is a multiple of
-                    // 4 (including 0), then all reads will be aligned.
-                    uint k = Unsafe.Add(ref Unsafe.As<byte, uint>(ref arr[off]), i);
+                    uint k = chunkedData[i];
                     k *= C1;
                     k = (k << R1) | (k >> R1C); // k = k ROL R1
                     k *= C2;
@@ -259,23 +250,29 @@ namespace AirBreather
                     h = (h * M) + N;
                 }
 
-                // handle the last incomplete word, if any.
-                if ((len & 3) != 0)
+                // handle the last incomplete chunk, if any.
+                uint k2 = 0;
+                switch (residue.Length)
                 {
-                    uint k = 0;
-                    for (int i = (len & 3) - 1; i >= 0; --i)
-                    {
-                        k = (k << 8) | arr[off + end + i];
-                    }
+                    case 3:
+                        k2 = unchecked((uint)(residue[2] << 16));
+                        goto case 2;
 
-                    k *= C1;
-                    k = (k << R1) | (k >> R1C); // k = k ROL R1
-                    k *= C2;
-                    h ^= k;
+                    case 2:
+                        k2 ^= unchecked((uint)(residue[1] << 8));
+                        goto case 1;
+
+                    case 1:
+                        k2 ^= residue[0];
+                        k2 *= C1;
+                        k2 = (k2 << R1) | (k2 >> R1C); // k2 = k2 ROL R1
+                        k2 *= C2;
+                        h ^= k2;
+                        break;
                 }
 
                 // finalize
-                h ^= (uint)len;
+                h ^= (uint)data.Length;
                 h ^= h >> 16;
                 h *= 0x85ebca6b;
                 h ^= h >> 13;

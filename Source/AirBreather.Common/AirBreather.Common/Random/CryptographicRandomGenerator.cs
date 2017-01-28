@@ -34,8 +34,7 @@ namespace AirBreather.Random
         }
 
         // Offer quick-and-easy ways of generating random value types, because this is often going
-        // to be used just to get a random seed for a PRNG. Allocate a new array each time because
-        // these are expected to be used infrequently.
+        // to be used just to get a random seed for a PRNG.
         public static byte NextByte() => Next<byte>();
         public static short NextInt16() => Next<short>();
         public static int NextInt32() => Next<int>();

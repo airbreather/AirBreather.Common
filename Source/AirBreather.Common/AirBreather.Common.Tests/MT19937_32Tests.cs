@@ -11,10 +11,7 @@ namespace AirBreather.Tests
     {
         private readonly ITestOutputHelper output;
 
-        public MT19937_32Tests(ITestOutputHelper output)
-        {
-            this.output = output;
-        }
+        public MT19937_32Tests(ITestOutputHelper output) => this.output = output;
 
         [Fact]
         public void Test()

@@ -38,7 +38,7 @@ namespace AirBreather.Tests
                 bld.Add(CryptographicRandomGenerator.NextByte());
             }
 
-            var data = bld.ToImmutable();
+            var data = bld.MoveToImmutable();
             using (var dst = new MemoryStream())
             {
                 using (var src = data.ToReadableStream())

@@ -12,10 +12,7 @@ namespace AirBreather.Tests
     {
         private readonly ITestOutputHelper output;
 
-        public WeightedRandomPickerTests(ITestOutputHelper output)
-        {
-            this.output = output;
-        }
+        public WeightedRandomPickerTests(ITestOutputHelper output) => this.output = output;
 
         [Fact]
         public void TestWeightedRandomPicker()

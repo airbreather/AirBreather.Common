@@ -11,10 +11,7 @@ namespace AirBreather.Tests
     {
         private readonly ITestOutputHelper output;
 
-        public XorShift128PlusTests(ITestOutputHelper output)
-        {
-            this.output = output;
-        }
+        public XorShift128PlusTests(ITestOutputHelper output) => this.output = output;
 
         [Theory]
         [InlineData(1234524356ul, 47845723665ul, 10356027574996968ul, 421627830503766283ul, 7267806761253193977ul)]
