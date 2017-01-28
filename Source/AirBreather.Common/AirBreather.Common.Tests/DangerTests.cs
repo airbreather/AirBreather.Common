@@ -8,7 +8,7 @@ using Xunit;
 
 namespace AirBreather.Tests
 {
-    public class DangerTests
+    public sealed class DangerTests
     {
         [Fact]
         public void ExactlyWhatYouAreNotSupposedToDo()
@@ -32,13 +32,8 @@ namespace AirBreather.Tests
         [Fact]
         public void TestToReadableStream()
         {
-            var bld = ImmutableArray.CreateBuilder<byte>(80000);
-            for (int i = 0; i < 80000; ++i)
-            {
-                bld.Add(CryptographicRandomGenerator.NextByte());
-            }
+            var data = CryptographicRandomGenerator.GetBuffer(3500).AsImmutableArrayDangerous();
 
-            var data = bld.MoveToImmutable();
             using (var dst = new MemoryStream())
             {
                 using (var src = data.ToReadableStream())

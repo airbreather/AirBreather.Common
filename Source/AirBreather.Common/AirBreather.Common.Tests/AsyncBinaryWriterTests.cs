@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,12 +15,8 @@ namespace AirBreather.Tests
         [Fact]
         public async Task TestAsyncBinaryWriter()
         {
-            bool customBool;
-            unsafe
-            {
-                byte customByte = 39;
-                customBool = *(bool*)&customByte;
-            }
+            byte customByte = 39;
+            bool customBool = Unsafe.As<byte, bool>(ref customByte);
 
             object[] expectedResults =
             {
@@ -32,11 +29,11 @@ namespace AirBreather.Tests
                 (ushort)64221,
                 (int)-288888,
                 (uint)3310229011,
+                (float)3811.55f,
                 (long)-19195205991011,
                 (ulong)11223372036854775807,
-                (decimal)295222.2811m,
-                (float)3811.55f,
-                (double)Math.PI
+                (double)Math.PI,
+                (decimal)295222.2811m
             };
 
             using (var ms = new MemoryStream())

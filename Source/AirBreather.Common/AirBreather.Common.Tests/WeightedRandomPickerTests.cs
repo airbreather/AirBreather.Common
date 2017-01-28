@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using Xunit;
@@ -36,11 +37,11 @@ namespace AirBreather.Tests
 
             var dct = valsWithWeights.Keys.ToDictionary(x => x, x => 0);
 
-            var rnd = new System.Random(CryptographicRandomGenerator.NextInt32());
-            const int TrialCount = 100000;
-            for (int i = 0; i < TrialCount; i++)
+            const int TrialCount = 10000;
+            var span = CryptographicRandomGenerator.GetBuffer(TrialCount * 8).Slice().NonPortableCast<byte, ulong>();
+            for (int i = 0; i < span.Length; ++i)
             {
-                dct[picker.Pick(rnd.NextDouble())]++;
+                ++dct[picker.Pick(span[i] / (double)UInt64.MaxValue)];
             }
 
             double scalar = TrialCount / (double)valsWithWeights.Values.Sum();
