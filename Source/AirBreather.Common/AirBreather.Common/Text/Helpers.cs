@@ -19,7 +19,7 @@ namespace AirBreather.Text
             // managed heap, considering that we keep pinning it in spurts and we have to do a bit
             // of manual memory management anyway.
             const int MaxChar = 256;
-            char[] tmpBuf = ArrayPool<char>.Shared.Rent(MaxChar * 2);
+            char[] tmpBuf = ArrayPool<char>.Shared.Rent(MaxChar);
             try
             {
                 while (!completed)
