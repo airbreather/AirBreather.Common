@@ -255,11 +255,11 @@ namespace AirBreather
                 switch (residue.Length)
                 {
                     case 3:
-                        k2 = unchecked((uint)(residue[2] << 16));
+                        k2 = (uint)residue[2] << 16;
                         goto case 2;
 
                     case 2:
-                        k2 ^= unchecked((uint)(residue[1] << 8));
+                        k2 ^= (uint)residue[1] << 8;
                         goto case 1;
 
                     case 1:
