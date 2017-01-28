@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace AirBreather.Text
@@ -16,10 +16,10 @@ namespace AirBreather.Text
             int cnt = encodedData.Count;
 
             // TODO: tmpBuf really ought to use a native buffer pool instead of one that uses the
-            // managed heap, considering that we keep pinning it in spurts, we always refer to its
-            // contents as char, and we have to do a bit of manual memory management anyway.
+            // managed heap, considering that we keep pinning it in spurts and we have to do a bit
+            // of manual memory management anyway.
             const int MaxChar = 256;
-            byte[] tmpBuf = ByteArrayPool.Instance.Rent(MaxChar * 2);
+            char[] tmpBuf = ArrayPool<char>.Shared.Rent(MaxChar * 2);
             try
             {
                 while (!completed)
@@ -28,12 +28,13 @@ namespace AirBreather.Text
                     // just defining a local method right here that we immediately call, which is
                     // actually perfectly "safe" in this usage.
                     Decode(decoder, arr, ref i, ref cnt, tmpBuf, MaxChar, out var charsUsed, out completed);
-                    unsafe void Decode(Decoder decoder2, byte[] arr2, ref int i2, ref int cnt2, byte[] tmpBuf2, int maxChar2, out int charsUsed2, out bool completed2)
+                    unsafe void Decode(Decoder decoder2, byte[] arr2, ref int i2, ref int cnt2, char[] tmpBuf2, int maxChar2, out int charsUsed2, out bool completed2)
                     {
                         int bytesUsed;
-                        fixed (byte* fromPtr = &arr2[i2], toPtr = tmpBuf2)
+                        fixed (byte* fromPtr = &arr2[i2])
+                        fixed (char* toPtr = tmpBuf2)
                         {
-                            decoder2.Convert(fromPtr, cnt2, (char*)toPtr, maxChar2, false, out bytesUsed, out charsUsed2, out completed2);
+                            decoder2.Convert(fromPtr, cnt2, toPtr, maxChar2, false, out bytesUsed, out charsUsed2, out completed2);
                         }
 
                         i2 += bytesUsed;
@@ -42,13 +43,13 @@ namespace AirBreather.Text
 
                     for (int j = 0; j < charsUsed; j++)
                     {
-                        yield return Unsafe.Add(ref Unsafe.As<byte, char>(ref tmpBuf[0]), j);
+                        yield return tmpBuf[j];
                     }
                 }
             }
             finally
             {
-                ByteArrayPool.Instance.Return(tmpBuf);
+                ArrayPool<char>.Shared.Return(tmpBuf);
             }
         }
     }
