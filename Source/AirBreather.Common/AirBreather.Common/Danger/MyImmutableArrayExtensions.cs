@@ -24,7 +24,7 @@ namespace AirBreather.Danger
         }
 
         // these next ones are actually comparatively safe.
-        public static ReadOnlySpan<T> Slice<T>(this ImmutableArray<T> array) => SliceCore(array, 0, null);
+        public static ReadOnlySpan<T> Slice<T>(this ImmutableArray<T> array, int index = 0) => SliceCore(array, index, null);
         public static ReadOnlySpan<T> Slice<T>(this ImmutableArray<T> array, int index, int count) => SliceCore(array, index, count);
         private static ReadOnlySpan<T> SliceCore<T>(ImmutableArray<T> array, int index, int? count)
         {
@@ -38,7 +38,7 @@ namespace AirBreather.Danger
             return new ReadOnlySpan<T>(array.AsRegularArrayDangerous(), start: index, length: count ?? array.Length);
         }
 
-        public static MemoryStream ToReadableStream(this ImmutableArray<byte> array) => ToReadableStreamCore(array, 0, null);
+        public static MemoryStream ToReadableStream(this ImmutableArray<byte> array, int index = 0) => ToReadableStreamCore(array, index, null);
         public static MemoryStream ToReadableStream(this ImmutableArray<byte> array, int index, int count) => ToReadableStreamCore(array, index, count);
         private static MemoryStream ToReadableStreamCore(ImmutableArray<byte> array, int index, int? count)
         {
