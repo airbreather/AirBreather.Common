@@ -72,6 +72,10 @@ namespace AirBreather.Tests
             //Make sure you don't store string lengths in a char, and overflow at 255 bytes (as OpenBSD's canonical BCrypt implementation did)
             TestString(new string('a', 256), 0x9747b28c, 0x37405BDC),
 
+            //"I'll post just two of the 11 SHA-2 test vectors that i converted to Murmur3."
+            TestString("abc", 0, 0xB3DD93FA),
+            TestString("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", 0, 0xEE925B90),
+
             //And finally, the big one:
             TestString("The quick brown fox jumps over the lazy dog", 0x9747b28c, 0x2FA826CD)
         };
