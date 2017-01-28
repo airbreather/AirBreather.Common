@@ -27,11 +27,7 @@ namespace AirBreather.IO
         }
 
         public Task<bool> ReadBooleanAsync() => this.ReadBooleanAsync(CancellationToken.None);
-        public async Task<bool> ReadBooleanAsync(CancellationToken cancellationToken)
-        {
-            var b = await this.ReadValueAsync<byte>(cancellationToken).ConfigureAwait(false);
-            return b != 0;
-        }
+        public async Task<bool> ReadBooleanAsync(CancellationToken cancellationToken) => await this.ReadValueAsync<byte>(cancellationToken).ConfigureAwait(false) != 0;
 
         public Task<byte> ReadByteAsync() => this.ReadValueAsync<byte>(CancellationToken.None);
         public Task<byte> ReadByteAsync(CancellationToken cancellationToken) => this.ReadValueAsync<byte>(cancellationToken);
