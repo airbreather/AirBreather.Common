@@ -51,16 +51,16 @@ namespace AirBreather.Random
                 // gap in weights, I *think* that sorting them like this improves how closely we'll
                 // match the expected distribution for the low ones; if not, I apologize to your CPU
                 // (but I'm pretty sure that at least it won't be *worse*).
-                this.weightedItems.Sort((first, second) => first.Weight.CompareTo(second.Weight));
+                var weightedItems = this.weightedItems.Sort((first, second) => first.Weight.CompareTo(second.Weight));
 
-                T[] items = new T[this.weightedItems.Count];
+                T[] items = new T[weightedItems.Count];
                 double[] newWeights = new double[items.Length];
 
                 // reweight, step 1: set each weight to the sum of itself and all weights before it.
                 double weightSoFar = 0;
                 for (int i = 0; i < items.Length; i++)
                 {
-                    WeightedItem weightedItem = this.weightedItems[i];
+                    WeightedItem weightedItem = weightedItems[i];
                     items[i] = weightedItem.Item;
                     newWeights[i] = weightSoFar += weightedItem.Weight;
                 }
@@ -75,7 +75,6 @@ namespace AirBreather.Random
                 Debug.Assert(newWeights[newWeights.Length - 1] == 1, "Any double value divided by itself should be 1...");
                 newWeights[newWeights.Length - 1] = 1;
 
-                this.weightedItems.Clear();
                 return new WeightedRandomPicker<T>(items, newWeights);
             }
         }
