@@ -24,20 +24,20 @@ namespace AirBreather.Tests
             var gen = new XorShift128PlusGenerator();
             var state = new RngState128(s0, s1);
             byte[] buf = new byte[expectedResults.Length * 8];
-            var actualResults = buf.Slice().NonPortableCast<byte, ulong>();
+            var actualResults = buf.AsSpan().NonPortableCast<byte, ulong>();
 
             // First, do it in separate calls.
             for (int i = 0; i < expectedResults.Length; i++)
             {
-                state = gen.FillBuffer(state, buf.Slice(i * 8, 8));
+                state = gen.FillBuffer(state, buf.AsSpan().Slice(i * 8, 8));
                 Assert.Equal(expectedResults[i], actualResults[i]);
             }
 
             // Now, do it all in one call.
             state = new RngState128(s0, s1);
             Array.Clear(buf, 0, buf.Length);
-            state = gen.FillBuffer(state, buf.Slice());
-            Assert.True(expectedResults.Slice().NonPortableCast<ulong, byte>().EqualsData(buf));
+            state = gen.FillBuffer(state, buf.AsSpan());
+            Assert.True(expectedResults.AsSpan().NonPortableCast<ulong, byte>().EqualsData(buf));
         }
     }
 }

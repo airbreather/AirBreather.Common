@@ -194,11 +194,6 @@ namespace AirBreather
 
         public static IEnumerable<(T1 x1, T2 x2)> Zip<T1, T2>(this IEnumerable<T1> first, IEnumerable<T2> second) => Enumerable.Zip(first, second, (x1, x2) => (x1, x2));
 
-        public static Span<T> Slice<T>(this T[] array, int start = 0) => ((Span<T>)array).Slice(start);
-        public static Span<T> Slice<T>(this T[] array, int start, int length) => ((Span<T>)array).Slice(start, length);
-        public static Span<T> Slice<T>(this ArraySegment<T> array, int start = 0) => ((Span<T>)array).Slice(start);
-        public static Span<T> Slice<T>(this ArraySegment<T> array, int start, int length) => ((Span<T>)array).Slice(start, length);
-
         public static bool EqualsData(this byte[] first, ReadOnlySpan<byte> second) => EqualsData((ReadOnlySpan<byte>)first, second);
         public static bool EqualsData(this ArraySegment<byte> first, ReadOnlySpan<byte> second) => EqualsData((ReadOnlySpan<byte>)first, second);
         public static unsafe bool EqualsData(this Span<byte> first, ReadOnlySpan<byte> second) => EqualsData((ReadOnlySpan<byte>)first, second);

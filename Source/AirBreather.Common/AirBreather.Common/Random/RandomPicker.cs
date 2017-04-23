@@ -1,15 +1,18 @@
 ﻿using System;
+using System.Globalization;
 
 namespace AirBreather.Random
 {
     public sealed class RandomPicker<TState> : IPicker where TState : IRandomGeneratorState
     {
         // Seems about right, from testing various sizes.
-        private const int DesiredBufferSizeInBytes = 16384;
+        private const int BufferLengthBytes = 16384;
+
+        private const int BufferLength = BufferLengthBytes / sizeof(int);
 
         private readonly IRandomGenerator<TState> rng;
 
-        private readonly byte[] buffer;
+        private readonly int[] buffer;
 
         private TState rngState;
 
@@ -29,20 +32,20 @@ namespace AirBreather.Random
                 throw new ArgumentException("Initial state must be valid.", nameof(initialState));
             }
 
+            if (BufferLengthBytes % rng.ChunkSize != 0)
+            {
+                throw new NotSupportedException("Chunk size must evenly divide " + BufferLengthBytes.ToString(CultureInfo.InvariantCulture));
+            }
+
             this.rng = rng;
             this.rngState = initialState;
-
-            int chunkSize = rng.ChunkSize;
-            int extra = DesiredBufferSizeInBytes % chunkSize;
-            this.buffer = new byte[DesiredBufferSizeInBytes + (extra == 0 ? 0 : chunkSize - extra)];
+            this.buffer = new int[BufferLength];
         }
 
         public int PickFromRange(int minValueInclusive, int rangeSize)
         {
             rangeSize.ValidateNotLessThan(nameof(rangeSize), 1);
             (Int32.MaxValue - rangeSize).ValidateNotLessThan(nameof(minValueInclusive), minValueInclusive);
-
-            int bufferLength = this.buffer.Length;
 
             // Conceptually, this creates several "buckets", each with values
             // [0, rangeSize) in it, plus a bucket with values [0, n), where
@@ -64,10 +67,10 @@ namespace AirBreather.Random
                 {
                     if (this.nextOffset == 0)
                     {
-                        this.rngState = this.rng.FillBuffer(this.rngState, this.buffer);
+                        this.rngState = this.rng.FillBuffer(this.rngState, this.buffer.AsSpan().NonPortableCast<int, byte>());
                     }
 
-                    sample = BitConverter.ToInt32(this.buffer, this.nextOffset);
+                    sample = this.buffer[this.nextOffset++];
 
                     // range of sample is [Int32.MinValue, Int32.MaxValue].
                     // we need [0, Int32.MaxValue - rerollThreshold].
@@ -75,7 +78,7 @@ namespace AirBreather.Random
                     // it's silly to discard a perfectly good random bit,
                     // but it's even sillier to bend over backwards to save it.
                     sample &= 0x7FFFFFFF;
-                    this.nextOffset = (this.nextOffset + 4) % bufferLength;
+                    this.nextOffset %= BufferLength;
                 }
                 while (Int32.MaxValue - rerollThreshold < sample);
             }
