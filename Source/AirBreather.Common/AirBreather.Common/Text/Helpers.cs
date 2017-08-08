@@ -41,7 +41,7 @@ namespace AirBreather.Text
                         cnt2 -= bytesUsed;
                     }
 
-                    for (int j = 0; j < charsUsed; j++)
+                    for (int j = 0; j < charsUsed; ++j)
                     {
                         yield return tmpBuf[j];
                     }

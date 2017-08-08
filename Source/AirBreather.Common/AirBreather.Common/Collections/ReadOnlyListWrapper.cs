@@ -15,9 +15,10 @@ namespace AirBreather.Collections
 
         public int IndexOf(T item)
         {
-            for (int i = 0; i < this.Count; i++)
+            EqualityComparer<T> equalityComparer = EqualityComparer<T>.Default;
+            for (int i = 0; i < this.Count; ++i)
             {
-                if (Equals(this.wrappedList[i], item))
+                if (equalityComparer.Equals(this.wrappedList[i], item))
                 {
                     return i;
                 }

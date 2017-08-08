@@ -121,7 +121,7 @@ namespace AirBreather.Collections
 
         public bool Contains(bool value)
         {
-            for (int i = 0; i < this.Count; i++)
+            for (int i = 0; i < this.Count; ++i)
             {
                 if (this.values[i] == value)
                 {
@@ -158,7 +158,7 @@ namespace AirBreather.Collections
 
         public int IndexOf(bool item)
         {
-            for (int i = 0; i < this.Count; i++)
+            for (int i = 0; i < this.Count; ++i)
             {
                 if (this.values[i] == item)
                 {
@@ -178,7 +178,7 @@ namespace AirBreather.Collections
         private void InsertCore(int index, bool value)
         {
             this.EnsureCapacity(this.Count + 1);
-            for (int i = this.Count - 1; i >= index; i--)
+            for (int i = this.Count - 1; i >= index; --i)
             {
                 this.values[i + 1] = this.values[i];
             }
@@ -251,7 +251,7 @@ namespace AirBreather.Collections
         public void RemoveAt(int index)
         {
             index.ValidateInRange(nameof(index), 0, this.Count);
-            for (int i = index; i < this.Count - 1; i++)
+            for (int i = index; i < this.Count - 1; ++i)
             {
                 this.values[i] = this.values[i + 1];
             }
@@ -276,7 +276,7 @@ namespace AirBreather.Collections
             }
 
             this.Count -= count;
-            for (int i = index; i < this.Count; i++)
+            for (int i = index; i < this.Count; ++i)
             {
                 this.values[i] = this.values[i + count];
             }
@@ -301,7 +301,7 @@ namespace AirBreather.Collections
         public BitArray ToBitArray()
         {
             BitArray result = new BitArray(this.Count);
-            for (int i = 0; i < this.Count; i++)
+            for (int i = 0; i < this.Count; ++i)
             {
                 result[i] = this[i];
             }
@@ -315,7 +315,7 @@ namespace AirBreather.Collections
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-        private void Modified() => this.version++;
+        private void Modified() => ++this.version;
 
         private sealed class Enumerator : IEnumerator<bool>
         {

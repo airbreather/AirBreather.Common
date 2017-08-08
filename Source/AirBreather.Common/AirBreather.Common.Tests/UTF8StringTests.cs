@@ -61,7 +61,6 @@ namespace AirBreather.Tests
             TestString("abcd", 0x9747b28c, 0xF0478627), //one full chunk
             TestString("abc", 0x9747b28c, 0xC84A62DD),
             TestString("ab", 0x9747b28c, 0x74875592),
-            TestString("a", 0x9747b28c, 0x7FA09EA6),
 
             TestString("Hello, world!", 0x9747b28c, 0x24884CBA),
 

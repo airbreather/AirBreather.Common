@@ -56,7 +56,7 @@ namespace AirBreather.Random
             // "yes / no" answers in a specific sequence... maybe just write out that sequence of
             // 128 yes / no answers as a bool[] or BitArray or something.
             ulong msk = 0xBEAC0467EBA5FACB;
-            for (int i = 0; i < 128; i++)
+            for (int i = 0; i < 128; ++i)
             {
                 if (i == 64)
                 {
@@ -79,7 +79,7 @@ namespace AirBreather.Random
 #endif
 
         /// <inheritdoc />
-        public RngState128 FillBuffer(RngState128 state, Span<byte> buffer)
+        public unsafe RngState128 FillBuffer(RngState128 state, Span<byte> buffer)
         {
             if (buffer.Length % ChunkSize != 0)
             {
@@ -91,14 +91,20 @@ namespace AirBreather.Random
                 throw new ArgumentException("State is not valid; use the parameterized constructor to initialize a new instance with the given seed values.", nameof(state));
             }
 
-            Span<ulong> chunkBuffer = buffer.NonPortableCast<byte, ulong>();
-            for (int i = 0; i < chunkBuffer.Length; ++i)
+            fixed (byte* fbuf = &buffer.DangerousGetPinnableReference())
             {
-                chunkBuffer[i] = unchecked(state.s0 + state.s1);
+                // count has already been validated to be a multiple of ChunkSize,
+                // and we assume index is OK too, so we can do this fanciness without fear.
+                ulong* pbuf = (ulong*)fbuf;
+                ulong* pend = pbuf + (buffer.Length / ChunkSize);
+                while (pbuf < pend)
+                {
+                    *(pbuf++) = unchecked(state.s0 + state.s1);
 
-                ulong t = state.s0 ^ state.s1;
-                state.s0 = ((state.s0 << 55) | (state.s0 >> 9)) ^ t ^ (t << 14);
-                state.s1 = (t << 36) | (t >> 28);
+                    ulong t = state.s0 ^ state.s1;
+                    state.s0 = ((state.s0 << 55) | (state.s0 >> 9)) ^ t ^ (t << 14);
+                    state.s1 = (t << 36) | (t >> 28);
+                }
             }
 
             return state;

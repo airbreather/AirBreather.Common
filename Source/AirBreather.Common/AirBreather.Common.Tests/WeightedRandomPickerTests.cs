@@ -20,7 +20,7 @@ namespace AirBreather.Tests
         {
             var builder = new WeightedRandomPicker<string>.Builder();
 
-            Dictionary<string, int> valsWithWeights = new Dictionary<string, int>
+            var valsWithWeights = new Dictionary<string, int>
             {
                 ["orly"] = 2,
                 ["yarly"] = 1,
@@ -28,9 +28,9 @@ namespace AirBreather.Tests
                 ["yaweh"] = 2
             };
 
-            foreach (var kvp in valsWithWeights)
+            foreach (var (item, weight) in valsWithWeights)
             {
-                builder = builder.AddWithWeight(kvp.Key, kvp.Value);
+                builder = builder.AddWithWeight(item, weight);
             }
 
             var picker = builder.Build();
@@ -47,9 +47,9 @@ namespace AirBreather.Tests
             double scalar = TrialCount / (double)valsWithWeights.Values.Sum();
             var expect = valsWithWeights.ToDictionary(kvp => kvp.Key, kvp => kvp.Value * scalar);
 
-            foreach (var kvp in dct)
+            foreach (var (item, actualCount) in dct)
             {
-                this.output.WriteLine("{0} appeared {1} times (expected {2})", kvp.Key, kvp.Value, expect[kvp.Key]);
+                this.output.WriteLine("{0} appeared {1} times (expected {2})", item, actualCount, expect[item]);
             }
         }
     }

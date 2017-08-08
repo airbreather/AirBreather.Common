@@ -58,7 +58,7 @@ namespace AirBreather.Random
         {
             this.data = new uint[624];
             this.data[0] = seed;
-            for (int i = 1; i < 624; i++)
+            for (int i = 1; i < 624; ++i)
             {
                 uint prev = this.data[i - 1];
                 this.data[i] = unchecked((1812433253 * (prev ^ (prev >> 30))) + (uint)i);
@@ -213,7 +213,7 @@ namespace AirBreather.Random
         int IRandomGenerator<MT19937_32State>.ChunkSize => ChunkSize;
 
         /// <inheritdoc />
-        public MT19937_32State FillBuffer(MT19937_32State state, Span<byte> buffer)
+        public unsafe MT19937_32State FillBuffer(MT19937_32State state, Span<byte> buffer)
         {
             if (buffer.Length % ChunkSize != 0)
             {
@@ -226,34 +226,42 @@ namespace AirBreather.Random
             }
 
             state = new MT19937_32State(state);
-            Span<uint> chunkBuffer = buffer.NonPortableCast<byte, uint>();
-            for (int i = 0; i < chunkBuffer.Length; ++i)
+
+            fixed (uint* fData = state.data)
+            fixed (byte* fbuf = &buffer.DangerousGetPinnableReference())
             {
-                if (state.idx == 624)
+                // count has already been validated to be a multiple of ChunkSize,
+                // and we assume index is OK too, so we can do this fanciness without fear.
+                var pbuf = (uint*)fbuf;
+                uint* pend = pbuf + (buffer.Length / ChunkSize);
+                while (pbuf < pend)
                 {
-                    Twist(state.data);
-                    state.idx = 0;
+                    if (state.idx == 624)
+                    {
+                        Twist(fData);
+                        state.idx = 0;
+                    }
+
+                    uint x = fData[state.idx++];
+
+                    x ^= (x >> 11);
+                    x ^= (x << 7) & 0x9D2C5680;
+                    x ^= (x << 15) & 0xEFC60000;
+                    x ^= (x >> 18);
+
+                    *(pbuf++) = x;
                 }
-
-                uint x = state.data[state.idx++];
-
-                x ^= (x >> 11);
-                x ^= (x << 7) & 0x9D2C5680;
-                x ^= (x << 15) & 0xEFC60000;
-                x ^= (x >> 18);
-
-                chunkBuffer[i] = x;
             }
 
             return state;
         }
 
-        private static void Twist(uint[] vals)
+        private static unsafe void Twist(uint* vals)
         {
             const uint Upper01 = 0x80000000;
             const uint Lower31 = 0x7FFFFFFF;
 
-            for (int curr = 0; curr < 624; curr++)
+            for (int curr = 0; curr < 624; ++curr)
             {
                 int near = (curr + 1) % 624;
                 int far = (curr + 397) % 624;

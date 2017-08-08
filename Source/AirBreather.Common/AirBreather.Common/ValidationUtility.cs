@@ -131,24 +131,32 @@ namespace AirBreather
         #endregion Primitives
 
         public static T ValidateNotNull<T>(this T value, string paramName) where T : class =>
-            value != null
+            value ?? throw new ArgumentNullException(paramName);
+
+        public static Span<T> ValidateNotDefault<T>(this Span<T> value, string paramName) =>
+            value != default(Span<T>)
+                ? value
+                : throw new ArgumentException(paramName);
+
+        public static ReadOnlySpan<T> ValidateNotDefault<T>(this ReadOnlySpan<T> value, string paramName) =>
+            value != default(ReadOnlySpan<T>)
+                ? value
+                : throw new ArgumentException(paramName);
+
+        public static ImmutableArray<T> ValidateNotDefault<T>(this ImmutableArray<T> value, string paramName) =>
+            !value.IsDefault
                 ? value
                 : throw new ArgumentNullException(paramName);
 
         // if it's null, we want ArgumentNullException instead.
         public static string ValidateNotNullOrEmpty(this string value, string paramName) =>
-            value.ValidateNotNull(nameof(value)).Length != 0
+            value.ValidateNotNull(paramName).Length != 0
                 ? value
                 : throw new ArgumentException("Must be non-empty.", paramName);
 
         public static string ValidateNotBlank(this string value, string paramName) =>
-            !String.IsNullOrWhiteSpace(value.ValidateNotNull(nameof(value)))
+            !String.IsNullOrWhiteSpace(value.ValidateNotNull(paramName))
                 ? value
                 : throw new ArgumentException("Must be non-blank.", paramName);
-
-        public static ImmutableArray<T> ValidateNotDefault<T>(this ImmutableArray<T> array, string paramName) =>
-            array.IsDefault
-                ? throw new ArgumentNullException(paramName)
-                : array;
     }
 }

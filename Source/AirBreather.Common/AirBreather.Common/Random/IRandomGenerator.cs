@@ -15,13 +15,11 @@ namespace AirBreather.Random
     /// This is a bit of a "low-level" interface.  Callers must request chunk-sized blocks, mainly
     /// because the implementations tend to be well-defined algorithms that should exactly match
     /// counterparts in other languages which return one "chunk" (i.e., 64- or 32-bit integer) per
-    /// method call.  Callers must also request chunk-aligned blocks, because the implementations
-    /// tend to use unsafe code to eliminate what would otherwise involve extra allocations.  So,
-    /// supporting partial or unaligned chunks gets complicated, especially if we want this to be
-    /// fast and correct.  Furthermore, very few meaningful applications actually *need* streams of
-    /// pseudorandom bytes themselves, but rather streams of higher-level pseudorandom concepts like
-    /// "integer in range" or "random HLS / HSV color" that can be *produced* by reinterpreting a
-    /// stream of bytes a particular way.  Those services can build off of this kind of provider.
+    /// method call.  So, supporting partial chunks gets complicated, especially if we want this to
+    /// be fast and correct.  Furthermore, very few meaningful applications actually *need* streams
+    /// of pseudorandom bytes themselves, but rather streams of higher-level pseudorandom concepts
+    /// like "integer in range" or "random HLS / HSV color" that can be *produced* by reinterpreting
+    /// a stream of bytes a particular way.  Those services can build off of this kind of provider.
     /// For these reasons, the "weirdness" of this interface should be isolated to providers of
     /// intermediate pseudorandom services rather than applications themselves.
     /// </remarks>
@@ -38,7 +36,7 @@ namespace AirBreather.Random
         int ChunkSize { get; }
 
         /// <summary>
-        /// Fills the specified range of the specified buffer with pseudorandom data.
+        /// Fills the specified buffer with pseudorandom data.
         /// </summary>
         /// <param name="state">
         /// The <typeparamref name="TState"/> value that encapsulates the state of the generator.
@@ -50,11 +48,9 @@ namespace AirBreather.Random
         /// <returns>
         /// A <typeparamref name="TState"/> value to use for subsequent calls, if needed.
         /// </returns>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="buffer"/> is <see cref="Span{T}.Empty"/>.
-        /// </exception>
         /// <exception cref="ArgumentException">
-        /// <paramref name="state"/> is not <see cref="IRandomGeneratorState.IsValid">valid</see>.
+        /// <paramref name="buffer"/> is default, or <paramref name="state"/> is not
+        /// <see cref="IRandomGeneratorState.IsValid">valid</see>.
         /// </exception>
         /// <remarks>
         /// <para>

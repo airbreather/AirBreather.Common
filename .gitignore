@@ -1,3 +1,4 @@
+**/.vs/*
 coverage/
 
 ## Ignore Visual Studio temporary files, build results, and

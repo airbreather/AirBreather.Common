@@ -5,6 +5,29 @@ using System.Collections.Immutable;
 
 namespace AirBreather.Collections
 {
+    public static class HashSetValue
+    {
+        public static HashSetValue<T> Create<T>(IEnumerable<T> values) => new HashSetValue<T>(values);
+
+        public static bool Equals<T>(HashSetValue<T> first, HashSetValue<T> second) => first.SetEquals(second);
+
+        public static int GetHashCode<T>(HashSetValue<T> value)
+        {
+            ImmutableHashSet<T> underlyingSet = value.UnderlyingSet;
+
+            int dataHashCode = 0;
+            foreach (T element in underlyingSet)
+            {
+                // XOR, because the ordering must not matter.
+                dataHashCode ^= EqualityComparer<T>.Default.GetHashCode(element);
+            }
+
+            return HashCode.Seed
+                           .HashWith(underlyingSet.Count)
+                           .HashWith(dataHashCode);
+        }
+    }
+
     public struct HashSetValue<T> : IReadOnlySet<T>, IImmutableSet<T>, IEquatable<HashSetValue<T>>
     {
         private ImmutableHashSet<T> values;
@@ -43,26 +66,10 @@ namespace AirBreather.Collections
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => this.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-        public static bool Equals(HashSetValue<T> first, HashSetValue<T> second) => first.SetEquals(second);
-        public static bool operator ==(HashSetValue<T> first, HashSetValue<T> second) => Equals(first, second);
-        public static bool operator !=(HashSetValue<T> first, HashSetValue<T> second) => !Equals(first, second);
-        public override bool Equals(object obj) => obj is HashSetValue<T> && Equals(this, (HashSetValue<T>)obj);
-        public bool Equals(HashSetValue<T> other) => Equals(this, other);
-        public override int GetHashCode() => GetHashCode(this);
-        public static int GetHashCode(HashSetValue<T> value)
-        {
-            ImmutableHashSet<T> underlyingSet = value.UnderlyingSet;
-
-            int dataHashCode = 0;
-            foreach (T element in underlyingSet)
-            {
-                // XOR, because the ordering must not matter.
-                dataHashCode ^= EqualityComparer<T>.Default.GetHashCode(element);
-            }
-
-            return HashCode.Seed
-                           .HashWith(underlyingSet.Count)
-                           .HashWith(dataHashCode);
-        }
+        public static bool operator ==(HashSetValue<T> first, HashSetValue<T> second) => HashSetValue.Equals(first, second);
+        public static bool operator !=(HashSetValue<T> first, HashSetValue<T> second) => !HashSetValue.Equals(first, second);
+        public override bool Equals(object obj) => obj is HashSetValue<T> && HashSetValue.Equals(this, (HashSetValue<T>)obj);
+        public bool Equals(HashSetValue<T> other) => HashSetValue.Equals(this, other);
+        public override int GetHashCode() => HashSetValue.GetHashCode(this);
     }
 }

@@ -24,19 +24,7 @@ namespace AirBreather.Danger
         }
 
         // these next ones are actually comparatively safe.
-        public static ReadOnlySpan<T> Slice<T>(this ImmutableArray<T> array, int index = 0) => SliceCore(array, index, null);
-        public static ReadOnlySpan<T> Slice<T>(this ImmutableArray<T> array, int index, int count) => SliceCore(array, index, count);
-        private static ReadOnlySpan<T> SliceCore<T>(ImmutableArray<T> array, int index, int? count)
-        {
-            array.ValidateNotDefault(nameof(array));
-            index.ValidateInRange(nameof(index), 0, array.Length);
-            if (array.Length - index < count)
-            {
-                throw new ArgumentException("Not enough room", nameof(array));
-            }
-
-            return new ReadOnlySpan<T>(array.AsRegularArrayDangerous(), start: index, length: count ?? array.Length);
-        }
+        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this ImmutableArray<T> array) => new ReadOnlySpan<T>(array.AsRegularArrayDangerous());
 
         public static MemoryStream ToReadableStream(this ImmutableArray<byte> array, int index = 0) => ToReadableStreamCore(array, index, null);
         public static MemoryStream ToReadableStream(this ImmutableArray<byte> array, int index, int count) => ToReadableStreamCore(array, index, count);

@@ -87,7 +87,7 @@ namespace AirBreather.Collections
 
         public T Find(Predicate<T> pred)
         {
-            for (int i = 0; i < this.Count; i++)
+            for (int i = 0; i < this.Count; ++i)
             {
                 if (pred(this.arr[i]))
                 {
@@ -120,7 +120,7 @@ namespace AirBreather.Collections
             }
             else
             {
-                for (int i = this.Count - 2; i >= index; i--)
+                for (int i = this.Count - 2; i >= index; --i)
                 {
                     this.arr[i + 1] = this.arr[i];
                 }

@@ -5,6 +5,28 @@ using System.Collections.Immutable;
 
 namespace AirBreather.Collections
 {
+    public static class SortedSetValue
+    {
+        public static SortedSetValue<T> Create<T>(IEnumerable<T> values) => new SortedSetValue<T>(values);
+
+        public static bool Equals<T>(SortedSetValue<T> first, SortedSetValue<T> second) => first.SetEquals(second);
+
+        public static int GetHashCode<T>(SortedSetValue<T> value)
+        {
+            int hashCode = HashCode.Seed;
+
+            hashCode = hashCode.HashWith(value.Count);
+
+            foreach (T element in value)
+            {
+                // Since SortedSet is sorted, we can make a better hash code than XOR.
+                hashCode = hashCode.HashWith(element);
+            }
+
+            return hashCode;
+        }
+    }
+
     public struct SortedSetValue<T> : IReadOnlySet<T>, IImmutableSet<T>, IEquatable<SortedSetValue<T>>
     {
         private ImmutableSortedSet<T> values;
@@ -43,25 +65,10 @@ namespace AirBreather.Collections
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => this.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-        public static bool Equals(SortedSetValue<T> first, SortedSetValue<T> second) => first.SetEquals(second);
-        public static bool operator ==(SortedSetValue<T> first, SortedSetValue<T> second) => Equals(first, second);
-        public static bool operator !=(SortedSetValue<T> first, SortedSetValue<T> second) => !Equals(first, second);
+        public static bool operator ==(SortedSetValue<T> first, SortedSetValue<T> second) => SortedSetValue.Equals(first, second);
+        public static bool operator !=(SortedSetValue<T> first, SortedSetValue<T> second) => !SortedSetValue.Equals(first, second);
         public override bool Equals(object obj) => obj is SortedSetValue<T> && Equals(this, (SortedSetValue<T>)obj);
-        public bool Equals(SortedSetValue<T> other) => Equals(this, other);
-        public override int GetHashCode() => GetHashCode(this);
-        public static int GetHashCode(SortedSetValue<T> value)
-        {
-            int hashCode = HashCode.Seed;
-
-            hashCode = hashCode.HashWith(value.Count);
-
-            foreach (T element in value)
-            {
-                // Since SortedSet is sorted, we can make a better hash code than XOR.
-                hashCode = hashCode.HashWith(element);
-            }
-
-            return hashCode;
-        }
+        public bool Equals(SortedSetValue<T> other) => SortedSetValue.Equals(this, other);
+        public override int GetHashCode() => SortedSetValue.GetHashCode(this);
     }
 }

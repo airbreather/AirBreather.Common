@@ -45,7 +45,7 @@ namespace AirBreather.Tests
         {
             BitList bl = new BitList { false, false };
 
-            Assert.Equal(false, bl[0]);
+            Assert.False(bl[0]);
             Assert.Equal(2, bl.Count);
 
             Assert.False(bl.Remove(true));
@@ -132,7 +132,7 @@ namespace AirBreather.Tests
             BitList bl = new BitList();
             foreach (byte val in someStuff)
             {
-                for (int j = 0; j < 8; j++)
+                for (int j = 0; j < 8; ++j)
                 {
                     bl.Add((val & (1 << j)) > 0);
                 }
@@ -154,7 +154,7 @@ namespace AirBreather.Tests
             BitList bl = new BitList();
             foreach (byte val in someStuff)
             {
-                for (int j = 0; j < 8; j++)
+                for (int j = 0; j < 8; ++j)
                 {
                     bl.Add((val & (1 << j)) > 0);
                 }
@@ -163,7 +163,7 @@ namespace AirBreather.Tests
             BitArray ba = bl.ToBitArray();
 
             Assert.Equal(bl.Count, ba.Length);
-            for (int i = 0; i < bl.Count; i++)
+            for (int i = 0; i < bl.Count; ++i)
             {
                 Assert.Equal(bl[i], ba[i]);
             }
@@ -179,7 +179,7 @@ namespace AirBreather.Tests
             BitArray ba = new BitArray(someStuff);
             BitList bl = new BitList(ba);
 
-            for (int i = 0; i < ba.Length; i++)
+            for (int i = 0; i < ba.Length; ++i)
             {
                 Assert.Equal(ba[i], bl[i]);
             }

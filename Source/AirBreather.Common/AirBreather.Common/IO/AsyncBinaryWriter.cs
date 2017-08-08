@@ -61,10 +61,10 @@ namespace AirBreather.IO
         public Task WriteAsync(decimal value) => this.WriteAsync(value, CancellationToken.None);
         public Task WriteAsync(decimal value, CancellationToken cancellationToken)
         {
-            wFlags(ref buffer[0]) = dFlags(ref value);
-            wHi(ref buffer[0]) = dHi(ref value);
-            wLo(ref buffer[0]) = dLo(ref value);
-            wMid(ref buffer[0]) = dMid(ref value);
+            wFlags(ref this.buffer[0]) = dFlags(ref value);
+            wHi(ref this.buffer[0]) = dHi(ref value);
+            wLo(ref this.buffer[0]) = dLo(ref value);
+            wMid(ref this.buffer[0]) = dMid(ref value);
             return this.BaseStream.WriteAsync(this.buffer, 0, 16, cancellationToken);
         }
 

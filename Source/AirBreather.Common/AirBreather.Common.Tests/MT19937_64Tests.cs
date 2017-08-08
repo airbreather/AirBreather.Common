@@ -1,7 +1,6 @@
 ﻿using System;
 
 using Xunit;
-using Xunit.Abstractions;
 
 using AirBreather.Random;
 
@@ -9,10 +8,6 @@ namespace AirBreather.Tests
 {
     public sealed class MT19937_64Tests
     {
-        private readonly ITestOutputHelper output;
-
-        public MT19937_64Tests(ITestOutputHelper output) => this.output = output;
-
         [Fact]
         public void Test()
         {
@@ -22,21 +17,21 @@ namespace AirBreather.Tests
 
             var gen = new MT19937_64Generator();
             var state = new MT19937_64State(5489);
-            byte[] buf = new byte[expectedResults.Length * 8];
-            var actualResults = buf.AsSpan().NonPortableCast<byte, ulong>();
+            var buf = new byte[expectedResults.Length * 8].AsSpan();
+            var actualResults = buf.NonPortableCast<byte, ulong>();
 
             // First, do it in separate calls.
-            for (int i = 0; i < expectedResults.Length; i++)
+            for (int i = 0; i < expectedResults.Length; ++i)
             {
-                state = gen.FillBuffer(state, buf.AsSpan().Slice(i * 8, 8));
+                state = gen.FillBuffer(state, buf.Slice(i * 8, 8));
                 Assert.Equal(expectedResults[i], actualResults[i]);
             }
 
             // Now, do it all in one call.
             state = new MT19937_64State(5489);
-            Array.Clear(buf, 0, buf.Length);
-            state = gen.FillBuffer(state, buf.AsSpan());
-            Assert.True(expectedBinary.EqualsData(buf));
+            buf.Clear();
+            state = gen.FillBuffer(state, buf);
+            Assert.True(expectedResults.SequenceEqual(actualResults));
         }
     }
 }

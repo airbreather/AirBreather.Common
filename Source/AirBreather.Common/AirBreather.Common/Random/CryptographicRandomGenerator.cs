@@ -45,7 +45,7 @@ namespace AirBreather.Random
         public static uint NextUInt32() => Next<uint>();
         public static ulong NextUInt64() => Next<ulong>();
 
-        public static double NextDouble() => NextUInt64() / (double)ulong.MaxValue;
+        public static double NextDouble() => NextUInt64() / (double)UInt64.MaxValue;
         public static float NextSingle() => (float)NextDouble();
 
         private static T Next<T>()
@@ -54,7 +54,7 @@ namespace AirBreather.Random
             try
             {
                 FillBuffer(buf);
-                return Unsafe.As<byte, T>(ref buf[0]);
+                return Unsafe.ReadUnaligned<T>(ref buf[0]);
             }
             finally
             {

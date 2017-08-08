@@ -1,7 +1,6 @@
 ﻿using System;
 
 using Xunit;
-using Xunit.Abstractions;
 
 using AirBreather.Random;
 
@@ -9,10 +8,6 @@ namespace AirBreather.Tests
 {
     public sealed class XorShift128PlusTests
     {
-        private readonly ITestOutputHelper output;
-
-        public XorShift128PlusTests(ITestOutputHelper output) => this.output = output;
-
         [Theory]
         [InlineData(1234524356ul, 47845723665ul, 10356027574996968ul, 421627830503766283ul, 7267806761253193977ul)]
         [InlineData(262151541652562ul, 468594272265ul, 3923822141990852456ul, 3993942717521754294ul, 13070632098572223408ul)]
@@ -23,21 +18,21 @@ namespace AirBreather.Tests
 
             var gen = new XorShift128PlusGenerator();
             var state = new RngState128(s0, s1);
-            byte[] buf = new byte[expectedResults.Length * 8];
-            var actualResults = buf.AsSpan().NonPortableCast<byte, ulong>();
+            var buf = new byte[expectedResults.Length * 8].AsSpan();
+            var actualResults = buf.NonPortableCast<byte, ulong>();
 
             // First, do it in separate calls.
-            for (int i = 0; i < expectedResults.Length; i++)
+            for (int i = 0; i < expectedResults.Length; ++i)
             {
-                state = gen.FillBuffer(state, buf.AsSpan().Slice(i * 8, 8));
+                state = gen.FillBuffer(state, buf.Slice(i * 8, 8));
                 Assert.Equal(expectedResults[i], actualResults[i]);
             }
 
             // Now, do it all in one call.
             state = new RngState128(s0, s1);
-            Array.Clear(buf, 0, buf.Length);
-            state = gen.FillBuffer(state, buf.AsSpan());
-            Assert.True(expectedResults.AsSpan().NonPortableCast<ulong, byte>().EqualsData(buf));
+            buf.Clear();
+            state = gen.FillBuffer(state, buf);
+            Assert.True(expectedResults.AsSpan().SequenceEqual(actualResults));
         }
     }
 }

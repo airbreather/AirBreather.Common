@@ -26,7 +26,7 @@ namespace AirBreather
             }
 
             byte[] bytes = new byte[s.Length / 2];
-            for (int i = 0; i < bytes.Length; i++)
+            for (int i = 0; i < bytes.Length; ++i)
             {
                 int hi = s[i * 2] - 65;
                 hi = hi + 10 + ((hi >> 31) & 7);
@@ -46,7 +46,7 @@ namespace AirBreather
         private static uint[] CreateLookup32Unsafe()
         {
             uint[] result = new uint[256];
-            for (int i = 0; i < result.Length; i++)
+            for (int i = 0; i < result.Length; ++i)
             {
                 string s = i.ToString("x2");
                 result[i] = BitConverter.IsLittleEndian

@@ -47,7 +47,7 @@ namespace AirBreather.Random
         {
             this.data = new ulong[312];
             this.data[0] = seed;
-            for (int i = 1; i < 312; i++)
+            for (int i = 1; i < 312; ++i)
             {
                 ulong prev = this.data[i - 1];
                 this.data[i] = unchecked((6364136223846793005 * (prev ^ (prev >> 62))) + (ulong)i);
@@ -202,7 +202,7 @@ namespace AirBreather.Random
         int IRandomGenerator<MT19937_64State>.ChunkSize => ChunkSize;
 
         /// <inheritdoc />
-        public MT19937_64State FillBuffer(MT19937_64State state, Span<byte> buffer)
+        public unsafe MT19937_64State FillBuffer(MT19937_64State state, Span<byte> buffer)
         {
             if (buffer.Length % ChunkSize != 0)
             {
@@ -215,34 +215,41 @@ namespace AirBreather.Random
             }
 
             state = new MT19937_64State(state);
-            Span<ulong> chunkBuffer = buffer.NonPortableCast<byte, ulong>();
-            for (int i = 0; i < chunkBuffer.Length; ++i)
+            fixed (ulong* fData = state.data)
+            fixed (byte* fbuf = &buffer.DangerousGetPinnableReference())
             {
-                if (state.idx == 312)
+                // count has already been validated to be a multiple of ChunkSize,
+                // and we assume index is OK too, so we can do this fanciness without fear.
+                ulong* pbuf = (ulong*)fbuf;
+                ulong* pend = pbuf + (buffer.Length / ChunkSize);
+                while (pbuf < pend)
                 {
-                    Twist(state.data);
-                    state.idx = 0;
+                    if (state.idx == 312)
+                    {
+                        Twist(fData);
+                        state.idx = 0;
+                    }
+
+                    ulong x = state.data[state.idx++];
+
+                    x ^= (x >> 29) & 0x5555555555555555;
+                    x ^= (x << 17) & 0x71D67FFFEDA60000;
+                    x ^= (x << 37) & 0xFFF7EEE000000000;
+                    x ^= (x >> 43);
+
+                    *(pbuf++) = x;
                 }
-
-                ulong x = state.data[state.idx++];
-
-                x ^= (x >> 29) & 0x5555555555555555;
-                x ^= (x << 17) & 0x71D67FFFEDA60000;
-                x ^= (x << 37) & 0xFFF7EEE000000000;
-                x ^= (x >> 43);
-
-                chunkBuffer[i] = x;
             }
 
             return state;
         }
 
-        private static void Twist(ulong[] vals)
+        private static unsafe void Twist(ulong* vals)
         {
             const ulong Upper33 = 0xFFFFFFFF80000000;
             const ulong Lower31 = 0x000000007FFFFFFF;
 
-            for (int curr = 0; curr < 312; curr++)
+            for (int curr = 0; curr < 312; ++curr)
             {
                 int near = (curr + 1) % 312;
                 int far = (curr + 156) % 312;

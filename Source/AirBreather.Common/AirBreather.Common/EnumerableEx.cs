@@ -12,7 +12,7 @@ namespace AirBreather
     {
         public static IEnumerable<uint> Range(uint start, uint count)
         {
-            for (uint end = start + count; start < end; start++)
+            for (uint end = start + count; start < end; ++start)
             {
                 yield return start;
             }
@@ -20,7 +20,7 @@ namespace AirBreather
 
         public static IEnumerable<long> Range(long start, long count)
         {
-            for (long end = start + count; start < end; start++)
+            for (long end = start + count; start < end; ++start)
             {
                 yield return start;
             }
@@ -28,7 +28,7 @@ namespace AirBreather
 
         public static IEnumerable<ulong> Range(ulong start, ulong count)
         {
-            for (ulong end = start + count; start < end; start++)
+            for (ulong end = start + count; start < end; ++start)
             {
                 yield return start;
             }
@@ -82,7 +82,7 @@ namespace AirBreather
         public static IEnumerable<TSource> DistinctBy<TSource, TCompare>(this IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector, IEqualityComparer<TCompare> equalityComparer) => DistinctByIterator(enumerable.ValidateNotNull(nameof(enumerable)), selector.ValidateNotNull(nameof(selector)), equalityComparer);
         private static IEnumerable<TSource> DistinctByIterator<TSource, TCompare>(IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector, IEqualityComparer<TCompare> equalityComparer)
         {
-            HashSet<TCompare> closedSet = new HashSet<TCompare>(equalityComparer);
+            var closedSet = new HashSet<TCompare>(equalityComparer);
             foreach (TSource value in enumerable)
             {
                 if (closedSet.Add(selector(value)))
@@ -94,7 +94,7 @@ namespace AirBreather
 
         public static void CopyTo<T>(this T[] src, Span<T> dst) => ((ReadOnlySpan<T>)src).CopyTo(dst);
         public static void CopyTo<T>(this ArraySegment<T> src, Span<T> dst) => ((ReadOnlySpan<T>)src).CopyTo(dst);
-        public static void CopyTo<T>(this IEnumerable<T> enumerable, T[] array, int arrayIndex)
+        public static void CopyTo<T>(this IEnumerable<T> enumerable, T[] array, int arrayIndex = 0)
         {
             enumerable.ValidateNotNull(nameof(enumerable));
             array.ValidateNotNull(nameof(array));
@@ -123,7 +123,7 @@ namespace AirBreather
         // A version of the above that does slightly less work for IReadOnlyCollection<T> instances.
         // Should JIT to something that gets optimized to something that's only marginally different
         // than the other one, but it's still cheap and easy to do it this way.
-        public static void CopyTo<T>(this IReadOnlyCollection<T> collection, T[] array, int arrayIndex)
+        public static void CopyTo<T>(this IReadOnlyCollection<T> collection, T[] array, int arrayIndex = 0)
         {
             collection.ValidateNotNull(nameof(collection));
             array.ValidateNotNull(nameof(array));
@@ -194,32 +194,10 @@ namespace AirBreather
 
         public static IEnumerable<(T1 x1, T2 x2)> Zip<T1, T2>(this IEnumerable<T1> first, IEnumerable<T2> second) => Enumerable.Zip(first, second, (x1, x2) => (x1, x2));
 
-        public static bool EqualsData(this byte[] first, ReadOnlySpan<byte> second) => EqualsData((ReadOnlySpan<byte>)first, second);
-        public static bool EqualsData(this ArraySegment<byte> first, ReadOnlySpan<byte> second) => EqualsData((ReadOnlySpan<byte>)first, second);
-        public static unsafe bool EqualsData(this Span<byte> first, ReadOnlySpan<byte> second) => EqualsData((ReadOnlySpan<byte>)first, second);
-        public static unsafe bool EqualsData(this ReadOnlySpan<byte> first, ReadOnlySpan<byte> second)
-        {
-            if (first.Length != second.Length)
-            {
-                return false;
-            }
-
-            if ((first == second) | (first.Length == 0))
-            {
-                return true;
-            }
-
-            fixed (byte* firstP = &first.DangerousGetPinnableReference())
-            fixed (byte* secondP = &second.DangerousGetPinnableReference())
-            {
-                return UnsafeNativeMethods.memcmp(firstP, secondP, new IntPtr(first.Length)) == 0;
-            }
-        }
-
         // https://en.wikipedia.org/wiki/MurmurHash#Algorithm
         public static int Murmur3_32(this byte[] data, int seed = 0) => Murmur3_32((ReadOnlySpan<byte>)data, seed);
         public static int Murmur3_32(this ArraySegment<byte> data, int seed = 0) => Murmur3_32((ReadOnlySpan<byte>)data, seed);
-        public static int Murmur3_32(this ReadOnlySpan<byte> data, int seed = 0)
+        public static unsafe int Murmur3_32(this ReadOnlySpan<byte> data, int seed = 0)
         {
             unchecked
             {
@@ -238,17 +216,23 @@ namespace AirBreather
                 ReadOnlySpan<byte> residue = data.Slice(chunkedData.Length << 2);
                 uint h = (uint)seed;
 
-                // hash the variable section of data, one 4-byte chunk at a time.
-                for (int i = 0; i < chunkedData.Length; ++i)
+                fixed (uint* fChunkedData = &chunkedData.DangerousGetPinnableReference())
                 {
-                    uint k = chunkedData[i];
-                    k *= C1;
-                    k = (k << R1) | (k >> R1C); // k = k ROL R1
-                    k *= C2;
+                    uint* pCur = fChunkedData;
+                    uint* pEnd = fChunkedData + chunkedData.Length;
 
-                    h ^= k;
-                    h = (h << R2) | (h >> R2C); // h = h ROL R2
-                    h = (h * M) + N;
+                    // hash the variable section of data, one 4-byte chunk at a time.
+                    while (pCur != pEnd)
+                    {
+                        uint k = *(pCur++);
+                        k *= C1;
+                        k = (k << R1) | (k >> R1C); // k = k ROL R1
+                        k *= C2;
+
+                        h ^= k;
+                        h = (h << R2) | (h >> R2C); // h = h ROL R2
+                        h = (h * M) + N;
+                    }
                 }
 
                 // handle the last incomplete chunk, if any.

@@ -1,133 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{F04C8BB5-8838-4472-9B64-FAFDB5A27EBC}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AirBreather</RootNamespace>
-    <AssemblyName>AirBreather.Common</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
+    <TargetFramework>netstandard20</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>AirBreather</RootNamespace>
+    <GenerateDocumentation>true</GenerateDocumentation>
+    <WarningsAsErrors>true</WarningsAsErrors>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Buffers, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Buffers.4.4.0-preview2-25222-02\lib\netstandard1.1\System.Buffers.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Collections.Immutable, Version=1.2.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Collections.Immutable.1.4.0-preview2-25222-02\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Memory, Version=4.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Memory.4.4.0-preview2-25222-02\lib\netstandard1.0\System.Memory.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Numerics.Vectors.4.4.0-preview2-25222-02\lib\net46\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.Caching" />
-    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.4.0-preview2-25222-02\lib\netstandard1.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ValueTuple, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.ValueTuple.4.4.0-preview2-25222-02\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
+    <Compile Remove="Experimental\**" />
+
+    <PackageReference Include="System.Buffers" Version="4.4.0-preview2-25405-01" />
+    <PackageReference Include="System.Collections.Immutable" Version="1.4.0-preview2-25405-01" />
+    <PackageReference Include="System.Memory" Version="4.4.0-preview2-25405-01" />
+    <PackageReference Include="System.Numerics.Vectors" Version="4.4.0-preview2-25405-01" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.4.0-preview2-25405-01" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Boxes.cs" />
-    <Compile Include="ByteArrayPool.cs" />
-    <Compile Include="Collections\ArrayDictionary.cs" />
-    <Compile Include="Collections\BitList.cs" />
-    <Compile Include="Collections\CallbackComparer.cs" />
-    <Compile Include="Collections\ReadOnlyListSegment.cs" />
-    <Compile Include="Collections\SlimList.cs" />
-    <Compile Include="Collections\StringPool.cs" />
-    <Compile Include="Collections\ReadOnlyCollectionWrapper.cs" />
-    <Compile Include="Collections\ReadOnlyDictionaryWrapper.cs" />
-    <Compile Include="Collections\ReadOnlyListWrapper.cs" />
-    <Compile Include="Danger\MyImmutableArrayExtensions.cs" />
-    <Compile Include="DisposableObject.cs" />
-    <Compile Include="Collections\ObjectReferenceEqualityComparer.cs" />
-    <Compile Include="IO\AsyncBinaryWriter.cs" />
-    <Compile Include="IO\AsyncBinaryReader.cs" />
-    <Compile Include="IO\AsyncFile.cs" />
-    <Compile Include="IO\DecimalSerializationUtility.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Random\BclPseudoRandomPicker.cs" />
-    <Compile Include="Random\IPicker.cs" />
-    <Compile Include="Random\IRandomGenerator.cs" />
-    <Compile Include="Random\IRandomGeneratorState.cs" />
-    <Compile Include="Random\MT19937_32.cs" />
-    <Compile Include="Random\RngState1024.cs" />
-    <Compile Include="Random\RngState128.cs" />
-    <Compile Include="Random\WeightedRandomPicker.cs" />
-    <Compile Include="Random\XoroShiro128Plus.cs" />
-    <Compile Include="Random\XorShift128Plus.cs" />
-    <Compile Include="Random\XorShift1024Star.cs" />
-    <Compile Include="Random\MT19937_64.cs" />
-    <Compile Include="StreamUtility.cs" />
-    <Compile Include="Text\Helpers.cs" />
-    <Compile Include="Text\UTF8String.cs" />
-    <Compile Include="Text\Windows1252String.cs" />
-    <Compile Include="UnmanagedResourceContainer.cs" />
-    <Compile Include="ComparableUtility.cs" />
-    <Compile Include="EnumerableEx.cs" />
-    <Compile Include="GCUtility.cs" />
-    <Compile Include="HashCode.cs" />
-    <Compile Include="KeyValuePair.cs" />
-    <Compile Include="ResourceUtility.cs" />
-    <Compile Include="Text\EncodingEx.cs" />
-    <Compile Include="StringUtility.cs" />
-    <Compile Include="Collections\IReadOnlySet.cs" />
-    <Compile Include="Collections\ReadOnlySet.cs" />
-    <Compile Include="Collections\ReadOnlySetWrapper.cs" />
-    <Compile Include="Collections\IModifiableLookup.cs" />
-    <Compile Include="Collections\ModifiableLookup.cs" />
-    <Compile Include="Random\CryptographicRandomGenerator.cs" />
-    <Compile Include="Random\RandomPicker.cs" />
-    <Compile Include="Collections\HashSetValue.cs" />
-    <Compile Include="Collections\SortedSetValue.cs" />
-    <Compile Include="UnsafeNativeMethods.cs" />
-    <Compile Include="ValidationUtility.cs" />
-    <Compile Include="Logging\ILogger.cs" />
-    <Compile Include="Logging\Extensions.cs" />
-    <Compile Include="Logging\ILoggerFactory.cs" />
-    <Compile Include="Logging\Log.cs" />
-    <Compile Include="Logging\DumbLoggerFactory.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

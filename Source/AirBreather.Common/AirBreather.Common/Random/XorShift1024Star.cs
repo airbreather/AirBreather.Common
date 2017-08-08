@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 
 namespace AirBreather.Random
 {
@@ -16,7 +15,7 @@ namespace AirBreather.Random
         int IRandomGenerator<RngState1024>.ChunkSize => ChunkSize;
 
         /// <inheritdoc />
-        public RngState1024 FillBuffer(RngState1024 state, Span<byte> buffer)
+        public unsafe RngState1024 FillBuffer(RngState1024 state, Span<byte> buffer)
         {
             if (buffer.Length % ChunkSize != 0)
             {
@@ -28,19 +27,29 @@ namespace AirBreather.Random
                 throw new ArgumentException("State is not valid; use the parameterized constructor to initialize a new instance with the given seed values.", nameof(state));
             }
 
-            ref ulong rState = ref Unsafe.As<RngState1024, ulong>(ref state);
-            Span<ulong> chunkBuffer = buffer.NonPortableCast<byte, ulong>();
-            for (int i = 0; i < chunkBuffer.Length; ++i)
+            fixed (byte* fbuf = &buffer.DangerousGetPinnableReference())
             {
-                ulong s0 = Unsafe.Add(ref rState, state.p++);
-                state.p = state.p & 15;
+                // count has already been validated to be a multiple of ChunkSize,
+                // and we assume index is OK too, so we can do this fanciness without fear.
+                ulong* pbuf = (ulong*)fbuf;
+                ulong* pend = pbuf + (buffer.Length / ChunkSize);
 
-                ref ulong s1 = ref Unsafe.Add(ref rState, state.p);
+                ulong* pState = (ulong*)&state;
 
-                s1 ^= s1 << 31;
-                s1 ^= s1 >> 11;
-                s1 ^= s0 >> 30;
-                chunkBuffer[i] = unchecked(1181783497276652981 * s1);
+                while (pbuf < pend)
+                {
+                    ulong s0 = *(pState + (state.p++));
+                    state.p = state.p & 15;
+
+                    ulong* pCurr = pState + state.p;
+                    ulong s1 = *(pCurr);
+
+                    s1 ^= s1 << 31;
+                    s1 ^= s1 >> 11;
+                    s0 ^= s0 >> 30;
+                    *pCurr = s0 ^ s1;
+                    *(pbuf++) = unchecked(1181783497276652981 * *(pCurr));
+                }
             }
 
             return state;

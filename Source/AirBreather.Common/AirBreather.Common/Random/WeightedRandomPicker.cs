@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AirBreather.Random
 {
@@ -27,6 +28,7 @@ namespace AirBreather.Random
             return this.items[idx];
         }
 
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Builder for immutable type.")]
         public sealed class Builder
         {
             private readonly ImmutableList<WeightedItem> weightedItems = ImmutableList<WeightedItem>.Empty;
@@ -51,14 +53,16 @@ namespace AirBreather.Random
                 // gap in weights, I *think* that sorting them like this improves how closely we'll
                 // match the expected distribution for the low ones; if not, I apologize to your CPU
                 // (but I'm pretty sure that at least it won't be *worse*).
-                var weightedItems = this.weightedItems.Sort((first, second) => first.Weight.CompareTo(second.Weight));
+                var weightedItems = new WeightedItem[this.weightedItems.Count];
+                this.weightedItems.CopyTo(weightedItems);
+                Array.Sort(weightedItems, CompareWeightedItems);
 
-                T[] items = new T[weightedItems.Count];
+                T[] items = new T[weightedItems.Length];
                 double[] newWeights = new double[items.Length];
 
                 // reweight, step 1: set each weight to the sum of itself and all weights before it.
                 double weightSoFar = 0;
-                for (int i = 0; i < items.Length; i++)
+                for (int i = 0; i < weightedItems.Length; ++i)
                 {
                     WeightedItem weightedItem = weightedItems[i];
                     items[i] = weightedItem.Item;
@@ -67,7 +71,7 @@ namespace AirBreather.Random
 
                 // reweight, step 2: divide each weight by the sum total of all weights observed.
                 // the final entry's weight, therefore, should be 1.
-                for (int i = 0; i < newWeights.Length; i++)
+                for (int i = 0; i < newWeights.Length; ++i)
                 {
                     newWeights[i] /= weightSoFar;
                 }
@@ -78,6 +82,8 @@ namespace AirBreather.Random
                 return new WeightedRandomPicker<T>(items, newWeights);
             }
         }
+
+        private static int CompareWeightedItems(WeightedItem first, WeightedItem second) => first.Weight.CompareTo(second.Weight);
 
         // class, instead of just a named tuple, so that when we sort, we sort pointers instead of a
         // 64-bit weight and whatever payload T is holding for us.
