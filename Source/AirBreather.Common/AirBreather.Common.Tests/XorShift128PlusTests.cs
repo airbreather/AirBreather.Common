@@ -32,7 +32,7 @@ namespace AirBreather.Tests
             state = new RngState128(s0, s1);
             buf.Clear();
             state = gen.FillBuffer(state, buf);
-            Assert.True(expectedResults.AsSpan().SequenceEqual(actualResults));
+            Assert.True(expectedResults.AsReadOnlySpan().SequenceEqual(actualResults));
         }
     }
 }

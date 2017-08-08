@@ -18,7 +18,7 @@ namespace AirBreather.Tests
             byte[] data = EncodingEx.UTF8NoBOM.GetBytes(orig);
             UTF8String sut = orig;
 
-            Assert.Equal(data, sut.EncodedData);
+            Assert.True(SpanExtensions.SequenceEqual(data, sut.EncodedData));
             Assert.Equal(orig, sut);
         }
 

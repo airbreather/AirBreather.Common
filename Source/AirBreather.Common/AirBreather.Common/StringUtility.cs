@@ -57,33 +57,23 @@ namespace AirBreather
             return result;
         }
 
-        public static unsafe string ByteArrayToHexString(this byte[] bytes)
+        public static unsafe string ToHexString(this ReadOnlySpan<byte> bytes)
         {
-            if (bytes.ValidateNotNull(nameof(bytes)).Length == 0)
+            int cnt = bytes.ValidateNotDefault(nameof(bytes)).Length;
+            if (cnt == 0)
             {
                 return String.Empty;
             }
 
-            fixed (byte* bytesPtr = bytes)
-            {
-                return BytesToHexStringUnsafeCore(bytesPtr, bytes.Length);
-            }
-        }
-
-        public static unsafe string BytesToHexStringUnsafe(byte* bytes, int cnt) => cnt.ValidateNotLessThan(nameof(cnt), 0) == 0
-            ? String.Empty
-            : BytesToHexStringUnsafeCore(bytes, cnt);
-
-        private static unsafe string BytesToHexStringUnsafeCore(byte* bytes, int cnt)
-        {
             string result = new string(default, cnt * 2);
             fixed (uint* byteToHexPtr = byteToHex32Lookup)
+            fixed (byte* bytesPtr = &bytes.DangerousGetPinnableReference())
             fixed (char* resultCharPtr = result)
             {
                 uint* resultUInt32Ptr = (uint*)resultCharPtr;
                 for (int i = 0; i < cnt; i++)
                 {
-                    resultUInt32Ptr[i] = byteToHexPtr[bytes[i]];
+                    resultUInt32Ptr[i] = byteToHexPtr[bytesPtr[i]];
                 }
             }
 

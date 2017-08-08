@@ -89,6 +89,9 @@ namespace AirBreather
             }
         }
 
+        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this T[] array) => new ReadOnlySpan<T>(array);
+        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this ArraySegment<T> arraySegment) => new ReadOnlySpan<T>(arraySegment.Array, arraySegment.Offset, arraySegment.Count);
+
         public static void CopyTo<T>(this T[] src, Span<T> dst) => ((ReadOnlySpan<T>)src).CopyTo(dst);
         public static void CopyTo<T>(this ArraySegment<T> src, Span<T> dst) => ((ReadOnlySpan<T>)src).CopyTo(dst);
         public static void CopyTo<T>(this IEnumerable<T> enumerable, T[] array, int arrayIndex = 0)

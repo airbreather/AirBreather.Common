@@ -24,7 +24,7 @@ namespace AirBreather.Danger
         }
 
         // these next ones are actually comparatively safe.
-        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this ImmutableArray<T> array) => new ReadOnlySpan<T>(array.AsRegularArrayDangerous());
+        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this ImmutableArray<T> array) => array.AsRegularArrayDangerous().AsReadOnlySpan();
 
         public static MemoryStream ToReadableStream(this ImmutableArray<byte> array, int index = 0) => ToReadableStreamCore(array, index, null);
         public static MemoryStream ToReadableStream(this ImmutableArray<byte> array, int index, int count) => ToReadableStreamCore(array, index, count);
