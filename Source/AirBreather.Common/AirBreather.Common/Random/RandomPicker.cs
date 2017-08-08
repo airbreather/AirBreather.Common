@@ -67,7 +67,7 @@ namespace AirBreather.Random
                 {
                     if (this.nextOffset == 0)
                     {
-                        this.rngState = this.rng.FillBuffer(this.rngState, this.buffer.AsSpan().NonPortableCast<int, byte>());
+                        this.rngState = this.rng.FillBuffer(this.rngState, this.buffer.AsSpan().AsBytes());
                     }
 
                     sample = this.buffer[this.nextOffset++];

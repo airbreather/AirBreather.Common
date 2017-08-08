@@ -26,45 +26,33 @@ namespace AirBreather.IO
         {
         }
 
-        public Task<bool> ReadBooleanAsync() => this.ReadBooleanAsync(CancellationToken.None);
-        public async Task<bool> ReadBooleanAsync(CancellationToken cancellationToken) => await this.ReadValueAsync<byte>(cancellationToken).ConfigureAwait(false) != 0;
+        public async Task<bool> ReadBooleanAsync(CancellationToken cancellationToken = default) => await this.ReadValueAsync<byte>(cancellationToken).ConfigureAwait(false) != 0;
 
-        public Task<byte> ReadByteAsync() => this.ReadValueAsync<byte>(CancellationToken.None);
-        public Task<byte> ReadByteAsync(CancellationToken cancellationToken) => this.ReadValueAsync<byte>(cancellationToken);
+        public Task<byte> ReadByteAsync(CancellationToken cancellationToken = default) => this.ReadValueAsync<byte>(cancellationToken);
 
-        public Task<sbyte> ReadSByteAsync() => this.ReadValueAsync<sbyte>(CancellationToken.None);
-        public Task<sbyte> ReadSByteAsync(CancellationToken cancellationToken) => this.ReadValueAsync<sbyte>(cancellationToken);
+        public Task<sbyte> ReadSByteAsync(CancellationToken cancellationToken = default) => this.ReadValueAsync<sbyte>(cancellationToken);
 
-        public Task<short> ReadInt16Async() => this.ReadValueAsync<short>(CancellationToken.None);
-        public Task<short> ReadInt16Async(CancellationToken cancellationToken) => this.ReadValueAsync<short>(cancellationToken);
+        public Task<short> ReadInt16Async(CancellationToken cancellationToken = default) => this.ReadValueAsync<short>(cancellationToken);
 
-        public Task<ushort> ReadUInt16Async() => this.ReadValueAsync<ushort>(CancellationToken.None);
-        public Task<ushort> ReadUInt16Async(CancellationToken cancellationToken) => this.ReadValueAsync<ushort>(cancellationToken);
+        public Task<ushort> ReadUInt16Async(CancellationToken cancellationToken = default) => this.ReadValueAsync<ushort>(cancellationToken);
 
-        public Task<int> ReadInt32Async() => this.ReadValueAsync<int>(CancellationToken.None);
-        public Task<int> ReadInt32Async(CancellationToken cancellationToken) => this.ReadValueAsync<int>(cancellationToken);
+        public Task<int> ReadInt32Async(CancellationToken cancellationToken = default) => this.ReadValueAsync<int>(cancellationToken);
 
-        public Task<uint> ReadUInt32Async() => this.ReadValueAsync<uint>(CancellationToken.None);
-        public Task<uint> ReadUInt32Async(CancellationToken cancellationToken) => this.ReadValueAsync<uint>(cancellationToken);
+        public Task<uint> ReadUInt32Async(CancellationToken cancellationToken = default) => this.ReadValueAsync<uint>(cancellationToken);
 
-        public Task<long> ReadInt64Async() => this.ReadValueAsync<long>(CancellationToken.None);
-        public Task<long> ReadInt64Async(CancellationToken cancellationToken) => this.ReadValueAsync<long>(cancellationToken);
+        public Task<long> ReadInt64Async(CancellationToken cancellationToken = default) => this.ReadValueAsync<long>(cancellationToken);
 
-        public Task<ulong> ReadUInt64Async() => this.ReadValueAsync<ulong>(CancellationToken.None);
-        public Task<ulong> ReadUInt64Async(CancellationToken cancellationToken) => this.ReadValueAsync<ulong>(cancellationToken);
+        public Task<ulong> ReadUInt64Async(CancellationToken cancellationToken = default) => this.ReadValueAsync<ulong>(cancellationToken);
 
-        public Task<float> ReadSingleAsync() => this.ReadValueAsync<float>(CancellationToken.None);
-        public Task<float> ReadSingleAsync(CancellationToken cancellationToken) => this.ReadValueAsync<float>(cancellationToken);
+        public Task<float> ReadSingleAsync(CancellationToken cancellationToken = default) => this.ReadValueAsync<float>(cancellationToken);
 
-        public Task<double> ReadDoubleAsync() => this.ReadValueAsync<double>(CancellationToken.None);
-        public Task<double> ReadDoubleAsync(CancellationToken cancellationToken) => this.ReadValueAsync<double>(cancellationToken);
+        public Task<double> ReadDoubleAsync(CancellationToken cancellationToken = default) => this.ReadValueAsync<double>(cancellationToken);
 
-        public Task<decimal> ReadDecimalAsync() => this.ReadDecimalAsync(CancellationToken.None);
-        public async Task<decimal> ReadDecimalAsync(CancellationToken cancellationToken)
+        public async Task<decimal> ReadDecimalAsync(CancellationToken cancellationToken = default)
         {
             await this.FillBufferAsync(16, cancellationToken).ConfigureAwait(false);
 
-            decimal d0 = default(decimal);
+            decimal d0 = default;
             dFlags(ref d0) = wFlags(ref this.buffer[0]);
             dHi(ref d0) = wHi(ref this.buffer[0]);
             dLo(ref d0) = wLo(ref this.buffer[0]);
@@ -72,14 +60,12 @@ namespace AirBreather.IO
             return d0;
         }
 
-        public Task<int> ReadAsync(byte[] buffer, int index, int count) => this.BaseStream.ReadAsync(buffer, index, count);
-        public Task<int> ReadAsync(byte[] buffer, int index, int count, CancellationToken cancellationToken) => this.BaseStream.ReadAsync(buffer, index, count, cancellationToken);
+        public Task<int> ReadAsync(byte[] buffer, int index, int count, CancellationToken cancellationToken = default) => this.BaseStream.ReadAsync(buffer, index, count, cancellationToken);
 
-        public Task<byte[]> ReadBytesAsync(int count) => this.ReadBytesAsync(count, CancellationToken.None);
-        public async Task<byte[]> ReadBytesAsync(int count, CancellationToken cancellationToken)
+        public async Task<byte[]> ReadBytesAsync(int count, CancellationToken cancellationToken = default)
         {
             byte[] result = new byte[count];
-            if (result.Length != (count = await this.BaseStream.LoopedReadAsync(result, 0, count).ConfigureAwait(false)))
+            if (result.Length != (count = await this.BaseStream.LoopedReadAsync(result, 0, count, cancellationToken).ConfigureAwait(false)))
             {
                 Array.Resize(ref result, count);
             }

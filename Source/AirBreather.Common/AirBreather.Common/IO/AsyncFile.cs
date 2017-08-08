@@ -15,15 +15,11 @@ namespace AirBreather.IO
         // https://github.com/dotnet/coreclr/blob/f5d7e048cf7d66c6dc8473d428bf2d82dddd07d5/src/mscorlib/src/System/IO/Stream.cs#L41-L44
         public const int FullCopyBufferSize = 81920;
 
-        public static Task CopyIfMissingAsync(string sourcePath, string destinationPath) => CopyIfMissingAsync(sourcePath, destinationPath, CancellationToken.None);
-
-        public static Task CopyIfMissingAsync(string sourcePath, string destinationPath, CancellationToken cancellationToken) => File.Exists(destinationPath)
+        public static Task CopyIfMissingAsync(string sourcePath, string destinationPath, CancellationToken cancellationToken = default) => File.Exists(destinationPath)
             ? Task.CompletedTask
             : CopyAsync(sourcePath, destinationPath, cancellationToken);
 
-        public static Task CopyAsync(string sourcePath, string destinationPath) => CopyAsync(sourcePath, destinationPath, CancellationToken.None);
-
-        public static async Task CopyAsync(string sourcePath, string destinationPath, CancellationToken cancellationToken)
+        public static async Task CopyAsync(string sourcePath, string destinationPath, CancellationToken cancellationToken = default)
         {
             using (FileStream sourceStream = OpenReadSequential(sourcePath))
             using (FileStream destinationStream = CreateSequential(destinationPath))
@@ -44,9 +40,7 @@ namespace AirBreather.IO
 
         public static FileStream Create(string path, FileOptions extraOptions) => new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.None, PrimaryBufferSize, FileOptions.Asynchronous | extraOptions);
 
-        public static Task<byte[]> ReadAllBytesAsync(string path) => ReadAllBytesAsync(path, CancellationToken.None);
-
-        public static async Task<byte[]> ReadAllBytesAsync(string path, CancellationToken cancellationToken)
+        public static async Task<byte[]> ReadAllBytesAsync(string path, CancellationToken cancellationToken = default)
         {
             using (FileStream sourceStream = OpenReadSequential(path))
             {
@@ -63,9 +57,7 @@ namespace AirBreather.IO
             }
         }
 
-        public static Task WriteAllBytesAsync(string path, byte[] bytes) => WriteAllBytesAsync(path, bytes, CancellationToken.None);
-
-        public static async Task WriteAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken)
+        public static async Task WriteAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken = default)
         {
             using (MemoryStream sourceStream = new MemoryStream(bytes, writable: false))
             using (FileStream destinationStream = CreateSequential(path))

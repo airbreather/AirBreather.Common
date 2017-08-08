@@ -8,9 +8,7 @@ namespace AirBreather
     {
         // Read exactly the number of bytes, unless the stream doesn't have enough data.  None of
         // this "I can possibly return fewer bytes than requested even if I'm not done" crap.
-        public static Task<int> LoopedReadAsync(this Stream stream, byte[] buffer, int offset, int count) => LoopedReadAsync(stream, buffer, offset, count, CancellationToken.None);
-
-        public static async Task<int> LoopedReadAsync(this Stream stream, byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        public static async Task<int> LoopedReadAsync(this Stream stream, byte[] buffer, int offset, int count, CancellationToken cancellationToken = default)
         {
             // others get validated during the actual call.
             stream.ValidateNotNull(nameof(stream));

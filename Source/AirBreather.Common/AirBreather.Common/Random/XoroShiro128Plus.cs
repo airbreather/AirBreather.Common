@@ -50,7 +50,7 @@ namespace AirBreather.Random
                 throw new ArgumentException("State is not valid; use the parameterized constructor to initialize a new instance with the given seed values.", nameof(state));
             }
 
-            RngState128 result = default(RngState128);
+            RngState128 result = default;
 
             // TODO: this (and what it came from) is a bit overcomplicated of a way of saying 128
             // "yes / no" answers in a specific sequence... maybe just write out that sequence of

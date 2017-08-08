@@ -25,41 +25,29 @@ namespace AirBreather.IO
         {
         }
 
-        public Task WriteAsync(bool value) => this.WriteAsyncCore(value ? (byte)1 : (byte)0, CancellationToken.None);
-        public Task WriteAsync(bool value, CancellationToken cancellationToken) => this.WriteAsyncCore(value ? (byte)1 : (byte)0, cancellationToken);
+        public Task WriteAsync(bool value, CancellationToken cancellationToken = default) => this.WriteAsyncCore(value ? (byte)1 : (byte)0, cancellationToken);
 
-        public Task WriteAsync(byte value) => this.WriteAsyncCore(value, CancellationToken.None);
-        public Task WriteAsync(byte value, CancellationToken cancellationToken) => this.WriteAsyncCore(value, cancellationToken);
+        public Task WriteAsync(byte value, CancellationToken cancellationToken = default) => this.WriteAsyncCore(value, cancellationToken);
 
-        public Task WriteAsync(sbyte value) => this.WriteAsyncCore(value, CancellationToken.None);
-        public Task WriteAsync(sbyte value, CancellationToken cancellationToken) => this.WriteAsyncCore(value, cancellationToken);
+        public Task WriteAsync(sbyte value, CancellationToken cancellationToken = default) => this.WriteAsyncCore(value, cancellationToken);
 
-        public Task WriteAsync(short value) => this.WriteAsyncCore(value, CancellationToken.None);
-        public Task WriteAsync(short value, CancellationToken cancellationToken) => this.WriteAsyncCore(value, cancellationToken);
+        public Task WriteAsync(short value, CancellationToken cancellationToken = default) => this.WriteAsyncCore(value, cancellationToken);
 
-        public Task WriteAsync(ushort value) => this.WriteAsyncCore(value, CancellationToken.None);
-        public Task WriteAsync(ushort value, CancellationToken cancellationToken) => this.WriteAsyncCore(value, cancellationToken);
+        public Task WriteAsync(ushort value, CancellationToken cancellationToken = default) => this.WriteAsyncCore(value, cancellationToken);
 
-        public Task WriteAsync(int value) => this.WriteAsyncCore(value, CancellationToken.None);
-        public Task WriteAsync(int value, CancellationToken cancellationToken) => this.WriteAsyncCore(value, cancellationToken);
+        public Task WriteAsync(int value, CancellationToken cancellationToken = default) => this.WriteAsyncCore(value, cancellationToken);
 
-        public Task WriteAsync(uint value) => this.WriteAsyncCore(value, CancellationToken.None);
-        public Task WriteAsync(uint value, CancellationToken cancellationToken) => this.WriteAsyncCore(value, cancellationToken);
+        public Task WriteAsync(uint value, CancellationToken cancellationToken = default) => this.WriteAsyncCore(value, cancellationToken);
 
-        public Task WriteAsync(long value) => this.WriteAsyncCore(value, CancellationToken.None);
-        public Task WriteAsync(long value, CancellationToken cancellationToken) => this.WriteAsyncCore(value, cancellationToken);
+        public Task WriteAsync(long value, CancellationToken cancellationToken = default) => this.WriteAsyncCore(value, cancellationToken);
 
-        public Task WriteAsync(ulong value) => this.WriteAsyncCore(value, CancellationToken.None);
-        public Task WriteAsync(ulong value, CancellationToken cancellationToken) => this.WriteAsyncCore(value, cancellationToken);
+        public Task WriteAsync(ulong value, CancellationToken cancellationToken = default) => this.WriteAsyncCore(value, cancellationToken);
 
-        public Task WriteAsync(float value) => this.WriteAsyncCore(value, CancellationToken.None);
-        public Task WriteAsync(float value, CancellationToken cancellationToken) => this.WriteAsyncCore(value, cancellationToken);
+        public Task WriteAsync(float value, CancellationToken cancellationToken = default) => this.WriteAsyncCore(value, cancellationToken);
 
-        public Task WriteAsync(double value) => this.WriteAsyncCore(value, CancellationToken.None);
-        public Task WriteAsync(double value, CancellationToken cancellationToken) => this.WriteAsyncCore(value, cancellationToken);
+        public Task WriteAsync(double value, CancellationToken cancellationToken = default) => this.WriteAsyncCore(value, cancellationToken);
 
-        public Task WriteAsync(decimal value) => this.WriteAsync(value, CancellationToken.None);
-        public Task WriteAsync(decimal value, CancellationToken cancellationToken)
+        public Task WriteAsync(decimal value, CancellationToken cancellationToken = default)
         {
             wFlags(ref this.buffer[0]) = dFlags(ref value);
             wHi(ref this.buffer[0]) = dHi(ref value);
@@ -70,7 +58,7 @@ namespace AirBreather.IO
 
         private Task WriteAsyncCore<T>(T value, CancellationToken cancellationToken)
         {
-            Unsafe.As<byte, T>(ref this.buffer[0]) = value;
+            Unsafe.WriteUnaligned(ref this.buffer[0], value);
             return this.BaseStream.WriteAsync(this.buffer, 0, Unsafe.SizeOf<T>(), cancellationToken);
         }
     }

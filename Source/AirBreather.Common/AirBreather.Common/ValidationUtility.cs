@@ -134,12 +134,12 @@ namespace AirBreather
             value ?? throw new ArgumentNullException(paramName);
 
         public static Span<T> ValidateNotDefault<T>(this Span<T> value, string paramName) =>
-            value != default(Span<T>)
+            value != default
                 ? value
                 : throw new ArgumentException(paramName);
 
         public static ReadOnlySpan<T> ValidateNotDefault<T>(this ReadOnlySpan<T> value, string paramName) =>
-            value != default(ReadOnlySpan<T>)
+            value != default
                 ? value
                 : throw new ArgumentException(paramName);
 

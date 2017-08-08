@@ -5,4 +5,3 @@
         ILogger Create(string category);
     }
 }
-

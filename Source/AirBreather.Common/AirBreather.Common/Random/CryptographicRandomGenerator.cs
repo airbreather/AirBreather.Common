@@ -6,10 +6,10 @@ namespace AirBreather.Random
 {
     public static class CryptographicRandomGenerator
     {
-        // RNGCryptoServiceProvider claims to be thread-safe and carries no state.
+        // RNGCryptoServiceProvider claims to be thread-safe and carries no external state.
         private static readonly Lazy<RNGCryptoServiceProvider> SingletonProvider = new Lazy<RNGCryptoServiceProvider>();
 
-        public static byte[] GetBuffer(int length) => FillBuffer(length == 0 ? Array.Empty<byte>() : new byte[length]);
+        public static byte[] GetBuffer(int length) => FillBuffer(new byte[length]);
 
         public static byte[] FillBuffer(byte[] data)
         {

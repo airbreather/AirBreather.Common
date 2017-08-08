@@ -26,7 +26,7 @@ namespace AirBreather.Collections
         public bool TryGetValue(int key, out T value)
         {
             bool result = key.IsInRange(0, this.array.Length);
-            value = result ? this.array[key] : default(T);
+            value = result ? this.array[key] : default;
             return result;
         }
     }

@@ -13,4 +13,3 @@ namespace AirBreather.Collections
         bool SetEquals(IEnumerable<T> other);
     }
 }
-

@@ -49,11 +49,9 @@ namespace AirBreather
             return enumerable.Where(x => !predicate(x));
         }
 
-        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IDictionary<TKey, TValue> dictionary) => ToDictionary(dictionary, null);
-        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey> equalityComparer) => new Dictionary<TKey, TValue>(dictionary.ValidateNotNull(nameof(dictionary)), equalityComparer);
+        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey> equalityComparer = null) => new Dictionary<TKey, TValue>(dictionary.ValidateNotNull(nameof(dictionary)), equalityComparer);
 
-        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable) => ToHashSet(enumerable, null);
-        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable, IEqualityComparer<T> equalityComparer) => new HashSet<T>(enumerable.ValidateNotNull(nameof(enumerable)), equalityComparer);
+        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable, IEqualityComparer<T> equalityComparer = null) => new HashSet<T>(enumerable.ValidateNotNull(nameof(enumerable)), equalityComparer);
 
         // these exist for the same reason as AsEnumerable<T>(), though their use case is weaker.
         public static IReadOnlyCollection<T> AsReadOnlyCollection<T>(this IReadOnlyCollection<T> collection) => collection;
@@ -78,8 +76,7 @@ namespace AirBreather
         // because the use cases it supports aren't particularly compelling.  Well... we found at
         // least one or two at work, and I have to say... I agree, there are better designs.  BUT,
         // for various internal team reasons, this would have been the overall least-bad solution.
-        public static IEnumerable<TSource> DistinctBy<TSource, TCompare>(this IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector) => DistinctBy(enumerable, selector, null);
-        public static IEnumerable<TSource> DistinctBy<TSource, TCompare>(this IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector, IEqualityComparer<TCompare> equalityComparer) => DistinctByIterator(enumerable.ValidateNotNull(nameof(enumerable)), selector.ValidateNotNull(nameof(selector)), equalityComparer);
+        public static IEnumerable<TSource> DistinctBy<TSource, TCompare>(this IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector, IEqualityComparer<TCompare> equalityComparer = null) => DistinctByIterator(enumerable.ValidateNotNull(nameof(enumerable)), selector.ValidateNotNull(nameof(selector)), equalityComparer);
         private static IEnumerable<TSource> DistinctByIterator<TSource, TCompare>(IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector, IEqualityComparer<TCompare> equalityComparer)
         {
             var closedSet = new HashSet<TCompare>(equalityComparer);

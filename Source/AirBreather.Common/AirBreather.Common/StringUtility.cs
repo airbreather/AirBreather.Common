@@ -76,7 +76,7 @@ namespace AirBreather
 
         private static unsafe string BytesToHexStringUnsafeCore(byte* bytes, int cnt)
         {
-            string result = new string(default(char), cnt * 2);
+            string result = new string(default, cnt * 2);
             fixed (uint* byteToHexPtr = byteToHex32Lookup)
             fixed (char* resultCharPtr = result)
             {

@@ -95,7 +95,7 @@ namespace AirBreather.Collections
                 }
             }
 
-            return default(T);
+            return default;
         }
 
         public Enumerator GetEnumerator() => new Enumerator(this);
@@ -148,7 +148,7 @@ namespace AirBreather.Collections
                 Array.Copy(this.arr, index + 1, this.arr, index, this.Count - index);
             }
 
-            this.arr[this.Count] = default(T);
+            this.arr[this.Count] = default;
         }
 
         public void Sort(IComparer<T> comparer) => Array.Sort(this.arr, 0, this.Count, comparer);

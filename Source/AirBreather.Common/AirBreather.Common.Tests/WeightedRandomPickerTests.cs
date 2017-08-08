@@ -38,7 +38,7 @@ namespace AirBreather.Tests
             var dct = valsWithWeights.Keys.ToDictionary(x => x, x => 0);
 
             const int TrialCount = 10000;
-            var span = CryptographicRandomGenerator.GetBuffer(TrialCount * 8).AsSpan().NonPortableCast<byte, ulong>();
+            var span = CryptographicRandomGenerator.GetBuffer(TrialCount * sizeof(ulong)).AsSpan().NonPortableCast<byte, ulong>();
             for (int i = 0; i < span.Length; ++i)
             {
                 ++dct[picker.Pick(span[i] / (double)UInt64.MaxValue)];

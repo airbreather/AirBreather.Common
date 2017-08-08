@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.IO;
 
 using AirBreather.Danger;
@@ -41,7 +42,7 @@ namespace AirBreather.Tests
                     src.CopyTo(dst);
                 }
 
-                Assert.Equal(data, dst.ToArray());
+                Assert.True(data.AsReadOnlySpan().SequenceEqual(dst.ToArray()));
             }
         }
     }
