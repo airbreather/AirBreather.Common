@@ -24,12 +24,9 @@ namespace AirBreather.Collections
                 return result;
             }
 
-            lock (this.pool)
+            if (!this.pool.TryGetValue(val, out result))
             {
-                if (!this.pool.TryGetValue(val, out result))
-                {
-                    result = this.pool[val] = val;
-                }
+                result = this.pool[val] = val;
             }
 
             return result;
@@ -50,23 +47,14 @@ namespace AirBreather.Collections
                 return result;
             }
 
-            lock (this.pool)
-            {
-                // thought: if something became interned after we pooled it all
-                // custom-like, then maybe we should replace our reference with
-                // a reference to the interned string?
-                this.pool.TryGetValue(val, out val);
-            }
+            // thought: if something became interned after we pooled it all
+            // custom-like, then maybe we should replace our reference with
+            // a reference to the interned string?
+            this.pool.TryGetValue(val, out val);
 
             return val;
         }
 
-        public void Clear()
-        {
-            lock (this.pool)
-            {
-                this.pool.Clear();
-            }
-        }
+        public void Clear() => this.pool.Clear();
     }
 }

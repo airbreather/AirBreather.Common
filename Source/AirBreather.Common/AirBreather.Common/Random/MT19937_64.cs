@@ -220,9 +220,7 @@ namespace AirBreather.Random
             {
                 // count has already been validated to be a multiple of ChunkSize,
                 // and we assume index is OK too, so we can do this fanciness without fear.
-                ulong* pbuf = (ulong*)fbuf;
-                ulong* pend = pbuf + (buffer.Length / ChunkSize);
-                while (pbuf < pend)
+                for (ulong* pbuf = (ulong*)fbuf, pend = pbuf + (buffer.Length / ChunkSize); pbuf < pend; ++pbuf)
                 {
                     if (state.idx == 312)
                     {
@@ -230,14 +228,14 @@ namespace AirBreather.Random
                         state.idx = 0;
                     }
 
-                    ulong x = state.data[state.idx++];
+                    ulong x = fData[state.idx++];
 
                     x ^= (x >> 29) & 0x5555555555555555;
                     x ^= (x << 17) & 0x71D67FFFEDA60000;
                     x ^= (x << 37) & 0xFFF7EEE000000000;
                     x ^= (x >> 43);
 
-                    *(pbuf++) = x;
+                    *pbuf = x;
                 }
             }
 

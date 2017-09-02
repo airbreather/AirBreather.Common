@@ -42,7 +42,6 @@ namespace AirBreather.Random
         [ExcludeFromCodeCoverage]
         int IRandomGenerator<RngState128>.ChunkSize => ChunkSize;
 
-#if false
         public static RngState128 Jump(RngState128 state)
         {
             if (!state.IsValid)
@@ -76,7 +75,6 @@ namespace AirBreather.Random
 
             return result;
         }
-#endif
 
         /// <inheritdoc />
         public unsafe RngState128 FillBuffer(RngState128 state, Span<byte> buffer)
@@ -95,11 +93,9 @@ namespace AirBreather.Random
             {
                 // count has already been validated to be a multiple of ChunkSize,
                 // and we assume index is OK too, so we can do this fanciness without fear.
-                ulong* pbuf = (ulong*)fbuf;
-                ulong* pend = pbuf + (buffer.Length / ChunkSize);
-                while (pbuf < pend)
+                for (ulong* pbuf = (ulong*)fbuf, pend = pbuf + (buffer.Length / ChunkSize); pbuf < pend; ++pbuf)
                 {
-                    *(pbuf++) = unchecked(state.s0 + state.s1);
+                    *pbuf = unchecked(state.s0 + state.s1);
 
                     ulong t = state.s0 ^ state.s1;
                     state.s0 = ((state.s0 << 55) | (state.s0 >> 9)) ^ t ^ (t << 14);

@@ -232,9 +232,7 @@ namespace AirBreather.Random
             {
                 // count has already been validated to be a multiple of ChunkSize,
                 // and we assume index is OK too, so we can do this fanciness without fear.
-                var pbuf = (uint*)fbuf;
-                uint* pend = pbuf + (buffer.Length / ChunkSize);
-                while (pbuf < pend)
+                for (uint* pbuf = (uint*)fbuf, pend = pbuf + (buffer.Length / ChunkSize); pbuf < pend; ++pbuf)
                 {
                     if (state.idx == 624)
                     {
@@ -249,7 +247,7 @@ namespace AirBreather.Random
                     x ^= (x << 15) & 0xEFC60000;
                     x ^= (x >> 18);
 
-                    *(pbuf++) = x;
+                    *pbuf = x;
                 }
             }
 

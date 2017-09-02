@@ -76,7 +76,7 @@ namespace AirBreather.IO
         private async Task<T> ReadValueAsync<T>(CancellationToken cancellationToken)
         {
             await this.FillBufferAsync(Unsafe.SizeOf<T>(), cancellationToken).ConfigureAwait(false);
-            return Unsafe.As<byte, T>(ref this.buffer[0]);
+            return Unsafe.ReadUnaligned<T>(ref this.buffer[0]);
         }
 
         private async Task FillBufferAsync(int cnt, CancellationToken cancellationToken)
