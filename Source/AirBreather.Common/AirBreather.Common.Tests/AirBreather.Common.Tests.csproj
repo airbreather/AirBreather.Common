@@ -15,18 +15,11 @@
 
     <ProjectReference Include="..\AirBreather.Common\AirBreather.Common.csproj" />
 
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0-preview-20170727-01" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0-preview-20170810-02" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.0-beta5-build3769" />
 
-    <PackageReference Include="System.Collections.Immutable" Version="1.4.0-preview2-25405-01" />
+    <PackageReference Include="System.Collections.Immutable" Version="1.4.0" />
     <PackageReference Include="System.Memory" Version="4.4.0-preview2-25405-01" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.4.0-preview2-25405-01" />
-    <PackageReference Include="xunit" Version="2.3.0-beta3-build3705" />
-    <PackageReference Include="xunit.abstractions" Version="2.0.1" />
-    <PackageReference Include="xunit.analyzers" Version="0.6.0" />
-    <PackageReference Include="xunit.assert" Version="2.3.0-beta3-build3705" />
-    <PackageReference Include="xunit.core" Version="2.3.0-beta3-build3705" />
-    <PackageReference Include="xunit.extensibility.core" Version="2.3.0-beta3-build3705" />
-    <PackageReference Include="xunit.extensibility.execution" Version="2.3.0-beta3-build3705" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.0-beta3-build3705" />
+    <PackageReference Include="xunit" Version="2.3.0-beta5-build3769" />
   </ItemGroup>
 </Project>
