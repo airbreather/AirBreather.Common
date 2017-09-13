@@ -31,7 +31,7 @@ namespace AirBreather.Tests
             // Now, do it all in one call.
             state = new RngState128(s0, s1);
             buf.Clear();
-            state = gen.FillBuffer(state, buf);
+            gen.FillBuffer(state, buf);
             Assert.True(expectedResults.AsReadOnlySpan().SequenceEqual(actualResults));
         }
     }

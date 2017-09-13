@@ -98,9 +98,9 @@ namespace AirBreather.Collections
             }
         }
 
-        public void Add(bool value)
+        public void Add(bool item)
         {
-            this.AddCore(value);
+            this.AddCore(item);
             this.Modified();
         }
 
@@ -119,11 +119,11 @@ namespace AirBreather.Collections
             this.Modified();
         }
 
-        public bool Contains(bool value)
+        public bool Contains(bool item)
         {
             for (int i = 0; i < this.Count; ++i)
             {
-                if (this.values[i] == value)
+                if (this.values[i] == item)
                 {
                     return true;
                 }
@@ -169,9 +169,9 @@ namespace AirBreather.Collections
             return -1;
         }
 
-        public void Insert(int index, bool value)
+        public void Insert(int index, bool item)
         {
-            this.InsertCore(index.ValidateInRange(nameof(index), 0, this.Count + 1), value);
+            this.InsertCore(index.ValidateInRange(nameof(index), 0, this.Count + 1), item);
             this.Modified();
         }
 

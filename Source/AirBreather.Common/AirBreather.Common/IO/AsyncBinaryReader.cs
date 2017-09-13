@@ -12,7 +12,7 @@ namespace AirBreather.IO
     public sealed class AsyncBinaryReader : BinaryReader
     {
         // largest value type to use this is System.Decimal, which is 16 bytes.
-        private byte[] buffer = new byte[16];
+        private readonly byte[] buffer = new byte[16];
 
         public AsyncBinaryReader(Stream input) : base(input)
         {

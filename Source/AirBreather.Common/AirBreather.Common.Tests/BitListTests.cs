@@ -8,6 +8,10 @@ using Xunit;
 using AirBreather.Collections;
 using AirBreather.Random;
 
+// we're testing the actual collection implementation itself.
+#pragma warning disable xUnit2013
+#pragma warning disable xUnit2017
+
 namespace AirBreather.Tests
 {
     public sealed class BitListTests

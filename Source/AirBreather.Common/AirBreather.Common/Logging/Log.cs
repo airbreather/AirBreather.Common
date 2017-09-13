@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Reflection;
 
 namespace AirBreather.Logging
 {
@@ -6,7 +6,7 @@ namespace AirBreather.Logging
     {
         public static ILoggerFactory Factory { get; set; } = new DumbLoggerFactory();
 
-        public static ILogger For(Type type) => Factory.Create(type.Name);
+        public static ILogger For(MemberInfo type) => Factory.Create(type.Name);
         public static ILogger For<T>(T exemplar) => For(typeof(T));
     }
 }

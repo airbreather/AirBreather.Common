@@ -101,12 +101,9 @@ namespace AirBreather
             arrayIndex.ValidateInRange(nameof(arrayIndex), 0, array.Length);
 
             bool prevalidate = enumerable.TryGetCount(out var count);
-            if (prevalidate)
+            if (prevalidate && array.Length - arrayIndex < count)
             {
-                if (array.Length - arrayIndex < count)
-                {
-                    throw new ArgumentException("Not enough room", nameof(array));
-                }
+                throw new ArgumentException("Not enough room", nameof(array));
             }
 
             foreach (T item in enumerable)

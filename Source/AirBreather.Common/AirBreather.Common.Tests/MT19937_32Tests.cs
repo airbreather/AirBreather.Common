@@ -30,7 +30,7 @@ namespace AirBreather.Tests
             // Now, do it all in one call.
             state = new MT19937_32State(5489);
             buf.Clear();
-            state = gen.FillBuffer(state, buf);
+            gen.FillBuffer(state, buf);
             Assert.True(expectedResults.SequenceEqual(actualResults));
         }
     }

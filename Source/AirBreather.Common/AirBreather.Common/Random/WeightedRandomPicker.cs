@@ -53,18 +53,18 @@ namespace AirBreather.Random
                 // gap in weights, I *think* that sorting them like this improves how closely we'll
                 // match the expected distribution for the low ones; if not, I apologize to your CPU
                 // (but I'm pretty sure that at least it won't be *worse*).
-                var weightedItems = new WeightedItem[this.weightedItems.Count];
-                this.weightedItems.CopyTo(weightedItems);
-                Array.Sort(weightedItems, CompareWeightedItems);
+                var weightedItemsArray = new WeightedItem[this.weightedItems.Count];
+                this.weightedItems.CopyTo(weightedItemsArray);
+                Array.Sort(weightedItemsArray, CompareWeightedItems);
 
-                T[] items = new T[weightedItems.Length];
+                T[] items = new T[weightedItemsArray.Length];
                 double[] newWeights = new double[items.Length];
 
                 // reweight, step 1: set each weight to the sum of itself and all weights before it.
                 double weightSoFar = 0;
-                for (int i = 0; i < weightedItems.Length; ++i)
+                for (int i = 0; i < weightedItemsArray.Length; ++i)
                 {
-                    WeightedItem weightedItem = weightedItems[i];
+                    WeightedItem weightedItem = weightedItemsArray[i];
                     items[i] = weightedItem.Item;
                     newWeights[i] = weightSoFar += weightedItem.Weight;
                 }
