@@ -26,6 +26,11 @@ namespace AirBreather.Collections
                 return false;
             }
 
+            if (!type.IsValueType)
+            {
+                return true;
+            }
+
             Type underlyingNullable = Nullable.GetUnderlyingType(type);
             if (underlyingNullable != null)
             {
