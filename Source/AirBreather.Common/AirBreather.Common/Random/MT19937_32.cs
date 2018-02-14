@@ -67,7 +67,7 @@ namespace AirBreather.Random
             this.idx = 624;
         }
 
-        public MT19937_32State(MT19937_32State copyFrom)
+        public MT19937_32State(in MT19937_32State copyFrom)
         {
             this.idx = copyFrom.idx;
 

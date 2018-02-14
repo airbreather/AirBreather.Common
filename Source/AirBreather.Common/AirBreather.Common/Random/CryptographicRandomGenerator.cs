@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
@@ -50,7 +51,7 @@ namespace AirBreather.Random
 
         private static T Next<T>()
         {
-            byte[] buf = ByteArrayPool.Instance.Rent(Unsafe.SizeOf<T>());
+            byte[] buf = ArrayPool<byte>.Shared.Rent(Unsafe.SizeOf<T>());
             try
             {
                 FillBuffer(buf);
@@ -58,9 +59,8 @@ namespace AirBreather.Random
             }
             finally
             {
-                ByteArrayPool.Instance.Return(buf);
+                ArrayPool<byte>.Shared.Return(buf);
             }
         }
     }
 }
-

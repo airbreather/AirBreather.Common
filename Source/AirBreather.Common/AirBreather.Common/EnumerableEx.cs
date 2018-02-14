@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 using AirBreather.Collections;
+using AirBreather.Danger;
 
 namespace AirBreather
 {
@@ -191,77 +194,50 @@ namespace AirBreather
 
         public static IEnumerable<(T1 x1, T2 x2)> Zip<T1, T2>(this IEnumerable<T1> first, IEnumerable<T2> second) => Enumerable.Zip(first, second, (x1, x2) => (x1, x2));
 
-        // https://en.wikipedia.org/wiki/MurmurHash#Algorithm
-        public static int Murmur3_32(this byte[] data, int seed = 0) => Murmur3_32((ReadOnlySpan<byte>)data, seed);
-        public static int Murmur3_32(this ArraySegment<byte> data, int seed = 0) => Murmur3_32((ReadOnlySpan<byte>)data, seed);
-        public static unsafe int Murmur3_32(this ReadOnlySpan<byte> data, int seed = 0)
+        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this ImmutableArray<T> array) => array.AsRegularArrayDangerous().AsReadOnlySpan();
+
+        public static MemoryStream ToReadableStream(this ImmutableArray<byte> array, int index = 0) => ToReadableStreamCore(array, index, null);
+        public static MemoryStream ToReadableStream(this ImmutableArray<byte> array, int index, int count) => ToReadableStreamCore(array, index, count);
+        private static MemoryStream ToReadableStreamCore(ImmutableArray<byte> array, int index, int? count)
         {
-            unchecked
+            array.ValidateNotDefault(nameof(array));
+            index.ValidateInRange(nameof(index), 0, array.Length);
+            if (array.Length - index < count)
             {
-                const uint C1 = 0xcc9e2d51;
-                const uint C2 = 0x1b873593;
-                const int R1 = 15;
-                const int R2 = 13;
-                const uint M = 5;
-                const uint N = 0xe6546b64;
+                throw new ArgumentException("Not enough room", nameof(array));
+            }
 
-                // language has no ROL operator
-                const int R1C = 32 - R1;
-                const int R2C = 32 - R2;
+            return new MemoryStream(buffer: array.AsRegularArrayDangerous(), index: index, count: count ?? array.Length, writable: false, publiclyVisible: false);
+        }
 
-                ReadOnlySpan<uint> chunkedData = data.NonPortableCast<byte, uint>();
-                ReadOnlySpan<byte> residue = data.Slice(chunkedData.Length << 2);
-                uint h = (uint)seed;
+        public static ReadOnlySpanEnumerable<T> AsEnumerable<T>(this ReadOnlySpan<T> span) => new ReadOnlySpanEnumerable<T>(span);
 
-                fixed (uint* fChunkedData = &chunkedData.DangerousGetPinnableReference())
+        [StructLayout(LayoutKind.Auto)]
+        public readonly ref struct ReadOnlySpanEnumerable<T>
+        {
+            private readonly ReadOnlySpan<T> span;
+
+            internal ReadOnlySpanEnumerable(ReadOnlySpan<T> span) => this.span = span;
+
+            public ReadOnlySpanEnumerator GetEnumerator() => new ReadOnlySpanEnumerator(this.span);
+
+            [StructLayout(LayoutKind.Auto)]
+            public ref struct ReadOnlySpanEnumerator
+            {
+                private ReadOnlySpan<T> span;
+
+                private int idx;
+
+                internal ReadOnlySpanEnumerator(ReadOnlySpan<T> span)
                 {
-                    uint* pCur = fChunkedData;
-                    uint* pEnd = fChunkedData + chunkedData.Length;
-
-                    // hash the variable section of data, one 4-byte chunk at a time.
-                    while (pCur != pEnd)
-                    {
-                        uint k = *(pCur++);
-                        k *= C1;
-                        k = (k << R1) | (k >> R1C); // k = k ROL R1
-                        k *= C2;
-
-                        h ^= k;
-                        h = (h << R2) | (h >> R2C); // h = h ROL R2
-                        h = (h * M) + N;
-                    }
+                    this.span = span;
+                    this.idx = -1;
                 }
 
-                // handle the last incomplete chunk, if any.
-                uint k2 = 0;
-                switch (residue.Length)
-                {
-                    case 3:
-                        k2 = (uint)residue[2] << 16;
-                        goto case 2;
+                public bool MoveNext() => this.idx < this.span.Length &&
+                                          ++this.idx < this.span.Length;
 
-                    case 2:
-                        k2 ^= (uint)residue[1] << 8;
-                        goto case 1;
-
-                    case 1:
-                        k2 ^= residue[0];
-                        k2 *= C1;
-                        k2 = (k2 << R1) | (k2 >> R1C); // k2 = k2 ROL R1
-                        k2 *= C2;
-                        h ^= k2;
-                        break;
-                }
-
-                // finalize
-                h ^= (uint)data.Length;
-                h ^= h >> 16;
-                h *= 0x85ebca6b;
-                h ^= h >> 13;
-                h *= 0xc2b2ae35;
-                h ^= h >> 16;
-
-                return (int)h;
+                public T Current => this.span[this.idx];
             }
         }
     }

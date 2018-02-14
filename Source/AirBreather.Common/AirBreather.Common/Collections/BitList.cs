@@ -49,7 +49,7 @@ namespace AirBreather.Collections
                     // Don't bother with AddRange -- it does extra stuff we've already done.
                     foreach (bool value in values)
                     {
-                        this.AddCore(value);
+                        this.Add(value);
                     }
 
                     break;
@@ -90,34 +90,19 @@ namespace AirBreather.Collections
         public bool this[int index]
         {
             get => this.values[index.ValidateInRange(nameof(index), 0, this.Count)];
-
-            set
-            {
-                this.values[index.ValidateInRange(nameof(index), 0, this.Count)] = value;
-                this.Modified();
-            }
+            set => this.values[index.ValidateInRange(nameof(index), 0, this.Count)] = value;
         }
 
         public void Add(bool item)
         {
-            this.AddCore(item);
-            this.Modified();
-        }
-
-        private void AddCore(bool value)
-        {
             this.EnsureCapacity(this.Count + 1);
-            this.values[this.Count++] = value;
+            this.values[this.Count++] = item;
         }
 
         public void AddRange(IEnumerable<bool> values) => this.InsertRange(this.Count, values);
 
-        public void Clear()
-        {
-            // unlike List<T>, we have absolutely no reason to clear the array itself.
-            this.Count = 0;
-            this.Modified();
-        }
+        // unlike List<T>, we have absolutely no reason to clear the array itself.
+        public void Clear() => this.Count = 0;
 
         public bool Contains(bool item)
         {
@@ -169,12 +154,7 @@ namespace AirBreather.Collections
             return -1;
         }
 
-        public void Insert(int index, bool item)
-        {
-            this.InsertCore(index.ValidateInRange(nameof(index), 0, this.Count + 1), item);
-            this.Modified();
-        }
-
+        public void Insert(int index, bool item) => this.InsertCore(index.ValidateInRange(nameof(index), 0, this.Count + 1), item);
         private void InsertCore(int index, bool value)
         {
             this.EnsureCapacity(this.Count + 1);
@@ -232,8 +212,6 @@ namespace AirBreather.Collections
                     this.InsertCore(index++, value);
                 }
             }
-
-            this.Modified();
         }
 
         public bool Remove(bool item)
@@ -257,7 +235,6 @@ namespace AirBreather.Collections
             }
 
             this.Count--;
-            this.Modified();
         }
 
         public void RemoveRange(int index, int count)
@@ -280,8 +257,6 @@ namespace AirBreather.Collections
             {
                 this.values[i] = this.values[i + count];
             }
-
-            this.Modified();
         }
 
         public void Reverse()
@@ -294,8 +269,6 @@ namespace AirBreather.Collections
                 this.values[i++] = this.values[j];
                 this.values[j--] = temp;
             }
-
-            this.Modified();
         }
 
         public BitArray ToBitArray()
@@ -311,50 +284,31 @@ namespace AirBreather.Collections
 
         public void TrimExcess() => this.Capacity = this.Count;
 
-        public IEnumerator<bool> GetEnumerator() => new Enumerator(this);
+        public Enumerator GetEnumerator() => new Enumerator(this);
 
+        IEnumerator<bool> IEnumerable<bool>.GetEnumerator() => this.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-        private void Modified() => ++this.version;
-
-        private sealed class Enumerator : IEnumerator<bool>
+        public struct Enumerator : IEnumerator<bool>
         {
-            private readonly BitList lst;
-
-            private readonly int version;
+            private BitList lst;
 
             private int currIndex;
 
             internal Enumerator(BitList lst)
             {
                 this.lst = lst;
-                this.version = lst.version;
-                this.currIndex = 0;
+                this.currIndex = -1;
             }
 
-            public bool Current { get; private set; }
+            public bool Current => this.lst[this.currIndex];
+
+            public bool MoveNext() => this.currIndex < this.lst.Count &&
+                                      ++this.currIndex < this.lst.Count;
 
             object IEnumerator.Current => Boxes.Boolean(this.Current);
 
-            public bool MoveNext()
-            {
-                if (this.version != this.lst.version)
-                {
-                    throw new InvalidOperationException("Collection was modified during enumeration.");
-                }
-
-                if (this.lst.Count <= this.currIndex)
-                {
-                    return false;
-                }
-
-                this.Current = this.lst[this.currIndex++];
-                return true;
-            }
-
-            public void Reset() => this.currIndex = this.version == this.lst.version
-                ? 0
-                : throw new InvalidOperationException("Collection was modified during enumeration.");
+            void IEnumerator.Reset() => this.currIndex = -1;
 
             void IDisposable.Dispose() { }
         }

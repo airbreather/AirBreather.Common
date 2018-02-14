@@ -28,9 +28,9 @@ namespace AirBreather.Collections
         }
     }
 
-    public struct HashSetValue<T> : IReadOnlySet<T>, IImmutableSet<T>, IEquatable<HashSetValue<T>>
+    public readonly struct HashSetValue<T> : IReadOnlySet<T>, IImmutableSet<T>, IEquatable<HashSetValue<T>>
     {
-        private ImmutableHashSet<T> values;
+        private readonly ImmutableHashSet<T> values;
 
         public HashSetValue(IEnumerable<T> values) => this.values = values.ValidateNotNull(nameof(values)).ToImmutableHashSet(EqualityComparer<T>.Default);
 
