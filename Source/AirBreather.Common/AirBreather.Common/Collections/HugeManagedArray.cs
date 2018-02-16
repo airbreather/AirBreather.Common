@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -6,10 +7,8 @@ using static System.Runtime.CompilerServices.Unsafe;
 
 namespace AirBreather.Collections
 {
-    public static class HugeManagedArray
+    internal static class HugeManagedArray
     {
-        public static HugeManagedArray<T> Empty<T>() where T : struct => PerTypeValues<T>.EmptyHugeManagedArray;
-
         internal static HugeManagedArrayBlock[] AllocateUnderlying(int sz, long length) => new HugeManagedArrayBlock[Math.DivRem(sz * length, SizeOf<HugeManagedArrayBlock>(), out long rem) + (rem == 0 ? 0 : 1)];
 
         // the rest of this "helpers" class is based on:
@@ -57,19 +56,15 @@ namespace AirBreather.Collections
             where T : struct // blittable
         {
             internal static readonly bool ContainsReferences = ContainsReferencesCore(typeof(T));
-
-            internal static readonly HugeManagedArray<T> EmptyHugeManagedArray = new HugeManagedArray<T>(0);
         }
     }
 
     // at this block size, with <gcAllowVeryLargeObjects> enabled, a single array can hold up to
-    // just barely under 128 TB of data (65536 * 0x7FEFFFFF bytes), provided enough virtual memory.
-    // this is the biggest we can get without forcing every single array of this kind to have its
-    // backing store get allocated on the LOH.
-    [StructLayout(LayoutKind.Sequential, Size = 65536)]
+    // just barely under 128 TB of data (65532 * 0x7FEFFFFF bytes), provided enough virtual memory.
+    [StructLayout(LayoutKind.Sequential, Size = 65532)]
     internal struct HugeManagedArrayBlock { }
 
-    public sealed class HugeManagedArray<T>
+    public sealed class HugeManagedArray<T> : IEnumerable<T>
         where T : struct // blittable
     {
         private readonly HugeManagedArrayBlock[] blocks;
@@ -77,8 +72,10 @@ namespace AirBreather.Collections
         public HugeManagedArray(long length)
         {
             this.ValidateBlittable();
-            this.blocks = HugeManagedArray.AllocateUnderlying(SizeOf<T>(), length.ValidateNotLessThan(nameof(length), 0));
-            this.Length = length;
+            this.Length = length.ValidateNotLessThan(nameof(length), 0);
+            this.blocks = length == 0
+                ? Array.Empty<HugeManagedArrayBlock>()
+                : HugeManagedArray.AllocateUnderlying(SizeOf<T>(), length);
         }
 
         public HugeManagedArray(HugeManagedArray<T> copyFrom)
@@ -95,12 +92,16 @@ namespace AirBreather.Collections
 
         public HugeManagedArray<T> Clone() => new HugeManagedArray<T>(this);
 
+        public Enumerator GetEnumerator() => new Enumerator(this);
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => new Enumerator(this);
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => new Enumerator(this);
+
         // TODO: add resizing capability and unlimited slicing capabilities
 
         public Span<T> Slice(long index, int length)
         {
             index.ValidateInRange(nameof(index), 0, this.Length);
-            ((long)length).ValidateInRange(nameof(length), 0, this.Length - index);
+            ((long)length).ValidateInRange(nameof(length), 0, this.Length - index + 1);
             return Span<T>.DangerousCreate(this.blocks, ref this.GetRefForValidatedIndex(index), length);
         }
 
@@ -108,8 +109,8 @@ namespace AirBreather.Collections
         public void CopyTo(HugeManagedArray<T> destinationArray, long length)
         {
             destinationArray.ValidateNotNull(nameof(destinationArray));
-            length.ValidateInRange(nameof(length), 0, this.Length);
-            length.ValidateInRange(nameof(length), 0, destinationArray.Length);
+            length.ValidateInRange(nameof(length), 0, this.Length + 1);
+            length.ValidateInRange(nameof(length), 0, destinationArray.Length + 1);
             this.CopyToCore(0, destinationArray, 0, length);
         }
 
@@ -118,8 +119,8 @@ namespace AirBreather.Collections
             destinationArray.ValidateNotNull(nameof(destinationArray));
             sourceIndex.ValidateInRange(nameof(sourceIndex), 0, this.Length);
             destinationIndex.ValidateInRange(nameof(destinationIndex), 0, destinationArray.Length);
-            length.ValidateInRange(nameof(length), 0, this.Length - sourceIndex);
-            length.ValidateInRange(nameof(length), 0, destinationArray.Length - destinationIndex);
+            length.ValidateInRange(nameof(length), 0, this.Length - sourceIndex + 1);
+            length.ValidateInRange(nameof(length), 0, destinationArray.Length - destinationIndex + 1);
             this.CopyToCore(sourceIndex, destinationArray, destinationIndex, length);
         }
 
@@ -139,7 +140,7 @@ namespace AirBreather.Collections
         public void DangerousCopyTo(long sourceIndex, ref T destinationStart, long length) =>
             this.DangerousCopyToCore(sourceIndex: sourceIndex.ValidateInRange(nameof(sourceIndex), 0, this.Length),
                                      destinationStart: ref destinationStart,
-                                     length: length.ValidateInRange(nameof(length), 0, this.Length - sourceIndex));
+                                     length: length.ValidateInRange(nameof(length), 0, this.Length - sourceIndex + 1));
 
         private unsafe void DangerousCopyToCore(long sourceIndex, ref T destinationStart, long length)
         {
@@ -167,6 +168,29 @@ namespace AirBreather.Collections
             {
                 ThrowHelpers.ThrowExceptionForNonBlittable();
             }
+        }
+
+        public struct Enumerator : IEnumerator<T>
+        {
+            private HugeManagedArray<T> array;
+
+            private long index;
+
+            internal Enumerator(HugeManagedArray<T> array)
+            {
+                this.array = array;
+                this.index = -1;
+            }
+
+            public bool MoveNext() => this.index < this.array.Length &&
+                                      ++this.index < this.array.Length;
+
+            public T Current => this.array[this.index];
+            object System.Collections.IEnumerator.Current => this.array[this.index];
+
+            public void Reset() => this.index = -1;
+
+            void IDisposable.Dispose() { }
         }
     }
 }
