@@ -50,7 +50,7 @@ namespace AirBreather.Tests
 
             foreach (var (item, actualCount) in dct)
             {
-                this.output.WriteLine("{0} appeared {1} times (expected {2}) (absolute error: {3:P3})", item, actualCount, expect[item], Math.Abs(actualCount - expect[item]) / expect[item]);
+                this.output.WriteLine("{0} appeared {1:N0} times (expected {2:N0}) (absolute error: {3:P3})", item, actualCount, expect[item], Math.Abs(actualCount - expect[item]) / expect[item]);
             }
         }
     }
