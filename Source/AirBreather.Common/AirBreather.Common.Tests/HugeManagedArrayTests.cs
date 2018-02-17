@@ -19,11 +19,7 @@ namespace AirBreather.Tests
         public void EqualityTests()
         {
             ulong[] data = new ulong[50124];
-            Span<byte> asBytes = data.AsSpan().AsBytes();
-
-            byte[] stupidByteArray = new byte[asBytes.Length];
-            CryptographicRandomGenerator.FillBuffer(stupidByteArray);
-            stupidByteArray.AsReadOnlySpan().CopyTo(asBytes);
+            CryptographicRandomGenerator.FillBuffer(data.AsSpan().AsBytes());
 
             HugeManagedArray<ulong> arrMine = new HugeManagedArray<ulong>(data);
 
