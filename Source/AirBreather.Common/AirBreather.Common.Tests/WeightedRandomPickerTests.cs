@@ -37,7 +37,7 @@ namespace AirBreather.Tests
 
             var dct = valsWithWeights.Keys.ToDictionary(x => x, x => 0);
 
-            const int TrialCount = 10000;
+            const int TrialCount = 500000;
             ulong[] span = new ulong[TrialCount];
             CryptographicRandomGenerator.FillBuffer(span.AsSpan().AsBytes());
             for (int i = 0; i < span.Length; ++i)
@@ -50,7 +50,7 @@ namespace AirBreather.Tests
 
             foreach (var (item, actualCount) in dct)
             {
-                this.output.WriteLine("{0} appeared {1} times (expected {2})", item, actualCount, expect[item]);
+                this.output.WriteLine("{0} appeared {1} times (expected {2}) (absolute error: {3:P3})", item, actualCount, expect[item], Math.Abs(actualCount - expect[item]) / expect[item]);
             }
         }
     }
