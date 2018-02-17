@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Text;
 using AirBreather.Collections;
 using AirBreather.Random;
 using Xunit;
@@ -20,21 +18,26 @@ namespace AirBreather.Tests
         [Fact]
         public void EqualityTests()
         {
-            byte[] arrBase = CryptographicRandomGenerator.FillBuffer(new byte[9999]);
-            HugeManagedArray<byte> arrMine = new HugeManagedArray<byte>(9999);
-            arrBase.AsReadOnlySpan().CopyTo(arrMine.Slice(0, 9999));
+            ulong[] data = new ulong[50124];
+            Span<byte> asBytes = data.AsSpan().AsBytes();
+
+            byte[] stupidByteArray = new byte[asBytes.Length];
+            CryptographicRandomGenerator.FillBuffer(stupidByteArray);
+            stupidByteArray.AsReadOnlySpan().CopyTo(asBytes);
+
+            HugeManagedArray<ulong> arrMine = new HugeManagedArray<ulong>(data);
 
             // IEnumerable<T>
-            Assert.Equal(arrBase, arrMine);
+            Assert.Equal(data, arrMine);
 
             // simple indexing
-            for (int i = 0; i < arrBase.Length; i++)
+            for (int i = 0; i < data.Length; i++)
             {
-                Assert.Equal(arrBase[i], arrMine[i]);
+                Assert.Equal(data[i], arrMine[i]);
             }
 
             // slicing
-            Assert.True(arrMine.Slice(0, 9999).SequenceEqual(arrBase));
+            Assert.True(arrMine.Slice(0, data.Length).SequenceEqual(data));
         }
 
         private struct EnumContainer

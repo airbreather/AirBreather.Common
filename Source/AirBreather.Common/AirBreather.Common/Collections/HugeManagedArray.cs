@@ -78,6 +78,17 @@ namespace AirBreather.Collections
                 : HugeManagedArray.AllocateUnderlying(SizeOf<T>(), length);
         }
 
+        public HugeManagedArray(T[] copyFrom)
+            : this(copyFrom.ValidateNotNull(nameof(copyFrom)).LongLength)
+        {
+            if (this.Length != 0)
+            {
+                DangerousCopyCore(sourceStart: ref copyFrom[0],
+                                  destinationStart: ref this.GetRefForValidatedIndex(0),
+                                  length: this.Length);
+            }
+        }
+
         public HugeManagedArray(HugeManagedArray<T> copyFrom)
         {
             copyFrom.ValidateNotNull(nameof(copyFrom));
@@ -142,7 +153,12 @@ namespace AirBreather.Collections
                                      destinationStart: ref destinationStart,
                                      length: length.ValidateInRange(nameof(length), 0, this.Length - sourceIndex + 1));
 
-        private unsafe void DangerousCopyToCore(long sourceIndex, ref T destinationStart, long length)
+        private unsafe void DangerousCopyToCore(long sourceIndex, ref T destinationStart, long length) =>
+            DangerousCopyCore(sourceStart: ref this.GetRefForValidatedIndex(sourceIndex),
+                              destinationStart: ref destinationStart,
+                              length: length);
+
+        private static unsafe void DangerousCopyCore(ref T sourceStart, ref T destinationStart, long length)
         {
             if (length == 0)
             {
@@ -151,7 +167,7 @@ namespace AirBreather.Collections
 
             long byteCount = length * SizeOf<T>();
 
-            fixed (void* src = &As<T, byte>(ref this.GetRefForValidatedIndex(sourceIndex)))
+            fixed (void* src = &As<T, byte>(ref sourceStart))
             fixed (void* dst = &As<T, byte>(ref destinationStart))
             {
                 Buffer.MemoryCopy(src, dst, byteCount, byteCount);
