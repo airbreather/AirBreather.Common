@@ -15,7 +15,7 @@ namespace AirBreather
 
             int orig = count;
             int cnt = -1;
-            while ((count | cnt) != 0)
+            while ((count != 0) & (cnt != 0))
             {
                 cnt = await stream.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
                 offset += cnt;
