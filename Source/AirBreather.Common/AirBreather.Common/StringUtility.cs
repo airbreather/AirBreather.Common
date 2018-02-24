@@ -59,7 +59,7 @@ namespace AirBreather
 
         public static unsafe string ToHexString(this ReadOnlySpan<byte> bytes)
         {
-            int cnt = bytes.ValidateNotDefault(nameof(bytes)).Length;
+            int cnt = bytes.Length;
             if (cnt == 0)
             {
                 return String.Empty;

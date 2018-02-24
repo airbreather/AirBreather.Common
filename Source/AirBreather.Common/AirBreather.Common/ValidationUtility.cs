@@ -46,28 +46,6 @@ namespace AirBreather
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Span<T> ValidateNotDefault<T>(this Span<T> value, string paramName)
-        {
-            if (value == default)
-            {
-                ThrowArgumentException(paramName);
-            }
-
-            return value;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ReadOnlySpan<T> ValidateNotDefault<T>(this ReadOnlySpan<T> value, string paramName)
-        {
-            if (value == default)
-            {
-                ThrowArgumentException(paramName);
-            }
-
-            return value;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ImmutableArray<T> ValidateNotDefault<T>(this ImmutableArray<T> value, string paramName)
         {
             if (value.IsDefault)
