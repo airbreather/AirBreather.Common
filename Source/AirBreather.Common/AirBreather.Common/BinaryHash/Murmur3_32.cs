@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace AirBreather.BinaryHash
 {
@@ -24,7 +25,7 @@ namespace AirBreather.BinaryHash
                 ReadOnlySpan<byte> residue = data.Slice(chunkedData.Length << 2);
                 uint h = seed;
 
-                fixed (uint* fChunkedData = &chunkedData.DangerousGetPinnableReference())
+                fixed (uint* fChunkedData = &MemoryMarshal.GetReference(chunkedData))
                 {
                     uint* pCur = fChunkedData;
                     uint* pEnd = fChunkedData + chunkedData.Length;

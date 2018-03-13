@@ -33,6 +33,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 using static System.FormattableString;
 
@@ -216,7 +217,7 @@ namespace AirBreather.Random
 
             state = new MT19937_64State(state);
             fixed (ulong* fData = state.data)
-            fixed (byte* fbuf = &buffer.DangerousGetPinnableReference())
+            fixed (byte* fbuf = &MemoryMarshal.GetReference(buffer))
             {
                 // count has already been validated to be a multiple of ChunkSize,
                 // and we assume index is OK too, so we can do this fanciness without fear.

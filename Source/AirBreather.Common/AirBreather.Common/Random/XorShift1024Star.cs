@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 namespace AirBreather.Random
 {
@@ -72,7 +73,7 @@ namespace AirBreather.Random
             }
 
             ulong* pState = (ulong*)&state;
-            fixed (byte* fbuf = &buffer.DangerousGetPinnableReference())
+            fixed (byte* fbuf = &MemoryMarshal.GetReference(buffer))
             {
                 // count has already been validated to be a multiple of ChunkSize,
                 // and we assume index is OK too, so we can do this fanciness without fear.

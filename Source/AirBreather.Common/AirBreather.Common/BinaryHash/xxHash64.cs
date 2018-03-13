@@ -81,7 +81,7 @@ namespace AirBreather.BinaryHash
                 // 32 bytes in independent 8-byte chunks.
                 while (input.Length >= 32)
                 {
-                    Process(ref input.DangerousGetPinnableReference(), values);
+                    Process(ref MemoryMarshal.GetReference(input), values);
                     input = input.Slice(32);
                 }
 

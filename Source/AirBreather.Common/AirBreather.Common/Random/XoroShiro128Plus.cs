@@ -27,6 +27,7 @@ See <http://creativecommons.org/publicdomain/zero/1.0/>. */
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 namespace AirBreather.Random
 {
@@ -89,7 +90,7 @@ namespace AirBreather.Random
                 throw new ArgumentException("State is not valid; use the parameterized constructor to initialize a new instance with the given seed values.", nameof(state));
             }
 
-            fixed (byte* fbuf = &buffer.DangerousGetPinnableReference())
+            fixed (byte* fbuf = &MemoryMarshal.GetReference(buffer))
             {
                 // count has already been validated to be a multiple of ChunkSize,
                 // and we assume index is OK too, so we can do this fanciness without fear.

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
 namespace AirBreather.Random
@@ -62,16 +63,9 @@ namespace AirBreather.Random
 
         private static T Next<T>()
         {
-            byte[] buf = ArrayPool<byte>.Shared.Rent(Unsafe.SizeOf<T>());
-            try
-            {
-                FillBuffer(buf);
-                return Unsafe.ReadUnaligned<T>(ref buf[0]);
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(buf);
-            }
+            Span<byte> buf = stackalloc byte[Unsafe.SizeOf<T>()];
+            FillBuffer(buf);
+            return Unsafe.ReadUnaligned<T>(ref MemoryMarshal.GetReference(buf));
         }
     }
 }

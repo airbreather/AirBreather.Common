@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -67,7 +68,7 @@ namespace AirBreather
 
             string result = new string(default, cnt * 2);
             fixed (uint* byteToHexPtr = byteToHex32Lookup)
-            fixed (byte* bytesPtr = &bytes.DangerousGetPinnableReference())
+            fixed (byte* bytesPtr = &MemoryMarshal.GetReference(bytes))
             fixed (char* resultCharPtr = result)
             {
                 uint* resultUInt32Ptr = (uint*)resultCharPtr;
