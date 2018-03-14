@@ -24,9 +24,6 @@ namespace AirBreather.Random
 
             RngState128 result = default;
 
-            // TODO: this (and what it came from) is a bit overcomplicated of a way of saying 128
-            // "yes / no" answers in a specific sequence... maybe just write out that sequence of
-            // 128 yes / no answers as a bool[] or BitArray or something.
             ulong msk = 0x8A5CD789635D2DFF;
             for (int i = 0; i < 128; ++i)
             {
