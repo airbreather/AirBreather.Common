@@ -74,7 +74,7 @@ namespace AirBreather.BinaryHash
                 {
                     input.Slice(0, freeBuffer.Length).CopyTo(freeBuffer);
                     input = input.Slice(freeBuffer.Length);
-                    Process(ref AsRef<byte>(p->Buffer), values);
+                    Process(ref MemoryMarshal.GetReference(stateBuffer), values);
                 }
 
                 // feels like SIMD could help this loop, since each iteration only looks at the next
