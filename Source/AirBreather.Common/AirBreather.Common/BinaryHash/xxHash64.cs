@@ -97,58 +97,61 @@ namespace AirBreather.BinaryHash
         // wrap up a streaming hash
         public static unsafe ulong Finish(ref State state)
         {
-            // pin because accessing the fixed-size buffers requires it.
-            fixed (State* p = &state)
+            unchecked
             {
-                Span<ulong> values = new Span<ulong>(p->Values, 4);
-
-                ulong h;
-                if (p->BytesProcessedSoFar >= 32)
+                // pin because accessing the fixed-size buffers requires it.
+                fixed (State* p = &state)
                 {
-                    h = RotateLeft(values[0], 1) +
-                        RotateLeft(values[1], 7) +
-                        RotateLeft(values[2], 12) +
-                        RotateLeft(values[3], 18);
+                    Span<ulong> values = new Span<ulong>(p->Values, 4);
 
-                    h = (h ^ ProcessSingle(0, values[0])) * Prime1 + Prime4;
-                    h = (h ^ ProcessSingle(0, values[1])) * Prime1 + Prime4;
-                    h = (h ^ ProcessSingle(0, values[2])) * Prime1 + Prime4;
-                    h = (h ^ ProcessSingle(0, values[3])) * Prime1 + Prime4;
+                    ulong h;
+                    if (p->BytesProcessedSoFar >= 32)
+                    {
+                        h = RotateLeft(values[0], 1) +
+                            RotateLeft(values[1], 7) +
+                            RotateLeft(values[2], 12) +
+                            RotateLeft(values[3], 18);
+
+                        h = (h ^ ProcessSingle(0, values[0])) * Prime1 + Prime4;
+                        h = (h ^ ProcessSingle(0, values[1])) * Prime1 + Prime4;
+                        h = (h ^ ProcessSingle(0, values[2])) * Prime1 + Prime4;
+                        h = (h ^ ProcessSingle(0, values[3])) * Prime1 + Prime4;
+                    }
+                    else
+                    {
+                        h = values[2];
+                    }
+
+                    h += p->BytesProcessedSoFar;
+
+                    ref byte bytesStart = ref AsRef<byte>(p->Buffer);
+                    int offset = 0;
+                    int remainingBytes = p->BufferUsed;
+
+                    for (; offset + 8 <= remainingBytes; offset += 8)
+                    {
+                        h = RotateLeft(h ^ ProcessSingle(0, ReadUnaligned<ulong>(ref AddByteOffset(ref bytesStart, new IntPtr(offset)))), 27) * Prime1 + Prime4;
+                    }
+
+                    if (offset + 4 <= remainingBytes)
+                    {
+                        h = RotateLeft(h ^ ReadUnaligned<uint>(ref AddByteOffset(ref bytesStart, new IntPtr(offset))), 23) * Prime2 + Prime3;
+                        offset += 4;
+                    }
+
+                    while (offset < remainingBytes)
+                    {
+                        h = RotateLeft(h ^ AddByteOffset(ref bytesStart, new IntPtr(offset)) * Prime5, 11) * Prime1;
+                        offset++;
+                    }
+
+                    h ^= h >> 33;
+                    h *= Prime2;
+                    h ^= h >> 29;
+                    h *= Prime3;
+                    h ^= h >> 32;
+                    return h;
                 }
-                else
-                {
-                    h = values[2];
-                }
-
-                h += p->BytesProcessedSoFar;
-
-                ref byte bytesStart = ref AsRef<byte>(p->Buffer);
-                int offset = 0;
-                int remainingBytes = p->BufferUsed;
-
-                for (; offset + 8 <= remainingBytes; offset += 8)
-                {
-                    h = RotateLeft(h ^ ProcessSingle(0, ReadUnaligned<ulong>(ref AddByteOffset(ref bytesStart, new IntPtr(offset)))), 27) * Prime1 + Prime4;
-                }
-
-                if (offset + 4 <= remainingBytes)
-                {
-                    h = RotateLeft(h ^ ReadUnaligned<uint>(ref AddByteOffset(ref bytesStart, new IntPtr(offset))), 23) * Prime2 + Prime3;
-                    offset += 4;
-                }
-
-                while (offset < remainingBytes)
-                {
-                    h = RotateLeft(h ^ AddByteOffset(ref bytesStart, new IntPtr(offset)) * Prime5, 11) * Prime1;
-                    offset++;
-                }
-
-                h ^= h >> 33;
-                h *= Prime2;
-                h ^= h >> 29;
-                h *= Prime3;
-                h ^= h >> 32;
-                return h;
             }
         }
 
