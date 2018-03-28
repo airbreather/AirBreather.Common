@@ -29,6 +29,8 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
+using static System.Runtime.CompilerServices.Unsafe;
+
 namespace AirBreather.Random
 {
     // TODO: fully replace XorShift128Plus with this, once it's been proven out more rigorously.
@@ -75,7 +77,7 @@ namespace AirBreather.Random
         }
 
         /// <inheritdoc />
-        public unsafe RngState128 FillBuffer(RngState128 state, Span<byte> buffer)
+        public RngState128 FillBuffer(RngState128 state, Span<byte> buffer)
         {
             if (buffer.Length % ChunkSize != 0)
             {
@@ -87,18 +89,14 @@ namespace AirBreather.Random
                 throw new ArgumentException("State is not valid; use the parameterized constructor to initialize a new instance with the given seed values.", nameof(state));
             }
 
-            fixed (byte* fbuf = &MemoryMarshal.GetReference(buffer))
+            ref byte start = ref MemoryMarshal.GetReference(buffer);
+            for (int i = 0, cnt = buffer.Length; i < cnt; i += SizeOf<ulong>())
             {
-                // count has already been validated to be a multiple of ChunkSize,
-                // and we assume index is OK too, so we can do this fanciness without fear.
-                for (ulong* pbuf = (ulong*)fbuf, pend = pbuf + (buffer.Length / ChunkSize); pbuf < pend; ++pbuf)
-                {
-                    *pbuf = unchecked(state.s0 + state.s1);
+                WriteUnaligned(ref AddByteOffset(ref start, new IntPtr(i)), unchecked(state.s0 + state.s1));
 
-                    ulong t = state.s0 ^ state.s1;
-                    state.s0 = ((state.s0 << 55) | (state.s0 >> 9)) ^ t ^ (t << 14);
-                    state.s1 = (t << 36) | (t >> 28);
-                }
+                ulong t = state.s0 ^ state.s1;
+                state.s0 = ((state.s0 << 55) | (state.s0 >> 9)) ^ t ^ (t << 14);
+                state.s1 = (t << 36) | (t >> 28);
             }
 
             return state;
