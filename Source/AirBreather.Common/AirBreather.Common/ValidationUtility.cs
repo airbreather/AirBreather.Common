@@ -83,13 +83,13 @@ namespace AirBreather
         {
             foreach (char ch in value)
             {
-                if (Char.IsWhiteSpace(ch))
+                if (!Char.IsWhiteSpace(ch))
                 {
-                    return true;
+                    return false;
                 }
             }
 
-            return false;
+            return true;
         }
     }
 }

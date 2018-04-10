@@ -27,11 +27,15 @@ namespace AirBreather.Collections
 
         public SlimList(IEnumerable<T> items) => this.AddRange(items.ValidateNotNull(nameof(items)));
 
-        public T this[int index]
+        public ref T this[int index] => ref this.arr[index];
+
+        T IList<T>.this[int index]
         {
             get => this.arr[index];
             set => this.arr[index] = value;
         }
+
+        T IReadOnlyList<T>.this[int index] => this.arr[index];
 
         public T[] DangerousCurrentArray => this.arr;
 
