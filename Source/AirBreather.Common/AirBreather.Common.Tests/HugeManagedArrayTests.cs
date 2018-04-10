@@ -1,20 +1,14 @@
 ﻿using System;
-using System.Collections.Immutable;
+
 using AirBreather.Collections;
 using AirBreather.Random;
+
 using Xunit;
 
 namespace AirBreather.Tests
 {
     public sealed class HugeManagedArrayTests
     {
-        [Fact]
-        public void MustBeBlittable()
-        {
-            Assert.Throws<ArgumentException>(() => new HugeManagedArray<ImmutableArray<byte>>(1));
-            new HugeManagedArray<EnumContainer>(1);
-        }
-
         [Fact]
         public void EqualityTests()
         {
