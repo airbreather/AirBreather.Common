@@ -121,6 +121,7 @@ namespace AirBreather.Collections
 
         private ref T GetRefForValidatedIndex(long index) => ref Add(ref As<HugeManagedArrayBlock, T>(ref this.blocks[0]), new IntPtr(index));
 
+        [StructLayout(LayoutKind.Auto)]
         public struct Enumerator : IEnumerator<T>
         {
             private HugeManagedArray<T> array;
@@ -133,11 +134,20 @@ namespace AirBreather.Collections
                 this.index = -1;
             }
 
-            public ref T Current => ref this.index == -1
-                ? ref this.array[this.index]
-                : ref this.array.GetRefForValidatedIndex(this.index);
+            public ref T Current
+            {
+                get
+                {
+                    if (unchecked((ulong)this.index) >= unchecked((ulong)this.array.Length))
+                    {
+                        ThrowHelpers.ThrowInvaildOperationExceptionForUnexpectedCurrent();
+                    }
 
-            public bool MoveNext() => ++this.index < this.array.Length;
+                    return ref this.array.GetRefForValidatedIndex(this.index);
+                }
+            }
+
+            public bool MoveNext() => unchecked((ulong)++this.index) < unchecked((ulong)this.array.Length);
 
             T IEnumerator<T>.Current => this.Current;
             object System.Collections.IEnumerator.Current => this.Current;

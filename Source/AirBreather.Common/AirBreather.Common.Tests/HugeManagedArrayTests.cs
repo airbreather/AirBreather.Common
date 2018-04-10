@@ -26,6 +26,15 @@ namespace AirBreather.Tests
             {
                 Assert.Equal(data[i], arrMine[i]);
             }
+
+            // pattern foreach
+            int j = 0;
+            foreach (ulong val in data)
+            {
+                Assert.Equal(val, arrMine[j++]);
+            }
+
+            Assert.Equal(j, arrMine.Length);
         }
 
         private struct EnumContainer

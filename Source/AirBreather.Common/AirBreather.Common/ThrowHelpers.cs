@@ -32,5 +32,8 @@ namespace AirBreather
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentExceptionForBadTargetSpanLength() => throw new ArgumentException("Length of the destination span must be exactly twice the length of the source span (two output chars per input byte).");
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvaildOperationExceptionForUnexpectedCurrent() => throw new InvalidOperationException("It is illegal to access Current before calling MoveNext() or after it has returned false.");
     }
 }
