@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 using AirBreather.Collections;
 using AirBreather.Random;
@@ -13,7 +14,7 @@ namespace AirBreather.Tests
         public void EqualityTests()
         {
             ulong[] data = new ulong[50124];
-            CryptographicRandomGenerator.FillBuffer(data.AsSpan().AsBytes());
+            CryptographicRandomGenerator.FillBuffer(MemoryMarshal.AsBytes(data.AsSpan()));
 
             HugeManagedArray<ulong> arrMine = new HugeManagedArray<ulong>(data);
 
@@ -25,9 +26,6 @@ namespace AirBreather.Tests
             {
                 Assert.Equal(data[i], arrMine[i]);
             }
-
-            // slicing
-            Assert.True(arrMine.Slice(0, data.Length).SequenceEqual(data));
         }
 
         private struct EnumContainer

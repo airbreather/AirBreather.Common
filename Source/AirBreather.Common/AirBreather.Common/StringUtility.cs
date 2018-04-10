@@ -16,7 +16,7 @@ namespace AirBreather
 
         public static byte[] HexStringToByteArrayChecked(this string s) =>
             hexStringRegex.Value.IsMatch(s.ValidateNotNull(nameof(s)))
-                ? s.AsReadOnlySpan().HexStringToByteArrayUnchecked()
+                ? s.AsSpan().HexStringToByteArrayUnchecked()
                 : throw new ArgumentException("Must provide a hex string.", nameof(s));
 
         // http://stackoverflow.com/a/17923942/1083771
@@ -62,7 +62,7 @@ namespace AirBreather
             return result;
         }
 
-        public static string ToHexString(this ReadOnlySpan<byte> bytes)
+        public static unsafe string ToHexString(this ReadOnlySpan<byte> bytes)
         {
             int cnt = bytes.Length;
             if (cnt == 0)
@@ -71,14 +71,28 @@ namespace AirBreather
             }
 
             string result = new string(default, cnt * 2);
-            ref byte bResult = ref Unsafe.As<char, byte>(ref Unsafe.AsRef(MemoryMarshal.GetReference(result.AsReadOnlySpan())));
+            fixed (char* c = result)
+            {
+                Span<char> span = new Span<char>(c, result.Length);
+                CopyToHexString(bytes, span);
+            }
+
+            return result;
+        }
+
+        public static void CopyToHexString(this ReadOnlySpan<byte> bytes, Span<char> target)
+        {
+            if (target.Length != bytes.Length * 2)
+            {
+                ThrowHelpers.ThrowArgumentExceptionForBadTargetSpanLength();
+            }
+
+            ref byte bResult = ref Unsafe.As<char, byte>(ref MemoryMarshal.GetReference(target));
             for (int i = 0; i < bytes.Length; i++)
             {
                 Unsafe.WriteUnaligned(ref Unsafe.AddByteOffset(ref bResult, new IntPtr(i * 4)),
                                       byteToHex32Lookup[bytes[i]]);
             }
-
-            return result;
         }
     }
 }

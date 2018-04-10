@@ -21,7 +21,7 @@ namespace AirBreather.BinaryHash
                 const int R1C = 32 - R1;
                 const int R2C = 32 - R2;
 
-                ReadOnlySpan<uint> chunkedData = data.NonPortableCast<byte, uint>();
+                ReadOnlySpan<uint> chunkedData = MemoryMarshal.Cast<byte, uint>(data);
                 ReadOnlySpan<byte> residue = data.Slice(chunkedData.Length << 2);
                 uint h = seed;
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace AirBreather.Random
 {
@@ -67,7 +68,7 @@ namespace AirBreather.Random
                 {
                     if (this.nextOffset == 0)
                     {
-                        this.rngState = this.rng.FillBuffer(this.rngState, this.buffer.AsSpan().AsBytes());
+                        this.rngState = this.rng.FillBuffer(this.rngState, MemoryMarshal.AsBytes(this.buffer.AsSpan()));
                     }
 
                     sample = this.buffer[this.nextOffset++];

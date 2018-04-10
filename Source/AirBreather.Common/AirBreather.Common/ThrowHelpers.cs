@@ -29,5 +29,8 @@ namespace AirBreather
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentExceptionForAllZeroes() => throw new ArgumentException("At least one seed value must be non-zero.");
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentExceptionForBadTargetSpanLength() => throw new ArgumentException("Length of the destination span must be exactly twice the length of the source span (two output chars per input byte).");
     }
 }

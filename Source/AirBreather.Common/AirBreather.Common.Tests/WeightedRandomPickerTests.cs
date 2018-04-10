@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 using Xunit;
 using Xunit.Abstractions;
@@ -38,8 +39,8 @@ namespace AirBreather.Tests
             var dct = valsWithWeights.Keys.ToDictionary(x => x, x => 0);
 
             const int TrialCount = 500000;
-            ulong[] span = new ulong[TrialCount];
-            CryptographicRandomGenerator.FillBuffer(span.AsSpan().AsBytes());
+            Span<ulong> span = new ulong[TrialCount];
+            CryptographicRandomGenerator.FillBuffer(MemoryMarshal.AsBytes(span));
             for (int i = 0; i < span.Length; ++i)
             {
                 ++dct[picker.Pick(span[i] / (double)UInt64.MaxValue)];

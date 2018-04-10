@@ -92,8 +92,8 @@ namespace AirBreather
             }
         }
 
-        public static void CopyTo<T>(this T[] src, Span<T> dst) => src.AsReadOnlySpan().CopyTo(dst);
-        public static void CopyTo<T>(this ArraySegment<T> src, Span<T> dst) => src.AsReadOnlySpan().CopyTo(dst);
+        public static void CopyTo<T>(this T[] src, Span<T> dst) => ((ReadOnlySpan<T>)src).CopyTo(dst);
+        public static void CopyTo<T>(this ArraySegment<T> src, Span<T> dst) => ((ReadOnlySpan<T>)src).CopyTo(dst);
         public static void CopyTo<T>(this IEnumerable<T> enumerable, T[] array, int arrayIndex = 0)
         {
             enumerable.ValidateNotNull(nameof(enumerable));
@@ -191,7 +191,7 @@ namespace AirBreather
 
         public static IEnumerable<(T1 x1, T2 x2)> Zip<T1, T2>(this IEnumerable<T1> first, IEnumerable<T2> second) => Enumerable.Zip(first, second, (x1, x2) => (x1, x2));
 
-        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this ImmutableArray<T> array) => array.AsRegularArrayDangerous().AsReadOnlySpan();
+        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this ImmutableArray<T> array) => array.AsRegularArrayDangerous().AsSpan();
 
         public static MemoryStream ToReadableStream(this ImmutableArray<byte> array, int index = 0) => ToReadableStreamCore(array, index, null);
         public static MemoryStream ToReadableStream(this ImmutableArray<byte> array, int index, int count) => ToReadableStreamCore(array, index, count);

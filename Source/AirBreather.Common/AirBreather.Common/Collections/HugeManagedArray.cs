@@ -58,14 +58,7 @@ namespace AirBreather.Collections
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => new Enumerator(this);
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => new Enumerator(this);
 
-        // TODO: add resizing capability and unlimited slicing capabilities
-
-        public Span<T> Slice(long index, int length)
-        {
-            index.ValidateInRange(nameof(index), 0, this.Length);
-            ((long)length).ValidateInRange(nameof(length), 0, this.Length - index + 1);
-            return Span<T>.DangerousCreate(this.blocks, ref this.GetRefForValidatedIndex(index), length);
-        }
+        // TODO: add resizing and slicing capabilities
 
         // CopyTo: base our overloads off of the Array.Copy overloads.
         public void CopyTo(HugeManagedArray<T> destinationArray, long length)

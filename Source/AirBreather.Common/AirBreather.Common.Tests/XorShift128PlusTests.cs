@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 using Xunit;
 
@@ -14,12 +15,12 @@ namespace AirBreather.Tests
         public void Test(ulong s0, ulong s1, ulong expectedResult1, ulong expectedResult2, ulong expectedResult3)
         {
             // this was params ulong[], but I like InlineData too much to make that work...
-            ulong[] expectedResults = { expectedResult1, expectedResult2, expectedResult3 };
+            Span<ulong> expectedResults = stackalloc[] { expectedResult1, expectedResult2, expectedResult3 };
 
             var gen = new XorShift128PlusGenerator();
             var state = new RngState128(s0, s1);
             var buf = new byte[expectedResults.Length * 8].AsSpan();
-            var actualResults = buf.NonPortableCast<byte, ulong>();
+            var actualResults = MemoryMarshal.Cast<byte, ulong>(buf);
 
             // First, do it in separate calls.
             for (int i = 0; i < expectedResults.Length; ++i)
@@ -32,7 +33,7 @@ namespace AirBreather.Tests
             state = new RngState128(s0, s1);
             buf.Clear();
             gen.FillBuffer(state, buf);
-            Assert.True(expectedResults.AsReadOnlySpan().SequenceEqual(actualResults));
+            Assert.True(expectedResults.SequenceEqual(actualResults));
         }
     }
 }

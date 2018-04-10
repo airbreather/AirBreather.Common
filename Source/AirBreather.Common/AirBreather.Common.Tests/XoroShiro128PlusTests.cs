@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 using AirBreather.Random;
 
@@ -26,18 +27,18 @@ namespace AirBreather.Tests
             {
                 var sut = new XoroShiro128PlusGenerator();
                 RngState128 prngState = new RngState128((ulong)s0, (ulong)s1);
-                ReadOnlySpan<ulong> expected = Array.ConvertAll(signedExpected, x => (ulong)x);
-                Span<ulong> actual = new ulong[expected.Length];
+                ReadOnlySpan<ulong> expected = MemoryMarshal.Cast<long, ulong>(signedExpected);
+                Span<ulong> actual = stackalloc ulong[expected.Length];
 
                 // one-shot
-                sut.FillBuffer(prngState, actual.AsBytes());
+                sut.FillBuffer(prngState, MemoryMarshal.AsBytes(actual));
                 Assert.True(expected.SequenceEqual(actual));
 
                 // one-by-one
                 actual.Clear();
                 for (int i = 0; i < actual.Length; i++)
                 {
-                    prngState = sut.FillBuffer(prngState, actual.Slice(i, 1).AsBytes());
+                    prngState = sut.FillBuffer(prngState, MemoryMarshal.AsBytes(actual.Slice(i, 1)));
                 }
 
                 Assert.True(expected.SequenceEqual(actual));
@@ -62,13 +63,13 @@ namespace AirBreather.Tests
             {
                 var sut = new XoroShiro128PlusGenerator();
                 RngState128 prngState = new RngState128((ulong)s0, (ulong)s1);
-                ReadOnlySpan<ulong> expected = Array.ConvertAll(signedExpected, x => (ulong)x);
+                ReadOnlySpan<ulong> expected = MemoryMarshal.Cast<long, ulong>(signedExpected);
 
-                Span<ulong> actual = new ulong[expected.Length];
+                Span<ulong> actual = stackalloc ulong[expected.Length];
                 for (int i = 0; i < actual.Length; i++)
                 {
                     prngState = XoroShiro128PlusGenerator.Jump(prngState);
-                    prngState = sut.FillBuffer(prngState, actual.Slice(i, 1).AsBytes());
+                    prngState = sut.FillBuffer(prngState, MemoryMarshal.AsBytes(actual.Slice(i, 1)));
                 }
 
                 Assert.True(expected.SequenceEqual(actual));
