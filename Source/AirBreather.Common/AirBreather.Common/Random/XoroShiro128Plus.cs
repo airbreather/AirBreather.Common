@@ -33,7 +33,6 @@ using static System.Runtime.CompilerServices.Unsafe;
 
 namespace AirBreather.Random
 {
-    // TODO: fully replace XorShift128Plus with this, once it's been proven out more rigorously.
     public sealed class XoroShiro128PlusGenerator : IRandomGenerator<RngState128>
     {
         /// <summary>
@@ -64,13 +63,13 @@ namespace AirBreather.Random
 
                 if ((msk & (1UL << (i & 0x3F))) != 0)
                 {
-                    result.s0 ^= state.s0;
-                    result.s1 ^= state.s1;
+                    result.S0 ^= state.S0;
+                    result.S1 ^= state.S1;
                 }
 
-                ulong t = state.s0 ^ state.s1;
-                state.s0 = ((state.s0 << 55) | (state.s0 >> 9)) ^ t ^ (t << 14);
-                state.s1 = (t << 36) | (t >> 28);
+                ulong t = state.S0 ^ state.S1;
+                state.S0 = ((state.S0 << 55) | (state.S0 >> 9)) ^ t ^ (t << 14);
+                state.S1 = (t << 36) | (t >> 28);
             }
 
             return result;
@@ -92,11 +91,11 @@ namespace AirBreather.Random
             ref byte start = ref MemoryMarshal.GetReference(buffer);
             for (int i = 0, cnt = buffer.Length; i < cnt; i += SizeOf<ulong>())
             {
-                WriteUnaligned(ref AddByteOffset(ref start, new IntPtr(i)), unchecked(state.s0 + state.s1));
+                WriteUnaligned(ref AddByteOffset(ref start, new IntPtr(i)), unchecked(state.S0 + state.S1));
 
-                ulong t = state.s0 ^ state.s1;
-                state.s0 = ((state.s0 << 55) | (state.s0 >> 9)) ^ t ^ (t << 14);
-                state.s1 = (t << 36) | (t >> 28);
+                ulong t = state.S0 ^ state.S1;
+                state.S0 = ((state.S0 << 55) | (state.S0 >> 9)) ^ t ^ (t << 14);
+                state.S1 = (t << 36) | (t >> 28);
             }
 
             return state;

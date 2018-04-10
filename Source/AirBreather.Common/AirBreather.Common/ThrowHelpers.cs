@@ -26,5 +26,8 @@ namespace AirBreather
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowExceptionForNonBlittable() => throw new ArgumentException("Generic type parameter must not contain any managed references.");
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentExceptionForAllZeroes() => throw new ArgumentException("At least one seed value must be non-zero.");
     }
 }

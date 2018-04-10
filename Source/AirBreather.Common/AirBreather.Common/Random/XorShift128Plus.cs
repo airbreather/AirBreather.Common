@@ -34,15 +34,15 @@ namespace AirBreather.Random
 
                 if ((msk & (1UL << (i & 0x3F))) != 0)
                 {
-                    result.s0 ^= state.s0;
-                    result.s1 ^= state.s1;
+                    result.S0 ^= state.S0;
+                    result.S1 ^= state.S1;
                 }
 
-                ulong s1 = state.s0;
-                ulong s0 = state.s1;
-                state.s0 = s0;
+                ulong s1 = state.S0;
+                ulong s0 = state.S1;
+                state.S0 = s0;
                 s1 ^= s1 << 23;
-                state.s1 = (s1 ^ s0 ^ (s1 >> 17) ^ (s0 >> 26));
+                state.S1 = (s1 ^ s0 ^ (s1 >> 17) ^ (s0 >> 26));
             }
 
             return result;
@@ -67,11 +67,11 @@ namespace AirBreather.Random
                 // and we assume index is OK too, so we can do this fanciness without fear.
                 for (ulong* pbuf = (ulong*)fbuf, pend = pbuf + (buffer.Length / ChunkSize); pbuf < pend; ++pbuf)
                 {
-                    ulong s1 = state.s0;
-                    ulong s0 = state.s1;
-                    state.s0 = s0;
+                    ulong s1 = state.S0;
+                    ulong s0 = state.S1;
+                    state.S0 = s0;
                     s1 ^= s1 << 23;
-                    *pbuf = unchecked((state.s1 = (s1 ^ s0 ^ (s1 >> 17) ^ (s0 >> 26))) + s0);
+                    *pbuf = unchecked((state.S1 = (s1 ^ s0 ^ (s1 >> 17) ^ (s0 >> 26))) + s0);
                 }
             }
 
