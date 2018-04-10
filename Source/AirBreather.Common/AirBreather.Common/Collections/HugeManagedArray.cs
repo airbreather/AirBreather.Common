@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.InteropServices;
 
 using static System.Runtime.CompilerServices.Unsafe;
@@ -10,53 +9,6 @@ namespace AirBreather.Collections
     internal static class HugeManagedArray
     {
         internal static HugeManagedArrayBlock[] AllocateUnderlying(int sz, long length) => new HugeManagedArrayBlock[Math.DivRem(sz * length, SizeOf<HugeManagedArrayBlock>(), out long rem) + (rem == 0 ? 0 : 1)];
-
-        // the rest of this "helpers" class is based on:
-        // https://github.com/dotnet/corefx/blob/1c9cd8118abfa13165d88a4e660fbdcc6c2ebc4c/src/System.Memory/src/System/SpanHelpers.cs#L125-L163
-        // TODO: remove after we can use the following to tell the compiler to do this for us:
-        // https://github.com/dotnet/csharplang/blob/master/proposals/blittable.md
-        internal static bool ContainsReferences<T>() where T : struct => PerTypeValues<T>.ContainsReferences;
-
-        private const BindingFlags DeclaredInstanceFields = BindingFlags.DeclaredOnly | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
-        private static bool ContainsReferencesCore(Type type)
-        {
-            if (type.IsPrimitive)
-            {
-                return false;
-            }
-
-            if (!type.IsValueType)
-            {
-                return true;
-            }
-
-            Type underlyingNullable = Nullable.GetUnderlyingType(type);
-            if (underlyingNullable != null)
-            {
-                type = underlyingNullable;
-            }
-
-            if (type.IsEnum)
-            {
-                return false;
-            }
-
-            foreach (FieldInfo field in type.GetFields(DeclaredInstanceFields))
-            {
-                if (ContainsReferencesCore(field.FieldType))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static class PerTypeValues<T>
-            where T : struct // blittable
-        {
-            internal static readonly bool ContainsReferences = ContainsReferencesCore(typeof(T));
-        }
     }
 
     // at this block size, with <gcAllowVeryLargeObjects> enabled, a single array can hold up to
@@ -65,13 +17,12 @@ namespace AirBreather.Collections
     internal struct HugeManagedArrayBlock { }
 
     public sealed class HugeManagedArray<T> : IEnumerable<T>
-        where T : struct // blittable
+        where T : unmanaged
     {
         private readonly HugeManagedArrayBlock[] blocks;
 
         public HugeManagedArray(long length)
         {
-            this.ValidateBlittable();
             this.Length = length.ValidateNotLessThan(nameof(length), 0);
             this.blocks = length == 0
                 ? Array.Empty<HugeManagedArrayBlock>()
@@ -175,16 +126,6 @@ namespace AirBreather.Collections
         }
 
         private ref T GetRefForValidatedIndex(long index) => ref Add(ref As<HugeManagedArrayBlock, T>(ref this.blocks[0]), new IntPtr(index));
-
-        // TODO: remove after we can use the following to tell the compiler to do this for us:
-        // https://github.com/dotnet/csharplang/blob/master/proposals/blittable.md
-        private void ValidateBlittable()
-        {
-            if (HugeManagedArray.ContainsReferences<T>())
-            {
-                ThrowHelpers.ThrowExceptionForNonBlittable();
-            }
-        }
 
         public struct Enumerator : IEnumerator<T>
         {
