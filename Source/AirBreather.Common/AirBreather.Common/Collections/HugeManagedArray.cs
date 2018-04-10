@@ -29,12 +29,12 @@ namespace AirBreather.Collections
                 : HugeManagedArray.AllocateUnderlying(SizeOf<T>(), length);
         }
 
-        public HugeManagedArray(T[] copyFrom)
-            : this(copyFrom.ValidateNotNull(nameof(copyFrom)).LongLength)
+        public HugeManagedArray(Span<T> copyFrom)
+            : this(copyFrom.Length)
         {
             if (this.Length != 0)
             {
-                DangerousCopyCore(sourceStart: ref copyFrom[0],
+                DangerousCopyCore(sourceStart: ref MemoryMarshal.GetReference(copyFrom),
                                   destinationStart: ref this.GetRefForValidatedIndex(0),
                                   length: this.Length);
             }
@@ -111,6 +111,7 @@ namespace AirBreather.Collections
 
             long byteCount = length * SizeOf<T>();
 
+            // TODO: use chained spans to copy without pinning
             fixed (void* src = &As<T, byte>(ref sourceStart))
             fixed (void* dst = &As<T, byte>(ref destinationStart))
             {
