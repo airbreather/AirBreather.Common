@@ -133,14 +133,15 @@ namespace AirBreather.Collections
                 this.index = -1;
             }
 
-            public bool MoveNext() => this.index < this.array.Length &&
-                                      ++this.index < this.array.Length;
+            public ref T Current => ref this.index == -1
+                ? ref this.array[this.index]
+                : ref this.array.GetRefForValidatedIndex(this.index);
 
-            public T Current => this.array[this.index];
-            object System.Collections.IEnumerator.Current => this.array[this.index];
+            public bool MoveNext() => ++this.index < this.array.Length;
 
-            public void Reset() => this.index = -1;
-
+            T IEnumerator<T>.Current => this.Current;
+            object System.Collections.IEnumerator.Current => this.Current;
+            void System.Collections.IEnumerator.Reset() => this.index = -1;
             void IDisposable.Dispose() { }
         }
     }
