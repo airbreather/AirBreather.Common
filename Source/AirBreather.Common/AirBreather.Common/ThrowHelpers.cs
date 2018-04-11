@@ -16,6 +16,10 @@ namespace AirBreather
             throw new ArgumentOutOfRangeException(paramName, value, Invariant($"Must be between [{minInclusive}, {maxExclusive})."));
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_Index_CollectionLength() =>
+            throw new ArgumentOutOfRangeException("index", "Must be non-negative and less than the size of the collection.");
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentNullException(string paramName) => throw new ArgumentNullException(paramName);
 
         [MethodImpl(MethodImplOptions.NoInlining)]

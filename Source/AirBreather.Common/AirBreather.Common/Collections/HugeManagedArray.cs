@@ -8,7 +8,8 @@ namespace AirBreather.Collections
 {
     internal static class HugeManagedArray
     {
-        internal static HugeManagedArrayBlock[] AllocateUnderlying(int sz, long length) => new HugeManagedArrayBlock[Math.DivRem(sz * length, SizeOf<HugeManagedArrayBlock>(), out long rem) + (rem == 0 ? 0 : 1)];
+        internal static HugeManagedArrayBlock[] AllocateUnderlying(int sz, long length) =>
+            new HugeManagedArrayBlock[Math.DivRem(sz * length, SizeOf<HugeManagedArrayBlock>(), out long rem) + (rem == 0 ? 0 : 1)];
     }
 
     // at this block size, with <gcAllowVeryLargeObjects> enabled, a single array can hold up to
@@ -34,23 +35,40 @@ namespace AirBreather.Collections
         {
             if (this.Length != 0)
             {
-                DangerousCopyCore(sourceStart: ref MemoryMarshal.GetReference(copyFrom),
-                                  destinationStart: ref this.GetRefForValidatedIndex(0),
-                                  length: this.Length);
+                Span<T> copyTo = MemoryMarshal.Cast<HugeManagedArrayBlock, T>(this.blocks).Slice(0, copyFrom.Length);
+                copyFrom.CopyTo(copyTo);
             }
         }
 
         public HugeManagedArray(HugeManagedArray<T> copyFrom)
         {
             copyFrom.ValidateNotNull(nameof(copyFrom));
-            this.blocks = new HugeManagedArrayBlock[copyFrom.blocks.Length];
-            new ReadOnlySpan<HugeManagedArrayBlock>(copyFrom.blocks).CopyTo(this.blocks);
-            this.Length = copyFrom.Length;
+            if (copyFrom.Length == 0)
+            {
+                this.blocks = Array.Empty<HugeManagedArrayBlock>();
+            }
+            else
+            {
+                this.Length = copyFrom.Length;
+                this.blocks = new HugeManagedArrayBlock[copyFrom.blocks.Length];
+                copyFrom.blocks.CopyTo(this.blocks);
+            }
         }
 
         public long Length { get; }
 
-        public ref T this[long index] => ref this.GetRefForValidatedIndex(index.ValidateInRange(nameof(index), 0, this.Length));
+        public ref T this[long index]
+        {
+            get
+            {
+                if (unchecked(((ulong)index) >= (ulong)this.Length))
+                {
+                    ThrowHelpers.ThrowArgumentOutOfRangeException_Index_CollectionLength();
+                }
+
+                return ref this.GetRefForValidatedIndex(index);
+            }
+        }
 
         public HugeManagedArray<T> Clone() => new HugeManagedArray<T>(this);
 
@@ -79,47 +97,24 @@ namespace AirBreather.Collections
             this.CopyToCore(sourceIndex, destinationArray, destinationIndex, length);
         }
 
-        private void CopyToCore(long sourceIndex, HugeManagedArray<T> destinationArray, long destinationIndex, long length) => this.DangerousCopyToCore(sourceIndex, ref destinationArray.GetRefForValidatedIndex(destinationIndex), length);
-
-        // DangerousCopyTo: dangerous because we can't prevent overrunning the destination buffer.
-        public void DangerousCopyTo(ref T destinationStart) =>
-            this.DangerousCopyToCore(sourceIndex: 0,
-                                     destinationStart: ref destinationStart,
-                                     length: this.Length);
-
-        public void DangerousCopyTo(long sourceIndex, ref T start) =>
-            this.DangerousCopyToCore(sourceIndex: sourceIndex.ValidateInRange(nameof(sourceIndex), 0, this.Length),
-                                     destinationStart: ref start,
-                                     length: this.Length - sourceIndex);
-
-        public void DangerousCopyTo(long sourceIndex, ref T destinationStart, long length) =>
-            this.DangerousCopyToCore(sourceIndex: sourceIndex.ValidateInRange(nameof(sourceIndex), 0, this.Length),
-                                     destinationStart: ref destinationStart,
-                                     length: length.ValidateInRange(nameof(length), 0, this.Length - sourceIndex + 1));
-
-        private unsafe void DangerousCopyToCore(long sourceIndex, ref T destinationStart, long length) =>
-            DangerousCopyCore(sourceStart: ref this.GetRefForValidatedIndex(sourceIndex),
-                              destinationStart: ref destinationStart,
-                              length: length);
-
-        private static unsafe void DangerousCopyCore(ref T sourceStart, ref T destinationStart, long length)
+        private unsafe void CopyToCore(long sourceIndex, HugeManagedArray<T> destinationArray, long destinationIndex, long length)
         {
             if (length == 0)
             {
                 return;
             }
 
-            long byteCount = length * SizeOf<T>();
-
-            // TODO: use chained spans to copy without pinning
-            fixed (void* src = &As<T, byte>(ref sourceStart))
-            fixed (void* dst = &As<T, byte>(ref destinationStart))
+            // TODO: copy individual spans, or ReadOnlySequence<T>?  pinning feels bad.
+            // .NET Core targets have MemoryMarshal.Create{ReadOnly,}Span<T> that we could use too.
+            fixed (T* src = &this.GetRefForValidatedIndex(sourceIndex))
+            fixed (T* dst = &destinationArray.GetRefForValidatedIndex(destinationIndex))
             {
-                Buffer.MemoryCopy(src, dst, byteCount, byteCount);
+                Buffer.MemoryCopy(src, dst, length, length);
             }
         }
 
-        private ref T GetRefForValidatedIndex(long index) => ref Add(ref As<HugeManagedArrayBlock, T>(ref this.blocks[0]), new IntPtr(index));
+        private ref T GetRefForValidatedIndex(long index) =>
+            ref Add(ref As<HugeManagedArrayBlock, T>(ref this.blocks[0]), new IntPtr(index));
 
         [StructLayout(LayoutKind.Auto)]
         public struct Enumerator : IEnumerator<T>
@@ -138,7 +133,7 @@ namespace AirBreather.Collections
             {
                 get
                 {
-                    if (unchecked((ulong)this.index) >= unchecked((ulong)this.array.Length))
+                    if (unchecked(((ulong)this.index) >= (ulong)this.array.Length))
                     {
                         ThrowHelpers.ThrowInvaildOperationExceptionForUnexpectedCurrent();
                     }
@@ -147,7 +142,7 @@ namespace AirBreather.Collections
                 }
             }
 
-            public bool MoveNext() => unchecked((ulong)++this.index) < unchecked((ulong)this.array.Length);
+            public bool MoveNext() => unchecked(((ulong)++this.index) < (ulong)this.array.Length);
 
             T IEnumerator<T>.Current => this.Current;
             object System.Collections.IEnumerator.Current => this.Current;
