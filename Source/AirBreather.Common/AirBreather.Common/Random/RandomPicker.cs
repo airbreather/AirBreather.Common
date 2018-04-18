@@ -59,8 +59,8 @@ namespace AirBreather.Random
             // We want to exclude the upper bucket, which contains 3 values.
             // 3 came from 8 % 5, so what we want is (MaxValue + 1) % rangeSize.
             // We have to do a little bit of a dance, though, since we obviously
-            // can't add 1 to Int32.MaxValue.
-            int rerollThreshold = ((Int32.MaxValue % rangeSize) + 1) % rangeSize;
+            // can't add 1 to Int32.MaxValue in signed 32-bit arithmetic.
+            int rerollThreshold = unchecked((int)((Int32.MaxValue + 1U) % (uint)rangeSize));
             int sample;
             lock (this.buffer)
             {
