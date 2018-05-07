@@ -7,7 +7,11 @@ namespace AirBreather.Collections
     {
         // thought: reimplement to cut down on duplicate hash code checks?  we
         // could wind up with really long strings here...
+#if NETSTANDARD2_0
         private readonly Dictionary<string, string> pool = new Dictionary<string, string>();
+#else
+        private readonly HashSet<string> pool = new HashSet<string>();
+#endif
 
         public string Pool(string val)
         {
@@ -26,7 +30,12 @@ namespace AirBreather.Collections
 
             if (!this.pool.TryGetValue(val, out result))
             {
-                result = this.pool[val] = val;
+                result = val;
+#if NETSTANDARD2_0
+                this.pool[val] = val;
+#else
+                this.pool.Add(val);
+#endif
             }
 
             return result;
