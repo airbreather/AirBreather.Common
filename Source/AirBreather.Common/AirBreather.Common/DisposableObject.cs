@@ -1,7 +1,5 @@
 ﻿using System;
 
-using AirBreather.Logging;
-
 namespace AirBreather
 {
     // my own IDisposable pattern, part 1 of 2
@@ -16,7 +14,6 @@ namespace AirBreather
         {
             if (this.IsDisposed)
             {
-                Log.For(this).Verbose("Skipping dispose of an already disposed object.");
                 return;
             }
 
@@ -30,7 +27,7 @@ namespace AirBreather
         {
             if (this.IsDisposed)
             {
-                throw new ObjectDisposedException(this.GetType().Name).Log(this.GetType());
+                ThrowHelpers.ThrowObjectDisposedException(this);
             }
         }
     }

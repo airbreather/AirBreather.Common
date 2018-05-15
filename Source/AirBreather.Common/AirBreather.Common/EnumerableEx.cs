@@ -52,6 +52,18 @@ namespace AirBreather
             return enumerable.Where(x => !predicate(x));
         }
 
+        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source, IEqualityComparer<TKey> equalityComparer = null)
+        {
+            source.ValidateNotNull(nameof(source));
+            var result = new Dictionary<TKey, TValue>(equalityComparer);
+            foreach (var (key, value) in source)
+            {
+                result.Add(key, value);
+            }
+
+            return result;
+        }
+
         public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey> equalityComparer = null) => new Dictionary<TKey, TValue>(dictionary.ValidateNotNull(nameof(dictionary)), equalityComparer);
 
         public static HashSet<T> ToHashSet<T>(this IEnumerable<T> enumerable, IEqualityComparer<T> equalityComparer = null) => new HashSet<T>(enumerable.ValidateNotNull(nameof(enumerable)), equalityComparer);
@@ -79,15 +91,20 @@ namespace AirBreather
         // because the use cases it supports aren't particularly compelling.  Well... we found at
         // least one or two at work, and I have to say... I agree, there are better designs.  BUT,
         // for various internal team reasons, this would have been the overall least-bad solution.
-        public static IEnumerable<TSource> DistinctBy<TSource, TCompare>(this IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector, IEqualityComparer<TCompare> equalityComparer = null) => DistinctByIterator(enumerable.ValidateNotNull(nameof(enumerable)), selector.ValidateNotNull(nameof(selector)), equalityComparer);
-        private static IEnumerable<TSource> DistinctByIterator<TSource, TCompare>(IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector, IEqualityComparer<TCompare> equalityComparer)
+        public static IEnumerable<TSource> DistinctBy<TSource, TCompare>(this IEnumerable<TSource> enumerable, Func<TSource, TCompare> selector, IEqualityComparer<TCompare> equalityComparer = null)
         {
-            var closedSet = new HashSet<TCompare>(equalityComparer);
-            foreach (TSource value in enumerable)
+            enumerable.ValidateNotNull(nameof(enumerable));
+            selector.ValidateNotNull(nameof(selector));
+            return Inner();
+            IEnumerable<TSource> Inner()
             {
-                if (closedSet.Add(selector(value)))
+                var closedSet = new HashSet<TCompare>(equalityComparer);
+                foreach (TSource value in enumerable)
                 {
-                    yield return value;
+                    if (closedSet.Add(selector(value)))
+                    {
+                        yield return value;
+                    }
                 }
             }
         }
@@ -103,14 +120,14 @@ namespace AirBreather
             bool prevalidate = enumerable.TryGetCount(out var count);
             if (prevalidate && array.Length - arrayIndex < count)
             {
-                throw new ArgumentException("Not enough room", nameof(array));
+                ThrowHelpers.ThrowArgumentException("Not enough room", nameof(array));
             }
 
             foreach (T item in enumerable)
             {
                 if (!prevalidate && arrayIndex == array.Length)
                 {
-                    throw new ArgumentException("Not enough room", nameof(array));
+                    ThrowHelpers.ThrowArgumentException("Not enough room", nameof(array));
                 }
 
                 array[arrayIndex++] = item;
@@ -128,7 +145,7 @@ namespace AirBreather
 
             if (array.Length - arrayIndex < collection.Count)
             {
-                throw new ArgumentException("Not enough room", nameof(array));
+                ThrowHelpers.ThrowArgumentException("Not enough room", nameof(array));
             }
 
             foreach (T item in collection)
@@ -201,41 +218,10 @@ namespace AirBreather
             index.ValidateInRange(nameof(index), 0, array.Length);
             if (array.Length - index < count)
             {
-                throw new ArgumentException("Not enough room", nameof(array));
+                ThrowHelpers.ThrowArgumentException("Not enough room", nameof(array));
             }
 
             return new MemoryStream(buffer: array.AsRegularArrayDangerous(), index: index, count: count ?? array.Length, writable: false, publiclyVisible: false);
-        }
-
-        public static ReadOnlySpanEnumerable<T> AsEnumerable<T>(this ReadOnlySpan<T> span) => new ReadOnlySpanEnumerable<T>(span);
-
-        [StructLayout(LayoutKind.Auto)]
-        public readonly ref struct ReadOnlySpanEnumerable<T>
-        {
-            private readonly ReadOnlySpan<T> span;
-
-            internal ReadOnlySpanEnumerable(ReadOnlySpan<T> span) => this.span = span;
-
-            public ReadOnlySpanEnumerator GetEnumerator() => new ReadOnlySpanEnumerator(this.span);
-
-            [StructLayout(LayoutKind.Auto)]
-            public ref struct ReadOnlySpanEnumerator
-            {
-                private ReadOnlySpan<T> span;
-
-                private int idx;
-
-                internal ReadOnlySpanEnumerator(ReadOnlySpan<T> span)
-                {
-                    this.span = span;
-                    this.idx = -1;
-                }
-
-                public bool MoveNext() => this.idx < this.span.Length &&
-                                          ++this.idx < this.span.Length;
-
-                public T Current => this.span[this.idx];
-            }
         }
     }
 }

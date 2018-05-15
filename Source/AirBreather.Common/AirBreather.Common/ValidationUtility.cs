@@ -12,26 +12,24 @@ namespace AirBreather
         public static T ValidateInRange<T>(this T value, string paramName, T minInclusive, T maxExclusive)
             where T : IComparable<T>
         {
-            if (value.IsInRange(minInclusive, maxExclusive))
+            if (!value.IsInRange(minInclusive, maxExclusive))
             {
-                return value;
+                ThrowArgumentOutOfRangeException_TwoBounds(paramName, value, minInclusive, maxExclusive);
             }
 
-            ThrowArgumentOutOfRangeException_TwoBounds(paramName, value, minInclusive, maxExclusive);
-            return default;
+            return value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T ValidateNotLessThan<T>(this T value, string paramName, T minInclusive)
             where T : IComparable<T>
         {
-            if (value.IsNotLessThan(minInclusive))
+            if (!value.IsNotLessThan(minInclusive))
             {
-                return value;
+                ThrowArgumentOutOfRangeException_Min(paramName, value, minInclusive);
             }
 
-            ThrowArgumentOutOfRangeException_Min(paramName, value, minInclusive);
-            return default;
+            return value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

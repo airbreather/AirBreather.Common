@@ -1,23 +1,37 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
-using System.Threading;
 
 namespace AirBreather
 {
     public static unsafe class StringUtility
     {
-        private static readonly Lazy<Regex> hexStringRegex = new Lazy<Regex>(() => new Regex("^([A-Fa-f0-9]{2})*$",
-                                                                                             RegexOptions.CultureInvariant |
-                                                                                             RegexOptions.Compiled |
-                                                                                             RegexOptions.ExplicitCapture),
-                                                                             LazyThreadSafetyMode.PublicationOnly);
+        public static byte[] HexStringToByteArrayChecked(this string s)
+        {
+            s.ValidateNotNull(nameof(s));
+            foreach (char c in s)
+            {
+                if (!IsHex(c))
+                {
+                    ThrowHelpers.ThrowArgumentException("Must provide a hex string.", nameof(s));
+                }
+            }
 
-        public static byte[] HexStringToByteArrayChecked(this string s) =>
-            hexStringRegex.Value.IsMatch(s.ValidateNotNull(nameof(s)))
-                ? s.AsSpan().HexStringToByteArrayUnchecked()
-                : throw new ArgumentException("Must provide a hex string.", nameof(s));
+            return s.AsSpan().HexStringToByteArrayUnchecked();
+            bool IsHex(char c)
+            {
+                // at the time of writing, on both x86 and x64, the assembly for this method is 1
+                // byte smaller than the assembly for 3 range checks, it has 2 fewer conditional
+                // jumps, and the larger 0-9 case is tighter (early return instead of jump to end).
+                if ('0' <= c && c <= '9')
+                {
+                    return true;
+                }
+
+                c = unchecked((char)(c & 0xFFDF));
+                return ('A' <= c && c <= 'F');
+            }
+        }
 
         // http://stackoverflow.com/a/17923942/1083771
         public static byte[] HexStringToByteArrayUnchecked(this ReadOnlySpan<char> s)
@@ -27,10 +41,23 @@ namespace AirBreather
                 return Array.Empty<byte>();
             }
 
+            byte[] bytes = new byte[s.Length / 2];
+            CopyHexStringToByteArrayUnchecked(s, bytes);
+            return bytes;
+        }
+
+        public static void CopyHexStringToByteArrayUnchecked(this ReadOnlySpan<char> s, Span<byte> b)
+        {
+            // this isn't really the kind of "check" that "checked / unchecked" was made for... that
+            // was more "throw if this string isn't *actually* a hex string".
+            if (s.Length != b.Length * 2)
+            {
+                ThrowHelpers.ThrowArgumentException("Hex string must have 2 chars for every desired output byte.");
+            }
+
             unchecked
             {
-                byte[] bytes = new byte[s.Length / 2];
-                for (int i = 0; i < bytes.Length; ++i)
+                for (int i = 0; i < b.Length; ++i)
                 {
                     int hi = s[i * 2] - 65;
                     hi = hi + 10 + ((hi >> 31) & 7);
@@ -38,10 +65,8 @@ namespace AirBreather
                     int lo = s[i * 2 + 1] - 65;
                     lo = lo + 10 + ((lo >> 31) & 7) & 0x0f;
 
-                    bytes[i] = unchecked((byte)(lo | hi << 4));
+                    b[i] = unchecked((byte)(lo | hi << 4));
                 }
-
-                return bytes;
             }
         }
 

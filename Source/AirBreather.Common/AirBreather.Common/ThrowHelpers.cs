@@ -39,5 +39,8 @@ namespace AirBreather
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowInvaildOperationExceptionForUnexpectedCurrent() => throw new InvalidOperationException("It is illegal to access Current before calling MoveNext() or after it has returned false.");
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowObjectDisposedException(object obj) => throw new ObjectDisposedException(obj.GetType().Name);
     }
 }
