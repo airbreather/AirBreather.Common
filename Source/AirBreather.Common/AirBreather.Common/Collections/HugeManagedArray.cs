@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 using static System.Runtime.CompilerServices.Unsafe;
@@ -59,6 +60,7 @@ namespace AirBreather.Collections
 
         public ref T this[long index]
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (unchecked(((ulong)index) >= (ulong)this.Length))
@@ -113,6 +115,7 @@ namespace AirBreather.Collections
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ref T GetRefForValidatedIndex(long index) =>
             ref Add(ref As<HugeManagedArrayBlock, T>(ref this.blocks[0]), new IntPtr(index));
 
@@ -123,6 +126,7 @@ namespace AirBreather.Collections
 
             private long index;
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal Enumerator(HugeManagedArray<T> array)
             {
                 this.array = array;
@@ -131,21 +135,39 @@ namespace AirBreather.Collections
 
             public ref T Current
             {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => ref this.array.GetRefForValidatedIndex(this.index);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext()
+            {
+                long newIndex = this.index + 1;
+                if (newIndex < this.array.Length)
+                {
+                    this.index = newIndex;
+                    return true;
+                }
+
+                return false;
+            }
+
+            T IEnumerator<T>.Current => this.Current;
+            object System.Collections.IEnumerator.Current
+            {
                 get
                 {
+                    // IEnumerator.get_Current is documented as needing to throw when accessed after
+                    // MoveNext() has returned false.
                     if (unchecked(((ulong)this.index) >= (ulong)this.array.Length))
                     {
                         ThrowHelpers.ThrowInvaildOperationExceptionForUnexpectedCurrent();
                     }
 
-                    return ref this.array.GetRefForValidatedIndex(this.index);
+                    return this.Current;
                 }
             }
 
-            public bool MoveNext() => unchecked(((ulong)++this.index) < (ulong)this.array.Length);
-
-            T IEnumerator<T>.Current => this.Current;
-            object System.Collections.IEnumerator.Current => this.Current;
             void System.Collections.IEnumerator.Reset() => this.index = -1;
             void IDisposable.Dispose() { }
         }
