@@ -30,7 +30,7 @@ namespace AirBreather.IO
             var rowOwner = MemoryPool<byte>.Shared.Rent(4096);
             try
             {
-                buffer = ArrayPool<byte>.Shared.Rent(4096);
+                buffer = ArrayPool<byte>.Shared.Rent(65536);
 
                 var fieldOffsets = new List<int>();
                 var bufferSpan = new ReadOnlySpan<byte>(buffer);
@@ -180,7 +180,7 @@ namespace AirBreather.IO
 
                 void EndLine(ReadOnlySpan<byte> completeRowSpan)
                 {
-                    if (fieldOffsets.Count == 0 && completeRowSpan.IsEmpty)
+                    if (completeRowSpan.IsEmpty && fieldOffsets.Count == 0)
                     {
                         rowHandler(default);
                         return;

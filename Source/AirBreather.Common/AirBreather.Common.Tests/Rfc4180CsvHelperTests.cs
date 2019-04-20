@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 
 using AirBreather.IO;
 
@@ -52,6 +53,30 @@ namespace AirBreather.Tests
                 }
 
                 Assert.Equal(expected, actual);
+            }
+        }
+
+        [Fact]
+        public void TestDegenerateCsvReading()
+        {
+            // just one row, 2 fields, field0 is the entire byte array but 1, field1 is empty.
+            byte[] bytes = new byte[7654321];
+            bytes[bytes.Length - 1] = (byte)',';
+
+            using (var stream = new MemoryStream(bytes))
+            {
+                int calledAlready = 0;
+                Rfc4180CsvHelper.ReadUtf8CsvFile(stream, row =>
+                {
+                    Assert.Equal(0, Interlocked.CompareExchange(ref calledAlready, 1, 0));
+                    Assert.Equal(2, row.FieldCount);
+
+                    var expected = new ReadOnlySpan<byte>(bytes, 0, bytes.Length - 1);
+                    Assert.True(expected.SequenceEqual(row[0]));
+                    Assert.True(row[1].IsEmpty);
+                });
+
+                Assert.Equal(1, calledAlready);
             }
         }
     }
