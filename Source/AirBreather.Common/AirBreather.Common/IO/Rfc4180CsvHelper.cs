@@ -132,6 +132,13 @@ namespace AirBreather.IO
                             freeRowSpan = freeRowSpan.Slice(copyChunk.Length);
                         }
 
+                        if (ignoreNextLinefeed && stopByte == LF)
+                        {
+                            stopByte = 0;
+                        }
+
+                        ignoreNextLinefeed = false;
+
                         switch (stopByte)
                         {
                             case QUOTE:
@@ -157,29 +164,23 @@ namespace AirBreather.IO
                                 break;
 
                             case LF:
-                                if (ignoreNextLinefeed)
-                                {
-                                    ignoreNextLinefeed = false;
-                                }
-                                else
-                                {
-                                    EndLine(rowSpan.Slice(0, rowSpan.Length - freeRowSpan.Length));
-                                    freeRowSpan = rowSpan;
-                                }
-
+                                EndLine(rowSpan.Slice(0, rowSpan.Length - freeRowSpan.Length));
+                                freeRowSpan = rowSpan;
                                 break;
                         }
                     }
                 }
 
-                if (fieldOffsets.Count != 0)
+                // only call EndLine if the last line was non-empty, since a very common practice is
+                // to end text files with an empty blank line.
+                if (rowSpan.Length != freeRowSpan.Length)
                 {
                     EndLine(rowSpan.Slice(0, rowSpan.Length - freeRowSpan.Length));
                 }
 
                 void EndLine(ReadOnlySpan<byte> completeRowSpan)
                 {
-                    if (fieldOffsets.Count == 0)
+                    if (fieldOffsets.Count == 0 && completeRowSpan.IsEmpty)
                     {
                         rowHandler(default);
                         return;
