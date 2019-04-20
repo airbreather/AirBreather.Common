@@ -30,7 +30,7 @@ namespace AirBreather.Tests
                 new[] { string.Empty, string.Empty, string.Empty, string.Empty },
                 new[] { "asdf" },
             };
-            using (var stream = new MemoryStream(bytes))
+            using (var stream = new MemoryStream(bytes, 0, bytes.Length, writable: false, publiclyVisible: false))
             {
                 int i = 0;
                 Rfc4180CsvHelper.ReadUtf8CsvFile(stream, row => Do(row, expectedRows[i++]));
@@ -63,7 +63,7 @@ namespace AirBreather.Tests
             byte[] bytes = new byte[7654321];
             bytes[bytes.Length - 1] = (byte)',';
 
-            using (var stream = new MemoryStream(bytes))
+            using (var stream = new MemoryStream(bytes, 0, bytes.Length, writable: false, publiclyVisible: false))
             {
                 int calledAlready = 0;
                 Rfc4180CsvHelper.ReadUtf8CsvFile(stream, row =>
