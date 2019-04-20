@@ -13,7 +13,7 @@ namespace AirBreather.Tests
         [Fact]
         public void TestCsvReading()
         {
-            const string CSVText = "Hello,\"Wor\"\"ld\"\r\nhow,\"are,\",you\n\r\n\n\r\n\r\r\ndoing,\"to\"\"\"\"d\"\"ay\"\rI,am,fine\n";
+            const string CSVText = "Hello,\"Wor\"\"ld\"\r\nhow,\"are,\",you\n\r\n\n\r\n\r\r\n,doing,\"to\"\"\"\"d\"\"ay\",\rI,am,,,,fine\r,,,,,,,,\n";
             var bytes = Encoding.UTF8.GetBytes(CSVText);
             string[][] expectedRows =
             {
@@ -24,8 +24,9 @@ namespace AirBreather.Tests
                 Array.Empty<string>(),
                 Array.Empty<string>(),
                 Array.Empty<string>(),
-                new[] { "doing", "to\"\"d\"ay" },
-                new[] { "I", "am", "fine" },
+                new[] { string.Empty, "doing", "to\"\"d\"ay", string.Empty },
+                new[] { "I", "am", string.Empty, string.Empty, string.Empty, "fine" },
+                new[] { string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty }
             };
             using (var stream = new MemoryStream(bytes))
             {
