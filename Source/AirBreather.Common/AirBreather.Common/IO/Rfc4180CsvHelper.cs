@@ -108,12 +108,11 @@ namespace AirBreather.IO
             }
         }
 
-        private void ProcessFields(ReadOnlySpan<byte> readBuffer, Span<byte> fieldBuffer, ref int fieldBufferConsumed, ref bool alwaysEmitLastField, ref bool fieldIsQuoted, ref bool escapeNextQuote, ref bool ignoreNextLinefeed)
+        private void ProcessFields(ReadOnlySpan<byte> readBuffer, Span<byte> cutFieldBuffer, ref int cutFieldBufferConsumed, ref bool alwaysEmitLastField, ref bool fieldIsQuoted, ref bool escapeNextQuote, ref bool ignoreNextLinefeed)
         {
-            Debug.Assert(fieldBuffer.Length == this.maxFieldLength);
+            Debug.Assert(cutFieldBuffer.Length == this.maxFieldLength);
 
             var unquotedStopBytes = new ReadOnlySpan<byte>(UnquotedStopBytes);
-            var freeFieldBuffer = fieldBuffer.Slice(fieldBufferConsumed);
 
             while (!readBuffer.IsEmpty)
             {
@@ -147,7 +146,8 @@ namespace AirBreather.IO
                 }
 
                 byte controlByte = 0;
-                ReadOnlySpan<byte> copyChunk;
+                ReadOnlySpan<byte> copyChunk = default;
+                ReadOnlySpan<byte> fieldBuffer = default;
                 if (idx < 0)
                 {
                     copyChunk = readBuffer;
@@ -161,20 +161,39 @@ namespace AirBreather.IO
                 else
                 {
                     controlByte = readBuffer[idx];
-                    copyChunk = readBuffer.Slice(0, idx);
-                    readBuffer = readBuffer.Slice(idx + 1);
-                }
+                    if (cutFieldBufferConsumed != 0 || fieldIsQuoted)
+                    {
+                        copyChunk = readBuffer.Slice(0, idx);
+                    }
+                    else
+                    {
+                        if (idx > cutFieldBuffer.Length)
+                        {
+                            FieldTooLong();
+                        }
 
-                if (copyChunk.Length > freeFieldBuffer.Length)
-                {
-                    FieldTooLong();
+                        fieldBuffer = readBuffer.Slice(0, idx);
+                    }
+
+                    readBuffer = readBuffer.Slice(idx + 1);
                 }
 
                 if (!copyChunk.IsEmpty)
                 {
+                    var freeFieldBuffer = cutFieldBuffer.Slice(cutFieldBufferConsumed);
+                    if (copyChunk.Length > freeFieldBuffer.Length)
+                    {
+                        FieldTooLong();
+                    }
+
                     copyChunk.CopyTo(freeFieldBuffer.Slice(0, copyChunk.Length));
                     freeFieldBuffer = freeFieldBuffer.Slice(copyChunk.Length);
-                    fieldBufferConsumed += copyChunk.Length;
+                    cutFieldBufferConsumed += copyChunk.Length;
+                }
+
+                if (fieldBuffer.IsEmpty)
+                {
+                    fieldBuffer = cutFieldBuffer.Slice(0, cutFieldBufferConsumed);
                 }
 
                 if (ignoreNextLinefeed)
@@ -194,21 +213,20 @@ namespace AirBreather.IO
                         {
                             escapeNextQuote = true;
                         }
-                        else if (fieldBufferConsumed != 0)
+                        else if (fieldBuffer.IsEmpty)
                         {
-                            BadQuoting();
+                            fieldIsQuoted = true;
                         }
                         else
                         {
-                            fieldIsQuoted = true;
+                            BadQuoting();
                         }
 
                         break;
 
                     case COMMA:
-                        this.FieldProcessed?.Invoke(this, fieldBuffer.Slice(0, fieldBufferConsumed));
-                        freeFieldBuffer = fieldBuffer;
-                        fieldBufferConsumed = 0;
+                        this.FieldProcessed?.Invoke(this, fieldBuffer);
+                        cutFieldBufferConsumed = 0;
                         alwaysEmitLastField = true;
                         break;
 
@@ -217,9 +235,8 @@ namespace AirBreather.IO
                         goto case LF;
 
                     case LF:
-                        this.ProcessEndOfFields(fieldBuffer.Slice(0, fieldBufferConsumed), alwaysEmitLastField);
-                        freeFieldBuffer = fieldBuffer;
-                        fieldBufferConsumed = 0;
+                        this.ProcessEndOfFields(fieldBuffer, alwaysEmitLastField);
+                        cutFieldBufferConsumed = 0;
                         alwaysEmitLastField = false;
                         break;
                 }
