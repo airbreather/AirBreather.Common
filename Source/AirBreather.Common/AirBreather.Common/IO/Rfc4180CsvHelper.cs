@@ -5,9 +5,9 @@ using System.IO;
 
 namespace AirBreather.IO
 {
-    public delegate void Rfc4180CsvRowHandler(Rfc4180CsvRow row);
+    public delegate void Rfc4180CsvRowHandler(object sender, Rfc4180CsvRow row);
 
-    public static class Rfc4180CsvHelper
+    public class Rfc4180CsvHelper
     {
         private const byte COMMA = (byte)',';
 
@@ -19,11 +19,13 @@ namespace AirBreather.IO
 
         private static readonly byte[] UnquotedStopBytes = { COMMA, QUOTE, CR, LF };
 
-        public static unsafe void ReadUtf8CsvFile(Stream stream, Rfc4180CsvRowHandler rowHandler)
+        public event Rfc4180CsvRowHandler RowProcessed;
+
+        public void ReadUtf8CsvFile(Stream stream)
         {
             stream.ValidateNotNull(nameof(stream));
-            rowHandler.ValidateNotNull(nameof(rowHandler));
 
+            var rowHandler = this.RowProcessed ?? delegate { };
             var unquotedStopBytes = new ReadOnlySpan<byte>(UnquotedStopBytes);
 
             byte[] buffer = null;
@@ -182,7 +184,7 @@ namespace AirBreather.IO
                 {
                     if (completeRowSpan.IsEmpty && fieldOffsets.Count == 0)
                     {
-                        rowHandler(default);
+                        rowHandler(this, default);
                         return;
                     }
 
@@ -201,7 +203,7 @@ namespace AirBreather.IO
 
                         slicesSpan[i].Offset = prevOffset;
                         slicesSpan[i].Length = completeRowSpan.Length - prevOffset;
-                        rowHandler(new Rfc4180CsvRow(completeRowSpan, slicesSpan.Slice(0, i + 1)));
+                        rowHandler(this, new Rfc4180CsvRow(completeRowSpan, slicesSpan.Slice(0, i + 1)));
                     }
 
                     fieldOffsets.Clear();
