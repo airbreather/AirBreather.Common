@@ -16,17 +16,12 @@ namespace AirBreather.Tests
         [Fact]
         public async Task TestCsvReading()
         {
-            const string CSVText = "Hello,\"Wor\"\"ld\"\r\nhow,\"are,\",you\n\r\n\n\r\n\r\r\n,doing,\"to\"\"\"\"d\"\"ay\",\rI,am,,,,fine\r,,,\nasdf";
+            const string CSVText = "Hello,\"Wor\"\"ld\"\r\nhow,\"are,\",you\n\r\n\n\r\n\r\r\n,doing,\"to\"\"\"\"d\"\"ay\",\rI,am,,,,fine\r,,,\nasdf\n";
             var bytes = Encoding.UTF8.GetBytes(CSVText);
             string[][] expectedRows =
             {
                 new[] { "Hello", "Wor\"ld" },
                 new[] { "how", "are,", "you" },
-                Array.Empty<string>(),
-                Array.Empty<string>(),
-                Array.Empty<string>(),
-                Array.Empty<string>(),
-                Array.Empty<string>(),
                 new[] { string.Empty, "doing", "to\"\"d\"ay", string.Empty },
                 new[] { "I", "am", string.Empty, string.Empty, string.Empty, "fine" },
                 new[] { string.Empty, string.Empty, string.Empty, string.Empty },
