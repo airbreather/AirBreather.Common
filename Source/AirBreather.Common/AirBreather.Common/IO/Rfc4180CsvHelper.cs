@@ -128,7 +128,12 @@ namespace AirBreather.IO
                     idx = readBuffer.IndexOfAny(unquotedStopBytes);
                     if (escapeNextQuote)
                     {
-                        if (idx == 0 && readBuffer[0] == QUOTE)
+                        if (idx != 0)
+                        {
+                            BadQuoting();
+                        }
+
+                        if (readBuffer[0] == QUOTE)
                         {
                             stoppedOnEscapedQuote = true;
                         }
@@ -141,7 +146,7 @@ namespace AirBreather.IO
                     }
                 }
 
-                byte stopByte = 0;
+                byte controlByte = 0;
                 ReadOnlySpan<byte> copyChunk;
                 if (idx < 0)
                 {
@@ -155,7 +160,7 @@ namespace AirBreather.IO
                 }
                 else
                 {
-                    stopByte = readBuffer[idx];
+                    controlByte = readBuffer[idx];
                     copyChunk = readBuffer.Slice(0, idx);
                     readBuffer = readBuffer.Slice(idx + 1);
                 }
@@ -169,24 +174,29 @@ namespace AirBreather.IO
                 {
                     copyChunk.CopyTo(freeFieldBuffer.Slice(0, copyChunk.Length));
                     freeFieldBuffer = freeFieldBuffer.Slice(copyChunk.Length);
+                    fieldBufferConsumed += copyChunk.Length;
                 }
 
                 if (ignoreNextLinefeed)
                 {
-                    if (stopByte == LF)
+                    if (controlByte == LF)
                     {
-                        stopByte = 0;
+                        controlByte = 0;
                     }
 
                     ignoreNextLinefeed = false;
                 }
 
-                switch (stopByte)
+                switch (controlByte)
                 {
                     case QUOTE:
                         if (fieldIsQuoted)
                         {
                             escapeNextQuote = true;
+                        }
+                        else if (fieldBufferConsumed != 0)
+                        {
+                            BadQuoting();
                         }
                         else
                         {
@@ -196,8 +206,9 @@ namespace AirBreather.IO
                         break;
 
                     case COMMA:
-                        this.FieldProcessed?.Invoke(this, fieldBuffer.Slice(0, fieldBuffer.Length - freeFieldBuffer.Length));
+                        this.FieldProcessed?.Invoke(this, fieldBuffer.Slice(0, fieldBufferConsumed));
                         freeFieldBuffer = fieldBuffer;
+                        fieldBufferConsumed = 0;
                         alwaysEmitLastField = true;
                         break;
 
@@ -206,14 +217,13 @@ namespace AirBreather.IO
                         goto case LF;
 
                     case LF:
-                        this.ProcessEndOfFields(fieldBuffer.Slice(0, fieldBuffer.Length - freeFieldBuffer.Length), alwaysEmitLastField);
+                        this.ProcessEndOfFields(fieldBuffer.Slice(0, fieldBufferConsumed), alwaysEmitLastField);
                         freeFieldBuffer = fieldBuffer;
+                        fieldBufferConsumed = 0;
                         alwaysEmitLastField = false;
                         break;
                 }
             }
-
-            fieldBufferConsumed = fieldBuffer.Length - freeFieldBuffer.Length;
         }
 
         private void ProcessEndOfFields(ReadOnlySpan<byte> lastFieldData, bool alwaysEmitLastField)
@@ -228,5 +238,8 @@ namespace AirBreather.IO
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void FieldTooLong() => throw new InvalidDataException($"Data contains one or more fields that exceed the limit set in {nameof(MaxFieldLength)}.");
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void BadQuoting() => throw new InvalidDataException("Failed to parse quoted field.");
     }
 }
