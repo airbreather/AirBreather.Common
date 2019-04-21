@@ -94,13 +94,19 @@ namespace AirBreather.IO
             var encoding = new UTF8Encoding(false, true);
             helper.FieldProcessed += (sender, fieldData) =>
             {
+                string fieldString;
+#if NETCOREAPP
+                fieldString = encoding.GetString(fieldData);
+#else
                 unsafe
                 {
                     fixed (byte* ptr = &MemoryMarshal.GetReference(fieldData))
                     {
-                        currentLine.Add(encoding.GetString(ptr, fieldData.Length));
+                        fieldString = encoding.GetString(ptr, fieldData.Length);
                     }
                 }
+#endif
+                currentLine.Add(fieldString);
             };
 
             helper.EndOfLine += (sender, args) =>
