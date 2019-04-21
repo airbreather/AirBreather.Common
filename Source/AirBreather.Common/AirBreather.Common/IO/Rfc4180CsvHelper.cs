@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -66,58 +63,6 @@ namespace AirBreather.IO
         public event FieldProcessedEventHandler FieldProcessed;
 
         public event EventHandler EndOfLine;
-
-        public static Task<string[][]> ReadAllFieldsFromUtf8CsvFileAsync(byte[] bytes, IProgress<int> progress = null, CancellationToken cancellationToken = default) => ReadAllFieldsFromUtf8CsvFileAsync(bytes, DefaultMaxFieldLength, DefaultMinReadBufferLength, progress, cancellationToken);
-
-        public static async Task<string[][]> ReadAllFieldsFromUtf8CsvFileAsync(byte[] bytes, int maxFieldLength, int minReadBufferLength, IProgress<int> progress = null, CancellationToken cancellationToken = default)
-        {
-            bytes.ValidateNotNull(nameof(bytes));
-            using (var stream = new MemoryStream(bytes, 0, bytes.Length, false, false))
-            {
-                return await ReadAllFieldsFromUtf8CsvFileAsync(stream, maxFieldLength, minReadBufferLength, progress, cancellationToken).ConfigureAwait(false);
-            }
-        }
-
-        public static Task<string[][]> ReadAllFieldsFromUtf8CsvFileAsync(Stream stream, IProgress<int> progress = null, CancellationToken cancellationToken = default) => ReadAllFieldsFromUtf8CsvFileAsync(stream, DefaultMaxFieldLength, DefaultMinReadBufferLength, progress, cancellationToken);
-
-        public static async Task<string[][]> ReadAllFieldsFromUtf8CsvFileAsync(Stream stream, int maxFieldLength, int minReadBufferLength, IProgress<int> progress = null, CancellationToken cancellationToken = default)
-        {
-            var lines = new List<string[]>();
-            var currentLine = new List<string>();
-
-            var helper = new Rfc4180CsvHelper
-            {
-                MaxFieldLength = maxFieldLength,
-                MinReadBufferLength = minReadBufferLength,
-            };
-
-            var encoding = new UTF8Encoding(false, true);
-            helper.FieldProcessed += (sender, fieldData) =>
-            {
-                string fieldString;
-#if NETCOREAPP
-                fieldString = encoding.GetString(fieldData);
-#else
-                unsafe
-                {
-                    fixed (byte* ptr = &MemoryMarshal.GetReference(fieldData))
-                    {
-                        fieldString = encoding.GetString(ptr, fieldData.Length);
-                    }
-                }
-#endif
-                currentLine.Add(fieldString);
-            };
-
-            helper.EndOfLine += (sender, args) =>
-            {
-                lines.Add(currentLine.ToArray());
-                currentLine.Clear();
-            };
-
-            await helper.ReadUtf8CsvFileAsync(stream, progress, cancellationToken).ConfigureAwait(false);
-            return lines.ToArray();
-        }
 
         public async Task ReadUtf8CsvFileAsync(Stream stream, IProgress<int> progress = null, CancellationToken cancellationToken = default)
         {
