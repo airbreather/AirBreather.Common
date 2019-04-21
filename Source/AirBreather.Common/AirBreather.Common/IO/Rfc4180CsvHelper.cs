@@ -1,14 +1,24 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AirBreather.IO
 {
-    public delegate void Rfc4180CsvRowHandler(object sender, Rfc4180CsvRow row);
+    public delegate void FieldProcessedEventHandler(object sender, ReadOnlySpan<byte> data);
 
     public class Rfc4180CsvHelper
     {
+        public const int DefaultMaxFieldLength = 1024 * 1024;
+
+        public const int DefaultMinReadBufferLength = 65536;
+
         private const byte COMMA = (byte)',';
 
         private const byte CR = (byte)'\r';
@@ -19,260 +29,253 @@ namespace AirBreather.IO
 
         private static readonly byte[] UnquotedStopBytes = { COMMA, QUOTE, CR, LF };
 
-        public event Rfc4180CsvRowHandler RowProcessed;
+        private int maxFieldLength = DefaultMaxFieldLength;
 
-        public void ReadUtf8CsvFile(Stream stream)
+        private int minReadBufferLength = DefaultMinReadBufferLength;
+
+        public int MaxFieldLength
+        {
+            get => this.maxFieldLength;
+            set
+            {
+                if (value < 1)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "Must be greater than zero.");
+                }
+
+                this.maxFieldLength = value;
+            }
+        }
+
+        public int MinReadBufferLength
+        {
+            get => this.minReadBufferLength;
+            set
+            {
+                if (value < 1)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "Must be greater than zero.");
+                }
+
+                this.minReadBufferLength = value;
+            }
+        }
+
+        public ArrayPool<byte> BufferPool { get; set; }
+
+        public event FieldProcessedEventHandler FieldProcessed;
+
+        public event EventHandler EndOfLine;
+
+        public static Task<string[][]> ReadAllFieldsFromUtf8CsvFileAsync(byte[] bytes, IProgress<int> progress = null, CancellationToken cancellationToken = default) => ReadAllFieldsFromUtf8CsvFileAsync(bytes, DefaultMaxFieldLength, DefaultMinReadBufferLength, progress, cancellationToken);
+
+        public static async Task<string[][]> ReadAllFieldsFromUtf8CsvFileAsync(byte[] bytes, int maxFieldLength, int minReadBufferLength, IProgress<int> progress = null, CancellationToken cancellationToken = default)
+        {
+            bytes.ValidateNotNull(nameof(bytes));
+            using (var stream = new MemoryStream(bytes, 0, bytes.Length, false, false))
+            {
+                return await ReadAllFieldsFromUtf8CsvFileAsync(stream, maxFieldLength, minReadBufferLength, progress, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        public static Task<string[][]> ReadAllFieldsFromUtf8CsvFileAsync(Stream stream, IProgress<int> progress = null, CancellationToken cancellationToken = default) => ReadAllFieldsFromUtf8CsvFileAsync(stream, DefaultMaxFieldLength, DefaultMinReadBufferLength, progress, cancellationToken);
+
+        public static async Task<string[][]> ReadAllFieldsFromUtf8CsvFileAsync(Stream stream, int maxFieldLength, int minReadBufferLength, IProgress<int> progress = null, CancellationToken cancellationToken = default)
+        {
+            var lines = new List<string[]>();
+            var currentLine = new List<string>();
+
+            var helper = new Rfc4180CsvHelper
+            {
+                MaxFieldLength = maxFieldLength,
+                MinReadBufferLength = minReadBufferLength,
+            };
+
+            var encoding = new UTF8Encoding(false, true);
+            helper.FieldProcessed += (sender, fieldData) =>
+            {
+                unsafe
+                {
+                    fixed (byte* ptr = &MemoryMarshal.GetReference(fieldData))
+                    {
+                        currentLine.Add(encoding.GetString(ptr, fieldData.Length));
+                    }
+                }
+            };
+
+            helper.EndOfLine += (sender, args) =>
+            {
+                lines.Add(currentLine.ToArray());
+                currentLine.Clear();
+            };
+
+            await helper.ReadUtf8CsvFileAsync(stream, progress, cancellationToken).ConfigureAwait(false);
+            return lines.ToArray();
+        }
+
+        public async Task ReadUtf8CsvFileAsync(Stream stream, IProgress<int> progress = null, CancellationToken cancellationToken = default)
         {
             stream.ValidateNotNull(nameof(stream));
 
-            var rowHandler = this.RowProcessed ?? delegate { };
-            var unquotedStopBytes = new ReadOnlySpan<byte>(UnquotedStopBytes);
+            var bufferPool = this.BufferPool ?? ArrayPool<byte>.Shared;
 
-            byte[] buffer = null;
-            var rowOwner = MemoryPool<byte>.Shared.Rent(4096);
+            byte[] readBuffer = null;
+            byte[] fieldBuffer = null;
             try
             {
-                buffer = ArrayPool<byte>.Shared.Rent(65536);
+                readBuffer = bufferPool.Rent(this.minReadBufferLength);
+                fieldBuffer = bufferPool.Rent(this.maxFieldLength);
+                var sizedFieldBuffer = new ArraySegment<byte>(fieldBuffer, 0, this.maxFieldLength);
 
-                var fieldOffsets = new List<int>();
-                var bufferSpan = new ReadOnlySpan<byte>(buffer);
-                var rowSpan = rowOwner.Memory.Span;
-                var freeRowSpan = rowSpan;
-
+                int fieldBufferConsumed = 0;
+                bool alwaysEmitLastField = false;
                 bool fieldIsQuoted = false;
                 bool escapeNextQuote = false;
                 bool ignoreNextLinefeed = false;
-                while (true)
+
+                int lastRead;
+                while ((lastRead = await stream.ReadAsync(readBuffer, 0, readBuffer.Length, cancellationToken).ConfigureAwait(false)) != 0)
                 {
-                    var currSpan = bufferSpan.Slice(0, stream.Read(buffer, 0, buffer.Length));
-                    if (currSpan.IsEmpty)
-                    {
-                        break;
-                    }
-
-                    while (!currSpan.IsEmpty)
-                    {
-                        int idx;
-                        bool stoppedOnEscapedQuote = false;
-                        if (fieldIsQuoted && !escapeNextQuote)
-                        {
-                            idx = currSpan.IndexOf(QUOTE);
-                        }
-                        else
-                        {
-                            idx = currSpan.IndexOfAny(unquotedStopBytes);
-                            if (escapeNextQuote)
-                            {
-                                if (idx == 0 && currSpan[0] == QUOTE)
-                                {
-                                    stoppedOnEscapedQuote = true;
-                                }
-                                else
-                                {
-                                    fieldIsQuoted = false;
-                                }
-
-                                escapeNextQuote = false;
-                            }
-                        }
-
-                        byte stopByte = 0;
-                        ReadOnlySpan<byte> copyChunk;
-                        if (idx < 0)
-                        {
-                            copyChunk = currSpan;
-                            currSpan = default;
-                        }
-                        else
-                        {
-                            if (stoppedOnEscapedQuote)
-                            {
-                                copyChunk = currSpan.Slice(0, 1);
-                                currSpan = currSpan.Slice(1);
-                            }
-                            else
-                            {
-                                stopByte = currSpan[idx];
-                                copyChunk = currSpan.Slice(0, idx);
-                                currSpan = currSpan.Slice(idx + 1);
-                            }
-                        }
-
-                        if (!copyChunk.IsEmpty)
-                        {
-                            if (copyChunk.Length > freeRowSpan.Length)
-                            {
-                                int newRowSpanLength = rowSpan.Length, newFreeRowSpanLength = freeRowSpan.Length;
-                                do
-                                {
-                                    newFreeRowSpanLength += newRowSpanLength;
-                                    newRowSpanLength *= 2;
-                                }
-                                while (copyChunk.Length > newFreeRowSpanLength);
-
-                                var rowOwner2 = MemoryPool<byte>.Shared.Rent(newRowSpanLength);
-                                try
-                                {
-                                    var rowSpan2 = rowOwner2.Memory.Span;
-                                    var rowSpanConsumed = rowSpan.Slice(0, rowSpan.Length - freeRowSpan.Length);
-                                    rowSpanConsumed.CopyTo(rowSpan2.Slice(0, rowSpanConsumed.Length));
-                                    rowSpan = rowSpan2;
-                                    freeRowSpan = rowSpan.Slice(rowSpanConsumed.Length);
-                                    using (var oldRowOwner = rowOwner)
-                                    {
-                                        rowOwner = rowOwner2;
-                                    }
-                                }
-                                catch
-                                {
-                                    rowOwner2.Dispose();
-                                    throw;
-                                }
-                            }
-
-                            copyChunk.CopyTo(freeRowSpan.Slice(0, copyChunk.Length));
-                            freeRowSpan = freeRowSpan.Slice(copyChunk.Length);
-                        }
-
-                        if (ignoreNextLinefeed && stopByte == LF)
-                        {
-                            stopByte = 0;
-                        }
-
-                        ignoreNextLinefeed = false;
-
-                        switch (stopByte)
-                        {
-                            case QUOTE:
-                                if (fieldIsQuoted)
-                                {
-                                    escapeNextQuote = true;
-                                }
-                                else
-                                {
-                                    fieldIsQuoted = true;
-                                }
-
-                                break;
-
-                            case COMMA:
-                                fieldOffsets.Add(rowSpan.Length - freeRowSpan.Length);
-                                break;
-
-                            case CR:
-                                ignoreNextLinefeed = true;
-                                EndLine(rowSpan.Slice(0, rowSpan.Length - freeRowSpan.Length));
-                                freeRowSpan = rowSpan;
-                                break;
-
-                            case LF:
-                                EndLine(rowSpan.Slice(0, rowSpan.Length - freeRowSpan.Length));
-                                freeRowSpan = rowSpan;
-                                break;
-                        }
-                    }
+                    this.ProcessFields(new ReadOnlySpan<byte>(readBuffer, 0, lastRead), sizedFieldBuffer, ref fieldBufferConsumed, ref alwaysEmitLastField, ref fieldIsQuoted, ref escapeNextQuote, ref ignoreNextLinefeed);
+                    progress?.Report(lastRead);
                 }
 
-                // only call EndLine if the last line was non-empty, since a very common practice is
-                // to end text files with an empty blank line.
-                if (rowSpan.Length != freeRowSpan.Length)
-                {
-                    EndLine(rowSpan.Slice(0, rowSpan.Length - freeRowSpan.Length));
-                }
-
-                void EndLine(ReadOnlySpan<byte> completeRowSpan)
-                {
-                    if (completeRowSpan.IsEmpty && fieldOffsets.Count == 0)
-                    {
-                        rowHandler(this, default);
-                        return;
-                    }
-
-                    using (var slicesOwner = MemoryPool<Rfc4180CsvRow.ColumnSlice>.Shared.Rent(fieldOffsets.Count + 1))
-                    {
-                        var slicesSpan = slicesOwner.Memory.Span;
-                        int i = 0;
-                        int prevOffset = 0;
-                        foreach (int offset in fieldOffsets)
-                        {
-                            slicesSpan[i].Offset = prevOffset;
-                            slicesSpan[i].Length = offset - prevOffset;
-                            prevOffset = offset;
-                            ++i;
-                        }
-
-                        slicesSpan[i].Offset = prevOffset;
-                        slicesSpan[i].Length = completeRowSpan.Length - prevOffset;
-                        rowHandler(this, new Rfc4180CsvRow(completeRowSpan, slicesSpan.Slice(0, i + 1)));
-                    }
-
-                    fieldOffsets.Clear();
-                }
+                this.ProcessEndOfFields(new ReadOnlySpan<byte>(fieldBuffer, 0, fieldBufferConsumed), alwaysEmitLastField);
+                progress?.Report(0);
             }
             finally
             {
-                if (buffer != null)
+                if (readBuffer != null)
                 {
-                    ArrayPool<byte>.Shared.Return(buffer, clearArray: true);
+                    bufferPool.Return(readBuffer, clearArray: true);
                 }
 
-                rowOwner?.Dispose();
+                if (fieldBuffer != null)
+                {
+                    bufferPool.Return(fieldBuffer, clearArray: true);
+                }
             }
         }
-    }
 
-    public readonly ref struct Rfc4180CsvRow
-    {
-        private readonly ReadOnlySpan<byte> rawRow;
-
-        private readonly ReadOnlySpan<ColumnSlice> columnSlices;
-
-        internal Rfc4180CsvRow(ReadOnlySpan<byte> rawRow, ReadOnlySpan<ColumnSlice> columnSlices)
+        private void ProcessFields(ReadOnlySpan<byte> readBuffer, Span<byte> fieldBuffer, ref int fieldBufferConsumed, ref bool alwaysEmitLastField, ref bool fieldIsQuoted, ref bool escapeNextQuote, ref bool ignoreNextLinefeed)
         {
-            this.rawRow = rawRow;
-            this.columnSlices = columnSlices;
-        }
+            Debug.Assert(fieldBuffer.Length == this.maxFieldLength);
 
-        public int FieldCount => this.columnSlices.Length;
+            var unquotedStopBytes = new ReadOnlySpan<byte>(UnquotedStopBytes);
+            var freeFieldBuffer = fieldBuffer.Slice(fieldBufferConsumed);
 
-        public ReadOnlySpan<byte> this[int index]
-        {
-            get
+            while (!readBuffer.IsEmpty)
             {
-                if (unchecked((uint)index >= (uint)columnSlices.Length))
+                int idx;
+                bool stoppedOnEscapedQuote = false;
+                if (fieldIsQuoted && !escapeNextQuote)
                 {
-                    throw new ArgumentOutOfRangeException();
+                    idx = readBuffer.IndexOf(QUOTE);
+                }
+                else
+                {
+                    idx = readBuffer.IndexOfAny(unquotedStopBytes);
+                    if (escapeNextQuote)
+                    {
+                        if (idx == 0 && readBuffer[0] == QUOTE)
+                        {
+                            stoppedOnEscapedQuote = true;
+                        }
+                        else
+                        {
+                            fieldIsQuoted = false;
+                        }
+
+                        escapeNextQuote = false;
+                    }
                 }
 
-                return this.rawRow.Slice(columnSlices[index].Offset, columnSlices[index].Length);
+                byte stopByte = 0;
+                ReadOnlySpan<byte> copyChunk;
+                if (idx < 0)
+                {
+                    copyChunk = readBuffer;
+                    readBuffer = default;
+                }
+                else if (stoppedOnEscapedQuote)
+                {
+                    copyChunk = readBuffer.Slice(0, 1);
+                    readBuffer = readBuffer.Slice(1);
+                }
+                else
+                {
+                    stopByte = readBuffer[idx];
+                    copyChunk = readBuffer.Slice(0, idx);
+                    readBuffer = readBuffer.Slice(idx + 1);
+                }
+
+                if (copyChunk.Length > freeFieldBuffer.Length)
+                {
+                    FieldTooLong();
+                }
+
+                if (!copyChunk.IsEmpty)
+                {
+                    copyChunk.CopyTo(freeFieldBuffer.Slice(0, copyChunk.Length));
+                    freeFieldBuffer = freeFieldBuffer.Slice(copyChunk.Length);
+                }
+
+                if (ignoreNextLinefeed)
+                {
+                    if (stopByte == LF)
+                    {
+                        stopByte = 0;
+                    }
+
+                    ignoreNextLinefeed = false;
+                }
+
+                switch (stopByte)
+                {
+                    case QUOTE:
+                        if (fieldIsQuoted)
+                        {
+                            escapeNextQuote = true;
+                        }
+                        else
+                        {
+                            fieldIsQuoted = true;
+                        }
+
+                        break;
+
+                    case COMMA:
+                        this.FieldProcessed?.Invoke(this, fieldBuffer.Slice(0, fieldBuffer.Length - freeFieldBuffer.Length));
+                        freeFieldBuffer = fieldBuffer;
+                        alwaysEmitLastField = true;
+                        break;
+
+                    case CR:
+                        ignoreNextLinefeed = true;
+                        goto case LF;
+
+                    case LF:
+                        this.ProcessEndOfFields(fieldBuffer.Slice(0, fieldBuffer.Length - freeFieldBuffer.Length), alwaysEmitLastField);
+                        freeFieldBuffer = fieldBuffer;
+                        alwaysEmitLastField = false;
+                        break;
+                }
             }
+
+            fieldBufferConsumed = fieldBuffer.Length - freeFieldBuffer.Length;
         }
 
-        public Enumerator GetEnumerator() => new Enumerator(this);
-
-        public ref struct Enumerator
+        private void ProcessEndOfFields(ReadOnlySpan<byte> lastFieldData, bool alwaysEmitLastField)
         {
-            private Rfc4180CsvRow row;
-
-            private int curr;
-
-            internal Enumerator(Rfc4180CsvRow row)
+            if (!lastFieldData.IsEmpty || alwaysEmitLastField)
             {
-                this.row = row;
-                this.curr = -1;
+                this.FieldProcessed?.Invoke(this, lastFieldData);
             }
 
-            public ReadOnlySpan<byte> Current => this.row.rawRow.Slice(this.row.columnSlices[this.curr].Offset, this.row.columnSlices[this.curr].Length);
-
-            public bool MoveNext() => this.curr < row.columnSlices.Length &&
-                                      ++this.curr < row.columnSlices.Length;
+            this.EndOfLine?.Invoke(this, EventArgs.Empty);
         }
 
-        internal struct ColumnSlice
-        {
-            public int Offset;
-
-            public int Length;
-        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void FieldTooLong() => throw new InvalidDataException($"Data contains one or more fields that exceed the limit set in {nameof(MaxFieldLength)}.");
     }
 }
