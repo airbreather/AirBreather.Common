@@ -313,7 +313,8 @@ namespace AirBreather.IO
                 this.FieldProcessed?.Invoke(this, lastFieldData);
 
                 // this surprised me, but it appears that most parsers ignore blank lines, even many
-                // in a row.  I would have thought that they'd emit lines with no fields, but cool.
+                // in a row.  I would have thought that they'd emit lines with no fields, if not the
+                // one-empty-field line that we would emit if we removed our conditional, but cool.
                 // this does simplify my code a bit, because CRLF is no longer special :-D.
                 this.EndOfLine?.Invoke(this, EventArgs.Empty);
             }
