@@ -11,18 +11,18 @@ using Xunit;
 
 namespace AirBreather.Tests
 {
-    public sealed class Rfc4180CsvHelperTests
+    public sealed class Rfc4180CsvReaderTests
     {
         [Fact]
         public async Task TestCsvReading()
         {
-            const string CSVText = "Hello,\"Wor\"\"ld\"\r\nhow,\"are,\",you\n\r\n\n\r\n\r\r\n,doing,\"to\"\"\"\"d\"\"ay\",\rI,am,,,,fine\r,,,\nasdf\n";
+            const string CSVText = "Héllo,\"Wor\"\"ld\"\r\nhow,\"are,\",you\n\r\n\n\r\n\r\r\n,doing,\"to\"\"\"\"d\"\"a🐨y\",\rI,am,,,,fine\r,,,\nasdf\n";
             var bytes = Encoding.UTF8.GetBytes(CSVText);
             string[][] expectedRows =
             {
-                new[] { "Hello", "Wor\"ld" },
+                new[] { "Héllo", "Wor\"ld" },
                 new[] { "how", "are,", "you" },
-                new[] { string.Empty, "doing", "to\"\"d\"ay", string.Empty },
+                new[] { string.Empty, "doing", "to\"\"d\"a🐨y", string.Empty },
                 new[] { "I", "am", string.Empty, string.Empty, string.Empty, "fine" },
                 new[] { string.Empty, string.Empty, string.Empty, string.Empty },
                 new[] { "asdf" },
@@ -32,7 +32,7 @@ namespace AirBreather.Tests
                 var currentLine = new List<string>();
                 int rowsReadSoFar = 0;
                 bool gotToEndOfStream = false;
-                var helper = new Rfc4180CsvHelper { MaxFieldLength = expectedRows.Max(row => row.Length == 0 ? 0 : row.Max(Encoding.UTF8.GetByteCount)) };
+                var helper = new Rfc4180CsvReader { MaxFieldLength = expectedRows.Max(row => row.Length == 0 ? 0 : row.Max(Encoding.UTF8.GetByteCount)) };
                 helper.FieldProcessed += (sender, fieldData) =>
                 {
                     Assert.Equal(helper, sender);
@@ -65,7 +65,7 @@ namespace AirBreather.Tests
 
             using (var stream = new MemoryStream(bytes, 0, bytes.Length, writable: false, publiclyVisible: false))
             {
-                var helper = new Rfc4180CsvHelper { MaxFieldLength = bytes.Length - 1 };
+                var helper = new Rfc4180CsvReader { MaxFieldLength = bytes.Length - 1 };
                 int fieldProcessedCalls = 0;
                 int endOfLineCalls = 0;
                 bool gotToEndOfStream = false;

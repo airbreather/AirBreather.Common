@@ -10,7 +10,7 @@ namespace AirBreather.IO
 {
     public delegate void FieldProcessedEventHandler(object sender, ReadOnlySpan<byte> data);
 
-    public class Rfc4180CsvHelper
+    public class Rfc4180CsvReader
     {
         public const int DefaultMaxFieldLength = 1024 * 1024;
 
