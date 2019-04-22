@@ -16,7 +16,7 @@ namespace AirBreather.Tests
         [Fact]
         public async Task TestCsvReading()
         {
-            const string CSVText = "Héllo,\"Wor\"\"ld\"\r\nhow,\"are,\",you\n\r\n\n\r\n\r\r\n,doing,\"to\"\"\"\"d\"\"a🐨y\",\rI,am,,,,fine\r,,,\nasdf\n";
+            const string CSVText = "Héllo,\"Wor\"\"ld\"\r\nhow,\"are,\",you\n\r\n\n\r\n\r\r\n,doing,\"to\"\"\"\"d\"\"a🐨y\",\rI,am,,,,fine\r,,,\n,\nasdf\n";
             var bytes = Encoding.UTF8.GetBytes(CSVText);
             string[][] expectedRows =
             {
@@ -25,6 +25,7 @@ namespace AirBreather.Tests
                 new[] { string.Empty, "doing", "to\"\"d\"a🐨y", string.Empty },
                 new[] { "I", "am", string.Empty, string.Empty, string.Empty, "fine" },
                 new[] { string.Empty, string.Empty, string.Empty, string.Empty },
+                new[] { string.Empty, string.Empty },
                 new[] { "asdf" },
             };
             using (var stream = new MemoryStream(bytes, 0, bytes.Length, writable: false, publiclyVisible: false))
