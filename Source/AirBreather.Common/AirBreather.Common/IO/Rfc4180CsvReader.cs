@@ -264,7 +264,13 @@ namespace AirBreather.IO
                             // this is either the escape byte for a literal quote, or the end of a
                             // quoted field.  we can't know without looking at another byte, and the
                             // next byte might only be available after another ReadAsync call, so we
-                            // choose to leave it up to the next round to disambiguate.
+                            // choose to leave it up to the next round to disambiguate.  I call this
+                            // a choice, because the buffer size is usually going to be so large
+                            // compared to the field lengths, and escaped quotes probably so rare,
+                            // that there seems to be a significant speedup potential from looking
+                            // ahead that one byte when possible even though we would need something
+                            // like what we currently do in order to handle all legal files at all
+                            // legal buffer sizes.
                             prevWasQuoteInQuotedField = true;
                         }
                         else
