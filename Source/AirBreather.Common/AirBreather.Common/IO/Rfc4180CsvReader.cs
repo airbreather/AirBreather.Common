@@ -218,9 +218,9 @@ namespace AirBreather.IO
                     // field data where it is, because it's incomplete.  so we need to copy what
                     // we've read into the cut buffer and use that as the field buffer.  annoyingly,
                     // the same solution applies to *ALL* quoted fields (for now), because we choose
-                    // not to look at another byte to see if the double-quote that we necessarily
-                    // stopped on here is actually escaping a double-quote that needs to be written
-                    // into the cut buffer no matter what.
+                    // not to look at another byte to see whether or not the double-quote that we
+                    // necessarily stopped on here is actually escaping a double-quote that needs to
+                    // be written into the cut buffer no matter what.
                     if (cutFieldBuffer.Length < cutFieldBufferConsumed + idx)
                     {
                         ThrowFieldTooLongError();
