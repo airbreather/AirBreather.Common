@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <Compile Remove="Experimental\**" />
+    <ProjectReference Include="..\..\AirBreather.Csv\AirBreather.Csv.csproj" />
 
     <ProjectReference Include="..\AirBreather.Common\AirBreather.Common.csproj" />
 

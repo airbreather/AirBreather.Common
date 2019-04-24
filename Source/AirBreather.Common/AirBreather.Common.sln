@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AirBreather.Common", "AirBreather.Common\AirBreather.Common.csproj", "{F04C8BB5-8838-4472-9B64-FAFDB5A27EBC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AirBreather.Common", "AirBreather.Common\AirBreather.Common.csproj", "{F04C8BB5-8838-4472-9B64-FAFDB5A27EBC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test Projects", "Test Projects", "{00E7C413-FA19-46C2-B26B-193FFBFB6010}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AirBreather.Common.Tests", "AirBreather.Common.Tests\AirBreather.Common.Tests.csproj", "{969F41E0-929C-436D-AF91-F90DD93FA06F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AirBreather.Common.Tests", "AirBreather.Common.Tests\AirBreather.Common.Tests.csproj", "{969F41E0-929C-436D-AF91-F90DD93FA06F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AirBreather.Csv", "..\AirBreather.Csv\AirBreather.Csv.csproj", "{4DC1D729-A037-4A17-A024-2859D1FADCDF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,11 +25,18 @@ Global
 		{969F41E0-929C-436D-AF91-F90DD93FA06F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{969F41E0-929C-436D-AF91-F90DD93FA06F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{969F41E0-929C-436D-AF91-F90DD93FA06F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DC1D729-A037-4A17-A024-2859D1FADCDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DC1D729-A037-4A17-A024-2859D1FADCDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DC1D729-A037-4A17-A024-2859D1FADCDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DC1D729-A037-4A17-A024-2859D1FADCDF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{969F41E0-929C-436D-AF91-F90DD93FA06F} = {00E7C413-FA19-46C2-B26B-193FFBFB6010}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1532F17D-056E-4EA2-B11C-90DD0275D971}
 	EndGlobalSection
 EndGlobal

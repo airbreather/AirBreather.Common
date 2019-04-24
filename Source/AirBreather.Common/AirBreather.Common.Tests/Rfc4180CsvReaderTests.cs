@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using AirBreather.IO;
+using AirBreather.Csv;
 
 using Xunit;
 
@@ -38,7 +38,7 @@ namespace AirBreather.Tests
                 {
                     Assert.Equal(helper, sender);
 
-                    currentLine.Add(Encoding.UTF8.GetString(fieldData));
+                    currentLine.Add(Encoding.UTF8.GetString(fieldData.Utf8FieldData));
                 };
                 helper.EndOfLine += (sender, args) =>
                 {
@@ -76,11 +76,11 @@ namespace AirBreather.Tests
                     {
                         case 1:
                             var expected = new ReadOnlySpan<byte>(bytes, 0, bytes.Length - 1);
-                            Assert.True(expected.SequenceEqual(actual));
+                            Assert.True(expected.SequenceEqual(actual.Utf8FieldData));
                             break;
 
                         case 2:
-                            Assert.True(actual.IsEmpty);
+                            Assert.True(actual.Utf8FieldData.IsEmpty);
                             break;
 
                         default:
