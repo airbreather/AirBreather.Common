@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 using AirBreather.Csv;
 
@@ -13,8 +11,16 @@ namespace AirBreather.Tests
 {
     public sealed class Rfc4180CsvReaderTests
     {
-        [Fact]
-        public void TestCsvReading()
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(4)]
+        [InlineData(8)]
+        [InlineData(16)]
+        [InlineData(32)]
+        [InlineData(64)]
+        [InlineData(int.MaxValue)]
+        public void TestCsvReading(int bufferSize)
         {
             const string CSVText = "Héllo,\"Wor\"\"ld\"\r\nhow,\"are,\",you\n\r\n\n\r\n\r\r\n,doing,\"to\"\"\"\"d\"\"a🐨y\",\rI,am,,,,fine\r,,,\n,\nasdf\n";
             var bytes = Encoding.UTF8.GetBytes(CSVText);
@@ -48,15 +54,32 @@ namespace AirBreather.Tests
                 currentLine.Clear();
             };
 
-            helper.ProcessNextReadBufferChunk(bytes);
+            if (bufferSize == int.MaxValue)
+            {
+                int xx = 0;
+            }
+
+            for (int rem = bytes.Length; rem > 0; rem -= bufferSize)
+            {
+                helper.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(bytes, bytes.Length - rem, Math.Min(rem, bufferSize)));
+            }
+
             helper.ProcessNextReadBufferChunk(null);
             gotToEndOfStream = true;
 
             Assert.Equal(expectedRows.Length, rowsReadSoFar);
         }
 
-        [Fact]
-        public void TestDegenerateCsvReading()
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(4)]
+        [InlineData(8)]
+        [InlineData(16)]
+        [InlineData(32)]
+        [InlineData(64)]
+        [InlineData(int.MaxValue)]
+        public void TestDegenerateCsvReading(int bufferSize)
         {
             // just one row, 2 fields, field0 is the entire byte array but 1, field1 is empty.
             byte[] bytes = new byte[7654321];
@@ -97,7 +120,12 @@ namespace AirBreather.Tests
                 Assert.False(gotToEndOfStream);
             };
 
-            helper.ProcessNextReadBufferChunk(bytes);
+
+            for (int rem = bytes.Length; rem > 0; rem -= bufferSize)
+            {
+                helper.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(bytes, bytes.Length - rem, Math.Min(rem, bufferSize)));
+            }
+
             helper.ProcessNextReadBufferChunk(null);
             gotToEndOfStream = true;
 
