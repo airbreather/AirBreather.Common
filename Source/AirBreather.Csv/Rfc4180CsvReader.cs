@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Buffers;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace AirBreather.Csv
 {
@@ -80,16 +76,6 @@ namespace AirBreather.Csv
     /// </remarks>
     public class Rfc4180CsvReader
     {
-        /// <summary>
-        /// The default value for <see cref="MaxFieldLength"/> (1 MiB).
-        /// </summary>
-        public static readonly int DefaultMaxFieldLength = 1024 * 1024;
-
-        /// <summary>
-        /// The default value for <see cref="MinReadBufferLength"/> (65 KiB).
-        /// </summary>
-        public static readonly int DefaultMinReadBufferLength = 65536;
-
         private const byte COMMA = (byte)',';
 
         private const byte CR = (byte)'\r';
@@ -98,60 +84,22 @@ namespace AirBreather.Csv
 
         private const byte QUOTE = (byte)'"';
 
-        private int maxFieldLength = DefaultMaxFieldLength;
+        private byte[] cutFieldBuffer;
 
-        private int minReadBufferLength = DefaultMinReadBufferLength;
+        private int cutFieldBufferConsumed;
 
-        /// <summary>
-        /// Gets or sets the <see cref="ArrayPool{T}"/> that serves us all the byte arrays that we
-        /// ask for, or <see langword="null"/> if we should use <see cref="ArrayPool{T}.Shared"/>.
-        /// </summary>
-        public ArrayPool<byte> BufferPool { get; set; }
+        private ParserFlags parserFlags;
 
-        /// <summary>
-        /// Gets or sets the maximum length, in UTF-8 code units (bytes), of the largest field that
-        /// this reader can process.  Any individual field longer than this will not be processed.
-        /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// Thrown when trying to set the value to something that is not greater than zero.
-        /// </exception>
-        public int MaxFieldLength
+        [Flags]
+        private enum ParserFlags : byte
         {
-            get => this.maxFieldLength;
-            set
-            {
-                if (value < 1)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value), value, "Must be greater than zero.");
-                }
-
-                this.maxFieldLength = value;
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the minimum length of the buffer, in bytes, to attempt to fill with each
-        /// read from the input stream.
-        /// </summary>
-        /// <remarks>
-        /// If <see cref="BufferPool"/> gives us a larger buffer than what we request, then the
-        /// entire buffer will still be used.
-        /// </remarks>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// Thrown when trying to set the value to something that is not greater than zero.
-        /// </exception>
-        public int MinReadBufferLength
-        {
-            get => this.minReadBufferLength;
-            set
-            {
-                if (value < 1)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value), value, "Must be greater than zero.");
-                }
-
-                this.minReadBufferLength = value;
-            }
+            None,
+            ReadAnythingOnCurrentLine           = 0b00000001,
+            ReadAnythingInCurrentField          = 0b00000010,
+            CurrentFieldStartedWithQuote        = 0b00000100,
+            QuotedFieldDataEnded                = 0b00001000,
+            CutAtPotentiallyTerminalDoubleQuote = 0b00010000,
+            FieldDataSoFarExceedsMaxLength      = 0b00100000,
         }
 
         /// <summary>
@@ -168,312 +116,235 @@ namespace AirBreather.Csv
         /// </remarks>
         public event EventHandler EndOfLine;
 
-        /// <summary>
-        /// Asynchronously processes a <see cref="Stream"/> assumed to contain UTF-8 encoded CSV
-        /// data, following the guidelines listed in RFC 4180.  Data itself and all errors we
-        /// encounter are all reported back to the consumer via the various events on this class,
-        /// while progress notifications are made available through an (optional) instance of
-        /// <see cref="IProgress{T}"/>.
-        /// </summary>
-        /// <param name="stream">
-        /// The <see cref="Stream"/> to read from.
-        /// </param>
-        /// <param name="progress">
-        /// An optional instance of <see cref="IProgress{T}"/> that will receive notifications every
-        /// time a chunk of bytes from the input stream has been fully consumed.  The parameter will
-        /// be the number of bytes that have been read since the last notification we made, with the
-        /// first call containing the number of bytes we read first.
-        /// <para>
-        /// This parameter may be <see langword="null"/> if no progress notifications are needed.
-        /// </para>
-        /// <para>
-        /// In case it helps, a final notification will be raised, with a parameter value of zero,
-        /// when no further events of any kind will be raised and the <see cref="Task"/> is about to
-        /// be completed successfully.
-        /// </para>
-        /// </param>
-        /// <param name="cancellationToken">
-        /// The token to monitor for cancellation requests. The default value is
-        /// <see cref="CancellationToken.None"/>.
-        /// </param>
-        /// <returns>
-        /// A <see cref="Task"/> that represents the asynchronous read operation.
-        /// </returns>
-        /// <exception cref="ArgumentNullException">
-        /// Thrown (synchronously) when <paramref name="stream"/> is <see langword="null"/>.
-        /// </exception>
-        public async Task ReadUtf8CsvFileAsync(Stream stream, IProgress<int> progress = null, CancellationToken cancellationToken = default)
+        public int MaxFieldLength
         {
-            if (stream is null)
+            get => CutFieldBuffer.Length;
+            set
             {
-                throw new ArgumentNullException(nameof(stream));
-            }
-
-            var bufferPool = this.BufferPool ?? ArrayPool<byte>.Shared;
-
-            byte[] readBuffer = null;
-            byte[] fieldBuffer = null;
-            try
-            {
-                readBuffer = bufferPool.Rent(this.minReadBufferLength);
-                fieldBuffer = bufferPool.Rent(this.maxFieldLength);
-
-                // readBuffer is allowed to exceed the user-specified length, but fieldBuffer has to
-                // be the exact given size as a maximum, no matter what the pool happened to give us
-                var sizedFieldBuffer = new ArraySegment<byte>(fieldBuffer, 0, this.maxFieldLength);
-
-                // this is the parser state that we preserve across calls to the inner method.  the
-                // inner method makes heavy use of spans, and this method is async, so there needs
-                // to be a bit of segregation between the two (dotnet/csharplang#1331).
-                int fieldBufferConsumed = 0;
-                bool alwaysEmitLastField = false;
-                bool fieldIsQuoted = false;
-                bool escapeNextQuote = false;
-
-                while (true)
+                if (value < 1)
                 {
-                    int lastRead = await stream.ReadAsync(readBuffer, 0, readBuffer.Length, cancellationToken).ConfigureAwait(false);
-                    if (lastRead == 0)
-                    {
-                        break;
-                    }
-
-                    this.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(readBuffer, 0, lastRead), sizedFieldBuffer, ref fieldBufferConsumed, ref alwaysEmitLastField, ref fieldIsQuoted, ref escapeNextQuote);
-                    progress?.Report(lastRead);
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "Must be greater than zero.");
                 }
 
-                // the inner method has no way of knowing when it sees the last field, and not all
-                // text files are terminated by a blank line, so we do (sometimes) need to announce
-                // one more field along with its EndOfLine event.
-                this.NotifyEndOfLineIfNeeded(new ReadOnlySpan<byte>(fieldBuffer, 0, fieldBufferConsumed), alwaysEmitLastField);
+                cutFieldBuffer = new byte[value];
             }
-            finally
-            {
-                if (readBuffer != null)
-                {
-                    bufferPool.Return(readBuffer, clearArray: true);
-                }
-
-                if (fieldBuffer != null)
-                {
-                    bufferPool.Return(fieldBuffer, clearArray: true);
-                }
-            }
-
-            progress?.Report(0);
         }
 
-        private void ProcessNextReadBufferChunk(ReadOnlySpan<byte> readBuffer, Span<byte> cutFieldBuffer, ref int cutFieldBufferConsumed, ref bool alwaysEmitLastField, ref bool fieldIsQuoted, ref bool prevWasQuoteInQuotedField)
+        private byte[] CutFieldBuffer => cutFieldBuffer ?? (cutFieldBuffer = new byte[81920]);
+
+        public void ProcessNextReadBufferChunk(ReadOnlySpan<byte> readBuffer)
         {
-            Debug.Assert(cutFieldBuffer.Length == this.maxFieldLength);
-
-            // when we're not reading a quoted field, these are the only bytes that we need to stop
-            // on.  UTF-8 is cool like that.
-            ReadOnlySpan<byte> unquotedStopBytes = stackalloc byte[] { COMMA, QUOTE, CR, LF };
-
-            // we're going to consume the entire buffer that was handed to us.  it's possible that a
-            // field will be split across multiple reads, which is why we take in cutFieldBuffer: it
-            // contains zero or more characters from the end of the last call.
-            while (!readBuffer.IsEmpty)
+            if (readBuffer.IsEmpty)
             {
-                int idx;
-                bool stoppedOnEscapedQuote = false;
-                if (fieldIsQuoted && !prevWasQuoteInQuotedField)
+                ProcessEndOfLine(readBuffer);
+                return;
+            }
+
+            // we're going to consume the entire buffer that was handed to us.
+            ReadOnlySpan<byte> allStopBytes = stackalloc byte[] { COMMA, CR, LF };
+
+            do
+            {
+                // when we're at the start of the field, anything goes.  this should be right at the
+                // head of the method, because we expect it to be not-too-uncommon to see a bunch of
+                // empty fields in a row, and/or CRLF line endings
+                if ((parserFlags & ParserFlags.ReadAnythingInCurrentField) == 0)
                 {
-                    // we've started reading a quoted field, which means that, AT LEAST, everything
-                    // up to the next double-quote is just getting copied straight in.
-                    idx = readBuffer.IndexOf(QUOTE);
-                }
-                else
-                {
-                    // we're either in the same basic state we started the file in, or we've seen a
-                    // double-quote while reading a quoted field and it's possible that the field is
-                    // over.  in both cases, we're on the hunt for any of our four special bytes.
-                    idx = readBuffer.IndexOfAny(unquotedStopBytes);
-                    if (prevWasQuoteInQuotedField)
+                    if (FirstByteIsAllWeNeeded(readBuffer[0]))
                     {
-                        // we started on the byte immediately after a double-quote that, if left
-                        // unescaped, ends the field data; RFC 4180 explicitly says that "Spaces are
-                        // considered part of a field and should not be ignored" and that double-
-                        // quotes need to surround the entire field (albeit not explicitly), and we
-                        // only enter in here if there was at least *something* to read, so the only
-                        // legal situation here is for the first byte to be something that advances
-                        // the parser state.  anything else is therefore an error.
-                        if (idx != 0)
-                        {
-                            ThrowBadQuotingError();
-                        }
-
-                        if (readBuffer[0] == QUOTE)
-                        {
-                            // the next byte after a double-quote is another double-quote, so we
-                            // need to insert a double-quote into the field data and keep the stream
-                            // going in "reading quoted field" mode.
-                            stoppedOnEscapedQuote = true;
-                        }
-                        else
-                        {
-                            // whether we saw a comma or a line-ending character, we're done reading
-                            // this quoted field, so reset the flag for next time.
-                            fieldIsQuoted = false;
-                        }
-
-                        prevWasQuoteInQuotedField = false;
+                        readBuffer = readBuffer.Slice(1);
+                        continue;
                     }
+
+                    parserFlags |= ParserFlags.ReadAnythingOnCurrentLine | ParserFlags.ReadAnythingInCurrentField;
+                }
+
+                if ((parserFlags & ParserFlags.CutAtPotentiallyTerminalDoubleQuote) != 0)
+                {
+                    // the way I chose to handle this situation, we have a helper method whose only
+                    // job is to do the minimum special processing it needs to do so we can move on.
+                    HandleBufferCutAtPotentiallyTerminalDoubleQuote(ref readBuffer);
+                    continue;
+                }
+
+                int idx;
+                if ((parserFlags & (ParserFlags.CurrentFieldStartedWithQuote | ParserFlags.QuotedFieldDataEnded)) != ParserFlags.CurrentFieldStartedWithQuote)
+                {
+                    idx = readBuffer.IndexOfAny(allStopBytes);
+                }
+                else if (TryFullyProcessQuotedFieldData(readBuffer, out idx))
+                {
+                    readBuffer = readBuffer.Slice(idx);
+                    continue;
                 }
 
                 if (idx < 0)
                 {
-                    // the entire remaining buffer lacks any of the bytes that tell us to stop, so
-                    // everything in it will be copied verbatim to the cut buffer to ensure that we
-                    // don't truncate a field whose data continues the next time we fill the read
-                    // buffer from the input stream.
-                    if (cutFieldBuffer.Length < cutFieldBufferConsumed + readBuffer.Length)
-                    {
-                        ThrowFieldTooLongError();
-                    }
-
-                    readBuffer.CopyTo(cutFieldBuffer.Slice(cutFieldBufferConsumed, readBuffer.Length));
-                    cutFieldBufferConsumed += readBuffer.Length;
+                    CopyToCutBuffer(readBuffer);
                     readBuffer = default;
                     continue;
                 }
 
-                if (stoppedOnEscapedQuote)
-                {
-                    // this special-case is the only time that a stop byte actually needs to show up
-                    // in the field data.  handle it specially.
-                    if (cutFieldBuffer.Length == cutFieldBufferConsumed)
-                    {
-                        // the cut buffer can't handle even one more byte.
-                        ThrowFieldTooLongError();
-                    }
-
-                    cutFieldBuffer[cutFieldBufferConsumed++] = QUOTE;
-                    readBuffer = readBuffer.Slice(1);
-                    continue;
-                }
-
-                byte stopByte = readBuffer[idx];
-                ReadOnlySpan<byte> fieldBuffer;
-                if (cutFieldBufferConsumed != 0 || fieldIsQuoted)
-                {
-                    // if there's already field data in the cut buffer, then we can't just use the
-                    // field data where it is, because it's incomplete.  so we need to copy what
-                    // we've read into the cut buffer and use that as the field buffer.  annoyingly,
-                    // the same solution applies to *ALL* quoted fields (for now), because we choose
-                    // not to look at another byte to see whether or not the double-quote that we
-                    // necessarily stopped on here is actually escaping a double-quote that needs to
-                    // be written into the cut buffer no matter what.
-                    if (cutFieldBuffer.Length < cutFieldBufferConsumed + idx)
-                    {
-                        ThrowFieldTooLongError();
-                    }
-
-                    readBuffer.Slice(0, idx).CopyTo(cutFieldBuffer.Slice(cutFieldBufferConsumed, idx));
-                    cutFieldBufferConsumed += idx;
-                    fieldBuffer = cutFieldBuffer.Slice(0, cutFieldBufferConsumed);
-                }
-                else
-                {
-                    // good news, everyone: the buffer containing all the data we just read from the
-                    // stream can be reused as-is for the field data, no copying required!
-                    fieldBuffer = readBuffer.Slice(0, idx);
-
-                    // we could maybe get away with skipping validating the field length, since the
-                    // only reasons for the max field length to be configurable all apply to other
-                    // situations, but if we skipped it, then some streams could potentially be
-                    // considered valid, but then become invalid when more valid rows are added,
-                    // because it would start having us cut (and therefore validate) a field that we
-                    // wouldn't have cut previously, which would suck.  the default max field length
-                    // is very generous, so we validate.
-                    if (cutFieldBuffer.Length < fieldBuffer.Length)
-                    {
-                        ThrowFieldTooLongError();
-                    }
-                }
-
-                // no matter what we read or what we're going to do with it, we've consumed all the
-                // data in the read buffer up to (and, we consider, including) the index at which we
-                // stopped.  set it up for the next read.
-                readBuffer = readBuffer.Slice(idx + 1);
-
-                // by this point, we've short-circuited out of all special-cases that make us stop
-                // on one of these bytes where we should NOT handle them the way that this does.
-                switch (stopByte)
+                switch (readBuffer[idx])
                 {
                     case QUOTE:
-                        if (fieldIsQuoted)
-                        {
-                            // this is either the escape byte for a literal quote, or the end of a
-                            // quoted field.  we can't know without looking at another byte, and the
-                            // next byte might only be available after another ReadAsync call, so we
-                            // choose to leave it up to the next round to disambiguate.  I call this
-                            // a choice, because the buffer size is usually going to be so large
-                            // compared to the field lengths, and escaped quotes probably so rare,
-                            // that there seems to be a significant speedup potential from looking
-                            // ahead that one byte when possible even though we would need something
-                            // like what we currently do in order to handle all legal files at all
-                            // legal buffer sizes.
-                            prevWasQuoteInQuotedField = true;
-                        }
-                        else
-                        {
-                            fieldIsQuoted = true;
-
-                            // a double-quote may not appear midway through an unquoted field's data
-                            if (!fieldBuffer.IsEmpty)
-                            {
-                                ThrowBadQuotingError();
-                            }
-                        }
-
+                        CopyToCutBuffer(readBuffer.Slice(0, idx));
+                        parserFlags |= ParserFlags.QuotedFieldDataEnded;
                         break;
 
                     case COMMA:
-                        this.FieldProcessed?.Invoke(this, new FieldProcessedEventArgs(fieldBuffer));
-                        cutFieldBufferConsumed = 0;
-
-                        // ensure that if a comma appears right at the end of a line (or the file),
-                        // we still emit an empty field for it.  we need to do this after seeing a
-                        // comma, because parsers seem to ignore multiple line endings in a row, but
-                        // a line with a comma immediately before the line ending has a blank field
-                        // at the end.  so the rule is that any time we see a comma, then the next
-                        // line ending will ALWAYS emit one last field.
-                        alwaysEmitLastField = true;
+                        ProcessEndOfField(readBuffer.Slice(0, idx));
                         break;
 
                     case CR:
                     case LF:
-                        this.NotifyEndOfLineIfNeeded(fieldBuffer, alwaysEmitLastField);
-                        cutFieldBufferConsumed = 0;
-
-                        // reset the flag after a line ending so that we don't emit any lines with
-                        // empty fields if there are multiple line endings in a row.
-                        alwaysEmitLastField = false;
+                        ProcessEndOfLine(readBuffer.Slice(0, idx));
                         break;
                 }
+
+                readBuffer = readBuffer.Slice(idx + 1);
+            }
+            while (!readBuffer.IsEmpty);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void HandleBufferCutAtPotentiallyTerminalDoubleQuote(ref ReadOnlySpan<byte> readBuffer)
+        {
+            // like I mentioned in the comments near the caller, this method's job is just to do the
+            // special processing we need to do in order to clear the flag and move on.  this method
+            // is expected to be called so rarely, at least in performance-sensitive cases, that I
+            // don't think it will ever pay off to bother doing more processing here.
+            parserFlags &= ~ParserFlags.CutAtPotentiallyTerminalDoubleQuote;
+            switch (readBuffer[0])
+            {
+                case QUOTE:
+                    CopyToCutBuffer(readBuffer.Slice(0, 1));
+                    readBuffer = readBuffer.Slice(1);
+                    break;
+
+                default:
+                    parserFlags |= ParserFlags.QuotedFieldDataEnded;
+                    break;
             }
         }
 
-        private void NotifyEndOfLineIfNeeded(ReadOnlySpan<byte> lastFieldData, bool alwaysEmitLastField)
+        private bool TryFullyProcessQuotedFieldData(ReadOnlySpan<byte> readBuffer, out int idx)
         {
-            if (!lastFieldData.IsEmpty || alwaysEmitLastField)
-            {
-                this.FieldProcessed?.Invoke(this, new FieldProcessedEventArgs(lastFieldData));
+            idx = readBuffer.IndexOf(QUOTE);
 
-                // this surprised me, but it appears that most parsers ignore blank lines, even many
-                // in a row.  I would have thought that they'd emit lines with no fields, if not the
-                // one-empty-field line that we would emit if we removed our conditional, but cool.
-                // this does simplify my code a bit, because CRLF is no longer special :-D.
-                this.EndOfLine?.Invoke(this, EventArgs.Empty);
+            if (idx < 0)
+            {
+                return false;
             }
+
+            if (idx == readBuffer.Length - 1)
+            {
+                CopyToCutBuffer(readBuffer.Slice(0, idx++));
+                parserFlags |= ParserFlags.CutAtPotentiallyTerminalDoubleQuote;
+                return true;
+            }
+
+            switch (readBuffer[idx + 1])
+            {
+                case QUOTE:
+                    // escaped quote, copy it in and send it back
+                    CopyToCutBuffer(readBuffer.Slice(0, idx + 1));
+                    idx += 2;
+                    return true;
+
+                case COMMA:
+                    ProcessEndOfField(readBuffer.Slice(0, idx));
+                    idx += 2;
+                    return true;
+
+                case CR:
+                case LF:
+                    ProcessEndOfLine(readBuffer.Slice(0, idx));
+                    idx += 2;
+                    return true;
+
+                default:
+                    break;
+            }
+
+            // we haven't definitely processed all the field data.
+            return false;
+        }
+
+        private bool FirstByteIsAllWeNeeded(byte firstByte)
+        {
+            // don't call the helper methods since this is intended to be super optimized.
+            switch (firstByte)
+            {
+                case COMMA:
+                    FieldProcessed?.Invoke(this, default);
+                    parserFlags = ParserFlags.ReadAnythingOnCurrentLine;
+                    return true;
+
+                case CR:
+                case LF:
+                    if ((parserFlags & ParserFlags.ReadAnythingOnCurrentLine) != 0)
+                    {
+                        FieldProcessed?.Invoke(this, default);
+                        EndOfLine?.Invoke(this, EventArgs.Empty);
+                        parserFlags &= ~ParserFlags.ReadAnythingOnCurrentLine;
+                    }
+
+                    return true;
+
+                case QUOTE:
+                    parserFlags |= ParserFlags.CurrentFieldStartedWithQuote;
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        private ReadOnlySpan<byte> CopyToCutBuffer(ReadOnlySpan<byte> copyBuffer)
+        {
+            if ((parserFlags & ParserFlags.FieldDataSoFarExceedsMaxLength) == 0)
+            {
+                if (cutFieldBufferConsumed + copyBuffer.Length <= cutFieldBuffer.Length)
+                {
+                    copyBuffer.CopyTo(new Span<byte>(cutFieldBuffer, cutFieldBufferConsumed, copyBuffer.Length));
+                    cutFieldBufferConsumed += copyBuffer.Length;
+                    return new ReadOnlySpan<byte>(cutFieldBuffer, 0, cutFieldBufferConsumed);
+                }
+                else
+                {
+                    ThrowFieldTooLongError();
+                    parserFlags |= ParserFlags.FieldDataSoFarExceedsMaxLength;
+                }
+            }
+
+            return default;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ProcessEndOfField(ReadOnlySpan<byte> lastReadSection)
+        {
+            ReadOnlySpan<byte> fieldBuffer = cutFieldBufferConsumed == 0
+                ? lastReadSection
+                : CopyToCutBuffer(lastReadSection);
+
+            FieldProcessed?.Invoke(this, new FieldProcessedEventArgs(fieldBuffer));
+            parserFlags = ParserFlags.ReadAnythingOnCurrentLine;
+            cutFieldBufferConsumed = 0;
+        }
+
+        private void ProcessEndOfLine(ReadOnlySpan<byte> lastFieldData)
+        {
+            if (!lastFieldData.IsEmpty || (parserFlags & ParserFlags.ReadAnythingOnCurrentLine) != 0)
+            {
+                ProcessEndOfField(lastFieldData);
+                EndOfLine?.Invoke(this, EventArgs.Empty);
+            }
+
+            parserFlags = ParserFlags.None;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void ThrowFieldTooLongError() => throw new InvalidDataException($"Data contains one or more fields that exceed the limit set in {nameof(MaxFieldLength)}.");
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void ThrowBadQuotingError() => throw new InvalidDataException("Failed to parse quoted field.");
     }
 }
