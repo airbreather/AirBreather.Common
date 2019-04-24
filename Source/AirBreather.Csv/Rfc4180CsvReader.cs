@@ -305,7 +305,7 @@ namespace AirBreather.Csv
         {
             if ((parserFlags & ParserFlags.FieldDataSoFarExceedsMaxLength) == 0)
             {
-                if (cutFieldBufferConsumed + copyBuffer.Length <= cutFieldBuffer.Length)
+                if (cutFieldBufferConsumed + copyBuffer.Length <= CutFieldBuffer.Length)
                 {
                     copyBuffer.CopyTo(new Span<byte>(cutFieldBuffer, cutFieldBufferConsumed, copyBuffer.Length));
                     cutFieldBufferConsumed += copyBuffer.Length;
