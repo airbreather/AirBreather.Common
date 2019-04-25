@@ -112,7 +112,7 @@ namespace AirBreather
             internal bool Remove(TValue value) => this.backingStore.Remove(value);
 
             public IEnumerator<TValue> GetEnumerator() => this.backingStore.GetEnumerator();
-            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator(); 
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
         }
     }
 }

@@ -22,7 +22,7 @@ namespace AirBreather.Random
             // System.Random also permits 0, which is ridiculous
             // because it's a special-case that doesn't need to exist.
             rangeSize.ValidateNotLessThan(nameof(rangeSize), 1);
-            (Int32.MaxValue - rangeSize).ValidateNotLessThan(nameof(minValueInclusive), minValueInclusive);
+            (int.MaxValue - rangeSize).ValidateNotLessThan(nameof(minValueInclusive), minValueInclusive);
 
             int pick;
 

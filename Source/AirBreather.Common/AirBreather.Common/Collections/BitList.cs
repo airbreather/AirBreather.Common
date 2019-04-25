@@ -10,8 +10,6 @@ namespace AirBreather.Collections
 
         private BitArray values;
 
-        private int version;
-
         public BitList() => this.values = Empty;
 
         public BitList(int capacity) => this.values = capacity.ValidateNotLessThan(nameof(capacity), 0) == 0
@@ -123,7 +121,7 @@ namespace AirBreather.Collections
         {
             if (this.values.Length < neededSize)
             {
-                this.Capacity = (int)Math.Min(Int32.MaxValue,
+                this.Capacity = (int)Math.Min(int.MaxValue,
                                               Math.Max(neededSize,
                                                        unchecked((uint)(this.values.Length == 0
                                                                             ? 128
@@ -273,7 +271,7 @@ namespace AirBreather.Collections
 
         public BitArray ToBitArray()
         {
-            BitArray result = new BitArray(this.Count);
+            var result = new BitArray(this.Count);
             for (int i = 0; i < this.Count; ++i)
             {
                 result[i] = this[i];
@@ -291,7 +289,9 @@ namespace AirBreather.Collections
 
         public struct Enumerator : IEnumerator<bool>
         {
+#pragma warning disable IDE0044
             private BitList lst;
+#pragma warning restore IDE0044
 
             private int currIndex;
 

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Immutable;
 using System.IO;
 
 using AirBreather.Danger;
@@ -16,7 +15,7 @@ namespace AirBreather.Tests
         {
             // i r ImmutableArray<T>.Builder nao, look at me
             ulong[] origBuf = { 1, 2, 3, 4 };
-            ImmutableArray<ulong> fakeImmutableBuf = origBuf.AsImmutableArrayDangerous();
+            var fakeImmutableBuf = origBuf.AsImmutableArrayDangerous();
 
             // we should get the same values.
             Assert.Equal(origBuf, fakeImmutableBuf);

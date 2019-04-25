@@ -17,7 +17,7 @@ namespace AirBreather
 
             // Assumes the assembly's default namespace is equal to its name,
             // which is ridiculous in the extremely general case, but fine for me.
-            return assembly.GetManifestResourceStream(String.Join(".", assembly.GetName().Name, resourceKey));
+            return assembly.GetManifestResourceStream(string.Join(".", assembly.GetName().Name, resourceKey));
         }
     }
 }

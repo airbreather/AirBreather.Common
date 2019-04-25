@@ -38,7 +38,7 @@ namespace AirBreather.Random
             private Builder(ImmutableList<WeightedItem> weightedItems) => this.weightedItems = weightedItems;
 
             public Builder AddWithWeight(T item, double weight) =>
-                Double.IsNaN(weight) || Double.IsInfinity(weight) || weight <= 0
+                double.IsNaN(weight) || double.IsInfinity(weight) || weight <= 0
                     ? throw new ArgumentOutOfRangeException(nameof(weight), weight, "weight must be reasonable (and positive non-zero).  come on, be nice, I was about to make this int and everything... I'm doing you a favor by letting you use doubles, and this is how you repay me?  that's it, I give up.")
                     : new Builder(this.weightedItems.Add(new WeightedItem(item, weight)));
 
@@ -57,7 +57,7 @@ namespace AirBreather.Random
                 this.weightedItems.CopyTo(weightedItemsArray);
                 Array.Sort(weightedItemsArray, CompareWeightedItems);
 
-                T[] items = new T[weightedItemsArray.Length];
+                var items = new T[weightedItemsArray.Length];
                 double[] newWeights = new double[items.Length];
 
                 // reweight, step 1: set each weight to the sum of itself and all weights before it.

@@ -59,7 +59,7 @@ namespace AirBreather.BinaryHash
             {
                 p->BytesProcessedSoFar += unchecked((ulong)input.Length);
 
-                Span<byte> stateBuffer = new Span<byte>(p->Buffer, 32);
+                var stateBuffer = new Span<byte>(p->Buffer, 32);
                 Span<byte> freeBuffer = stateBuffer.Slice(p->BufferUsed);
                 if (input.Length < freeBuffer.Length)
                 {
@@ -69,7 +69,7 @@ namespace AirBreather.BinaryHash
                     return;
                 }
 
-                Span<ulong> values = new Span<ulong>(p->Values, 4);
+                var values = new Span<ulong>(p->Values, 4);
                 if (freeBuffer.Length < 32)
                 {
                     input.Slice(0, freeBuffer.Length).CopyTo(freeBuffer);
@@ -102,7 +102,7 @@ namespace AirBreather.BinaryHash
                 // pin because accessing the fixed-size buffers requires it.
                 fixed (State* p = &state)
                 {
-                    Span<ulong> values = new Span<ulong>(p->Values, 4);
+                    var values = new Span<ulong>(p->Values, 4);
 
                     ulong h;
                     if (p->BytesProcessedSoFar >= 32)

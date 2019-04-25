@@ -45,7 +45,7 @@ namespace AirBreather.IO
             using (FileStream sourceStream = OpenReadSequential(path))
             {
                 long longLen = sourceStream.Length;
-                if (longLen > Int32.MaxValue)
+                if (longLen > int.MaxValue)
                 {
                     throw new IOException("Too long (supports no more than 2 GB).");
                 }
@@ -59,7 +59,7 @@ namespace AirBreather.IO
 
         public static async Task WriteAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken = default)
         {
-            using (MemoryStream sourceStream = new MemoryStream(bytes, writable: false))
+            using (var sourceStream = new MemoryStream(bytes, writable: false))
             using (FileStream destinationStream = CreateSequential(path))
             {
                 await sourceStream.CopyToAsync(destinationStream, FullCopyBufferSize, cancellationToken).ConfigureAwait(false);

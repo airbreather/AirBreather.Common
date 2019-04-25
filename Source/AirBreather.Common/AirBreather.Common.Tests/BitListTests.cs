@@ -19,7 +19,7 @@ namespace AirBreather.Tests
         [Fact]
         public void ThrowingForBadArgs()
         {
-            BitList bl = new BitList { true, true, false, false };
+            var bl = new BitList { true, true, false, false };
             IList<bool> blInterface = bl;
 
             Assert.Throws<ArgumentOutOfRangeException>("index", () => bl[-1]);
@@ -47,7 +47,7 @@ namespace AirBreather.Tests
         [Fact]
         public void AddAndRemoveShouldBeConsistent()
         {
-            BitList bl = new BitList { false, false };
+            var bl = new BitList { false, false };
 
             Assert.False(bl[0]);
             Assert.Equal(2, bl.Count);
@@ -63,7 +63,7 @@ namespace AirBreather.Tests
         [Fact]
         public void InsertAndRemoveAtShouldBeConsistent()
         {
-            BitList bl = new BitList { true, false, true };
+            var bl = new BitList { true, false, true };
 
             bl.Insert(1, false);
 
@@ -90,7 +90,7 @@ namespace AirBreather.Tests
         [Fact]
         public void Contains()
         {
-            BitList bl = new BitList();
+            var bl = new BitList();
 
             Assert.False(bl.Contains(true));
             Assert.False(bl.Contains(false));
@@ -133,7 +133,7 @@ namespace AirBreather.Tests
 
             byte[] someStuff = CryptographicRandomGenerator.GetBuffer(ByteCount);
 
-            BitList bl = new BitList();
+            var bl = new BitList();
             foreach (byte val in someStuff)
             {
                 for (int j = 0; j < 8; ++j)
@@ -155,7 +155,7 @@ namespace AirBreather.Tests
 
             byte[] someStuff = CryptographicRandomGenerator.GetBuffer(ByteCount);
 
-            BitList bl = new BitList();
+            var bl = new BitList();
             foreach (byte val in someStuff)
             {
                 for (int j = 0; j < 8; ++j)
@@ -164,7 +164,7 @@ namespace AirBreather.Tests
                 }
             }
 
-            BitArray ba = bl.ToBitArray();
+            var ba = bl.ToBitArray();
 
             Assert.Equal(bl.Count, ba.Length);
             for (int i = 0; i < bl.Count; ++i)
@@ -180,8 +180,8 @@ namespace AirBreather.Tests
         {
             byte[] someStuff = CryptographicRandomGenerator.GetBuffer(byteCount);
 
-            BitArray ba = new BitArray(someStuff);
-            BitList bl = new BitList(ba);
+            var ba = new BitArray(someStuff);
+            var bl = new BitList(ba);
 
             for (int i = 0; i < ba.Length; ++i)
             {

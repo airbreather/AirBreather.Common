@@ -122,7 +122,9 @@ namespace AirBreather.Collections
         [StructLayout(LayoutKind.Auto)]
         public struct Enumerator : IEnumerator<T>
         {
+#pragma warning disable IDE0044
             private HugeManagedArray<T> array;
+#pragma warning restore IDE0044
 
             private long index;
 

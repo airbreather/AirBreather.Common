@@ -23,7 +23,7 @@ namespace AirBreather.Random
             byte[] buf = ArrayPool<byte>.Shared.Rent(4096);
             try
             {
-                ReadOnlySpan<byte> span = new ReadOnlySpan<byte>(buf);
+                var span = new ReadOnlySpan<byte>(buf);
                 int offset = 0;
                 for (int end = data.Length - buf.Length; offset <= end; offset += buf.Length)
                 {
@@ -58,7 +58,7 @@ namespace AirBreather.Random
         public static uint NextUInt32() => Next<uint>();
         public static ulong NextUInt64() => Next<ulong>();
 
-        public static double NextDouble() => NextUInt64() / (double)UInt64.MaxValue;
+        public static double NextDouble() => NextUInt64() / (double)ulong.MaxValue;
         public static float NextSingle() => (float)NextDouble();
 
         private static T Next<T>()

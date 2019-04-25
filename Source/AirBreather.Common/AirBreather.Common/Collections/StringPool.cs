@@ -22,7 +22,7 @@ namespace AirBreather.Collections
             }
 
             // if it's interned, then we don't need to store it separately.
-            string result = String.IsInterned(val);
+            string result = string.IsInterned(val);
             if (result != null)
             {
                 return result;
@@ -50,7 +50,7 @@ namespace AirBreather.Collections
             }
 
             // if it's interned, then we don't need to check our separate pool.
-            string result = String.IsInterned(val);
+            string result = string.IsInterned(val);
             if (result != null)
             {
                 return result;

@@ -23,7 +23,7 @@ namespace AirBreather.Random
     /// For these reasons, the "weirdness" of this interface should be isolated to providers of
     /// intermediate pseudorandom services rather than applications themselves.
     /// </remarks>
-    public interface IRandomGenerator<TState> where TState: IRandomGeneratorState
+    public interface IRandomGenerator<TState> where TState : IRandomGeneratorState
     {
         /// <summary>
         /// Gets the size of each "chunk" of bytes that can be generated at a time.

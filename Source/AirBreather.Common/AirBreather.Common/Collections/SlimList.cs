@@ -64,7 +64,7 @@ namespace AirBreather.Collections
             if (!items.TryGetCount(out var cnt))
             {
                 // it's too inefficient to just add one-by-one.  just buffer it.
-                List<T> itemsList = items.ToList();
+                var itemsList = items.ToList();
                 items = itemsList;
                 cnt = itemsList.Count;
             }
@@ -118,7 +118,7 @@ namespace AirBreather.Collections
 
             if (this.Count++ == this.arr.Length)
             {
-                T[] newArr = new T[this.Count];
+                var newArr = new T[this.Count];
                 Array.Copy(this.arr, 0, newArr, 0, index);
                 Array.Copy(this.arr, index, newArr, index + 1, this.Count - index - 1);
             }
@@ -161,7 +161,9 @@ namespace AirBreather.Collections
 
         public struct Enumerator : IEnumerator<T>
         {
+#pragma warning disable IDE0044
             private SlimList<T> lst;
+#pragma warning restore IDE0044
 
             private int pos;
 

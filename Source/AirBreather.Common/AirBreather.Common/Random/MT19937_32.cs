@@ -45,7 +45,6 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using static System.FormattableString;
 
 namespace AirBreather.Random
 {
@@ -191,14 +190,12 @@ namespace AirBreather.Random
             return hashCode.HashWith(accumulator);
         }
 
-        public static string ToString(MT19937_32State state) => Invariant($"{nameof(MT19937_32State)}[]");
-
         public static bool operator ==(MT19937_32State first, MT19937_32State second) => Equals(first, second);
         public static bool operator !=(MT19937_32State first, MT19937_32State second) => !Equals(first, second);
         public override bool Equals(object obj) => obj is MT19937_32State && Equals(this, (MT19937_32State)obj);
         public bool Equals(MT19937_32State other) => Equals(this, other);
         public override int GetHashCode() => GetHashCode(this);
-        public override string ToString() => ToString(this);
+        public override string ToString() => $"{nameof(MT19937_32State)}[]";
     }
 
     public sealed class MT19937_32Generator : IRandomGenerator<MT19937_32State>

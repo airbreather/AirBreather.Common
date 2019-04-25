@@ -16,7 +16,7 @@ namespace AirBreather.Tests
             ulong[] data = new ulong[50124];
             CryptographicRandomGenerator.FillBuffer(MemoryMarshal.AsBytes(data.AsSpan()));
 
-            HugeManagedArray<ulong> arrMine = new HugeManagedArray<ulong>(data);
+            var arrMine = new HugeManagedArray<ulong>(data);
 
             // IEnumerable<T>
             Assert.Equal(data, arrMine);
@@ -35,11 +35,6 @@ namespace AirBreather.Tests
             }
 
             Assert.Equal(j, arrMine.Length);
-        }
-
-        private struct EnumContainer
-        {
-            private DateTimeKind? field;
         }
     }
 }

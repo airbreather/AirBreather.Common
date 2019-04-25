@@ -26,7 +26,7 @@ namespace AirBreather.Tests
             unchecked
             {
                 var sut = new XoroShiro128PlusGenerator();
-                RngState128 prngState = new RngState128((ulong)s0, (ulong)s1);
+                var prngState = new RngState128((ulong)s0, (ulong)s1);
                 ReadOnlySpan<ulong> expected = MemoryMarshal.Cast<long, ulong>(signedExpected);
                 Span<ulong> actual = stackalloc ulong[expected.Length];
 
@@ -62,7 +62,7 @@ namespace AirBreather.Tests
             unchecked
             {
                 var sut = new XoroShiro128PlusGenerator();
-                RngState128 prngState = new RngState128((ulong)s0, (ulong)s1);
+                var prngState = new RngState128((ulong)s0, (ulong)s1);
                 ReadOnlySpan<ulong> expected = MemoryMarshal.Cast<long, ulong>(signedExpected);
 
                 Span<ulong> actual = stackalloc ulong[expected.Length];

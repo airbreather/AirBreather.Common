@@ -19,7 +19,7 @@ namespace AirBreather.Text
         public static string Encode(ReadOnlySpan<byte> data)
         {
             (Maps nonAscii, Maps ascii) = ComputedMaps.Value;
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             int bitOffset = 0;
             while (data.Length > 2 || (data.Length == 2 && bitOffset < 2))
             {
@@ -72,8 +72,8 @@ namespace AirBreather.Text
 
             public static Maps Build(string rangeStarts)
             {
-                Dictionary<short, char> encode = new Dictionary<short, char>(rangeStarts.Length * 32);
-                Dictionary<char, short> decode = new Dictionary<char, short>(rangeStarts.Length * 32);
+                var encode = new Dictionary<short, char>(rangeStarts.Length * 32);
+                var decode = new Dictionary<char, short>(rangeStarts.Length * 32);
                 for (int i = 0; i < rangeStarts.Length; i++)
                 {
                     char rangeStart = rangeStarts[i];

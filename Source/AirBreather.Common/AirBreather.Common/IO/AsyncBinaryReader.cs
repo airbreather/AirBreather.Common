@@ -82,7 +82,7 @@ namespace AirBreather.IO
         private async Task FillBufferAsync(int cnt, CancellationToken cancellationToken)
         {
             int off = 0;
-            int prev = 0;
+            int prev;
             do
             {
                 prev = await this.BaseStream.ReadAsync(this.buffer, off, cnt, cancellationToken).ConfigureAwait(false);

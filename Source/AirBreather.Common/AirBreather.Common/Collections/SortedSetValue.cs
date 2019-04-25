@@ -29,7 +29,9 @@ namespace AirBreather.Collections
 
     public struct SortedSetValue<T> : IReadOnlySet<T>, IImmutableSet<T>, IEquatable<SortedSetValue<T>>
     {
+#pragma warning disable IDE0044
         private ImmutableSortedSet<T> values;
+#pragma warning restore IDE0044
 
         public SortedSetValue(IEnumerable<T> values) => this.values = values.ValidateNotNull(nameof(values)).ToImmutableSortedSet(Comparer<T>.Default);
 

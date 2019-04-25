@@ -43,7 +43,7 @@ namespace AirBreather.Tests
             CryptographicRandomGenerator.FillBuffer(MemoryMarshal.AsBytes(span));
             for (int i = 0; i < span.Length; ++i)
             {
-                ++dct[picker.Pick(span[i] / (double)UInt64.MaxValue)];
+                ++dct[picker.Pick(span[i] / (double)ulong.MaxValue)];
             }
 
             double scalar = TrialCount / (double)valsWithWeights.Values.Sum();

@@ -46,7 +46,7 @@ namespace AirBreather.Random
         public int PickFromRange(int minValueInclusive, int rangeSize)
         {
             rangeSize.ValidateNotLessThan(nameof(rangeSize), 1);
-            (Int32.MaxValue - rangeSize).ValidateNotLessThan(nameof(minValueInclusive), minValueInclusive);
+            (int.MaxValue - rangeSize).ValidateNotLessThan(nameof(minValueInclusive), minValueInclusive);
 
             // Conceptually, this creates several "buckets", each with values
             // [0, rangeSize) in it, plus a bucket with values [0, n), where
@@ -60,7 +60,7 @@ namespace AirBreather.Random
             // 3 came from 8 % 5, so what we want is (MaxValue + 1) % rangeSize.
             // We have to do a little bit of a dance, though, since we obviously
             // can't add 1 to Int32.MaxValue in signed 32-bit arithmetic.
-            int rerollThreshold = unchecked((int)((Int32.MaxValue + 1U) % (uint)rangeSize));
+            int rerollThreshold = unchecked((int)((int.MaxValue + 1U) % (uint)rangeSize));
             int sample;
             lock (this.buffer)
             {
@@ -81,7 +81,7 @@ namespace AirBreather.Random
                     sample &= 0x7FFFFFFF;
                     this.nextOffset %= BufferLength;
                 }
-                while (Int32.MaxValue - rerollThreshold < sample);
+                while (int.MaxValue - rerollThreshold < sample);
             }
 
             sample %= rangeSize;

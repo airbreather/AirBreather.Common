@@ -92,13 +92,13 @@ namespace AirBreather
             int cnt = bytes.Length;
             if (cnt == 0)
             {
-                return String.Empty;
+                return string.Empty;
             }
 
             string result = new string(default, cnt * 2);
             fixed (char* c = result)
             {
-                Span<char> span = new Span<char>(c, result.Length);
+                var span = new Span<char>(c, result.Length);
                 CopyToHexString(bytes, span);
             }
 

@@ -54,11 +54,6 @@ namespace AirBreather.Tests
                 currentLine.Clear();
             };
 
-            if (bufferSize == int.MaxValue)
-            {
-                int xx = 0;
-            }
-
             for (int rem = bytes.Length; rem > 0; rem -= bufferSize)
             {
                 helper.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(bytes, bytes.Length - rem, Math.Min(rem, bufferSize)));

@@ -81,7 +81,7 @@ namespace AirBreather
         {
             foreach (char ch in value)
             {
-                if (!Char.IsWhiteSpace(ch))
+                if (!char.IsWhiteSpace(ch))
                 {
                     return false;
                 }
