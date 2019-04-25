@@ -264,11 +264,10 @@ namespace AirBreather.Csv
                     return true;
 
                 default:
-                    break;
+                    // we haven't definitely processed all the field data.
+                    // this isn't RFC 4180 compliant, so don't handhold.
+                    return false;
             }
-
-            // we haven't definitely processed all the field data.
-            return false;
         }
 
         private bool FirstByteIsAllWeNeeded(byte firstByte)
