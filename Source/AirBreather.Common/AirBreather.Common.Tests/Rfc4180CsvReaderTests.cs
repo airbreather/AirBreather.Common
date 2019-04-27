@@ -27,11 +27,11 @@ namespace AirBreather.Tests
 
         [Theory]
         [MemberData(nameof(TestCsvFiles))]
-        public async Task CompareAirBreatherToCsvHelper(string fileName, int bufferSize)
+        public async Task CompareToCsvHelper(string fileName, int bufferSize)
         {
-            fileName = Path.Combine(TestCsvFilesFolderPath, fileName + ".csv");
-            var csvHelperReadTask = ReadCsvFileUsingCsvHelperAsync(fileName);
-            var airBreatherReadTask = ReadCsvFileUsingAirBreatherAsync(fileName, new Rfc4180CsvReader(), bufferSize);
+            string fullCsvFilePath = Path.Combine(TestCsvFilesFolderPath, fileName + ".csv");
+            var csvHelperReadTask = ReadCsvFileUsingCsvHelperAsync(fullCsvFilePath);
+            var airBreatherReadTask = ReadCsvFileUsingMineAsync(fullCsvFilePath, new Rfc4180CsvReader(), bufferSize);
 
             var lines = await Task.WhenAll(csvHelperReadTask, airBreatherReadTask).ConfigureAwait(false);
             Assert.Equal(lines[0], lines[1]);
@@ -94,7 +94,7 @@ namespace AirBreather.Tests
             Assert.Equal(1, endOfLineCalls);
         }
 
-        private static async Task<string[][]> ReadCsvFileUsingAirBreatherAsync(string path, Rfc4180CsvReader reader, int fileReadBufferLength)
+        private static async Task<string[][]> ReadCsvFileUsingMineAsync(string path, Rfc4180CsvReader reader, int fileReadBufferLength)
         {
             var lines = new List<string[]>();
             var currentLine = new List<string>();
