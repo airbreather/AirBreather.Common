@@ -141,55 +141,85 @@ namespace AirBreather.Csv
             }
 
             // we're going to consume the entire buffer that was handed to us.
-            ReadOnlySpan<byte> allStopBytes = stackalloc byte[] { COMMA, CR, LF };
+            ReadOnlySpan<byte> allStopBytes = stackalloc byte[] { COMMA, QUOTE, CR, LF };
 
             do
             {
-                // when we're at the start of the field, anything goes.  this should be right at the
-                // head of the method, because we expect it to be not-too-uncommon to see a bunch of
-                // empty fields in a row, and/or CRLF line endings
-                if ((parserFlags & ParserFlags.ReadAnythingInCurrentField) == 0)
+                if ((parserFlags & ParserFlags.ReadAnythingInCurrentField) != 0)
                 {
-                    if (FirstByteIsAllWeNeeded(readBuffer[0]))
-                    {
-                        readBuffer = readBuffer.Slice(1);
-                        continue;
-                    }
-
-                    parserFlags |= ParserFlags.ReadAnythingOnCurrentLine | ParserFlags.ReadAnythingInCurrentField;
-                }
-
-                if ((parserFlags & ParserFlags.CutAtPotentiallyTerminalDoubleQuote) != 0)
-                {
-                    // the way I chose to handle this situation, we have a helper method whose only
-                    // job is to do the minimum special processing it needs to do so we can move on.
-                    HandleBufferCutAtPotentiallyTerminalDoubleQuote(ref readBuffer);
+                    PickUpFromLastTime(ref readBuffer);
                     continue;
                 }
 
-                int idx;
-                if ((parserFlags & (ParserFlags.CurrentFieldStartedWithQuote | ParserFlags.QuotedFieldDataEnded)) != ParserFlags.CurrentFieldStartedWithQuote)
-                {
-                    idx = readBuffer.IndexOfAny(allStopBytes);
-                }
-                else if (TryFullyProcessQuotedFieldData(readBuffer, out idx))
-                {
-                    readBuffer = readBuffer.Slice(idx);
-                    continue;
-                }
-
+                int idx = readBuffer.IndexOfAny(allStopBytes);
                 if (idx < 0)
                 {
                     CopyToCutBuffer(readBuffer);
-                    readBuffer = default;
-                    continue;
+                    parserFlags = ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
+                    break;
                 }
 
                 switch (readBuffer[idx])
                 {
                     case QUOTE:
-                        CopyToCutBuffer(readBuffer.Slice(0, idx));
-                        parserFlags |= ParserFlags.QuotedFieldDataEnded;
+                        if (idx == 0)
+                        {
+                            parserFlags = ParserFlags.CurrentFieldStartedWithQuote | ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
+                        }
+                        else
+                        {
+                            CopyToCutBuffer(readBuffer.Slice(0, idx + 1));
+                            parserFlags = ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
+                        }
+
+                        break;
+
+                    case COMMA:
+                        ProcessEndOfField(readBuffer.Slice(0, idx));
+                        break;
+
+                    default:
+                        ProcessEndOfLine(readBuffer.Slice(0, idx));
+                        break;
+                }
+
+                readBuffer = readBuffer.Slice(idx + 1);
+            }
+            while (!readBuffer.IsEmpty);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void PickUpFromLastTime(ref ReadOnlySpan<byte> readBuffer)
+        {
+            if ((parserFlags & ParserFlags.CutAtPotentiallyTerminalDoubleQuote) != 0)
+            {
+                HandleBufferCutAtPotentiallyTerminalDoubleQuote(ref readBuffer);
+                return;
+            }
+
+            if ((parserFlags & (ParserFlags.CurrentFieldStartedWithQuote | ParserFlags.QuotedFieldDataEnded)) == ParserFlags.CurrentFieldStartedWithQuote)
+            {
+                int idx = readBuffer.IndexOf(QUOTE);
+                if (idx < 0)
+                {
+                    CopyToCutBuffer(readBuffer);
+                    readBuffer = default;
+                    return;
+                }
+
+                if (idx == readBuffer.Length - 1)
+                {
+                    CopyToCutBuffer(readBuffer.Slice(0, idx));
+                    parserFlags |= ParserFlags.CutAtPotentiallyTerminalDoubleQuote;
+                    readBuffer = default;
+                    return;
+                }
+
+                switch (readBuffer[idx + 1])
+                {
+                    case QUOTE:
+                        // escaped quote, copy it in and send it back
+                        CopyToCutBuffer(readBuffer.Slice(0, idx + 1));
                         break;
 
                     case COMMA:
@@ -200,11 +230,43 @@ namespace AirBreather.Csv
                     case LF:
                         ProcessEndOfLine(readBuffer.Slice(0, idx));
                         break;
+
+                    default:
+                        parserFlags |= ParserFlags.QuotedFieldDataEnded;
+                        CopyToCutBuffer(readBuffer.Slice(0, idx));
+                        CopyToCutBuffer(readBuffer.Slice(idx + 1, 1));
+                        break;
+                }
+
+                readBuffer = readBuffer.Slice(idx + 2);
+                return;
+            }
+
+            // this is expected to be rare: either we were cut between field reads, or we're reading
+            // nonstandard field data where the quoted field data ends but there's extra stuff after
+            {
+                ReadOnlySpan<byte> allStopBytes = stackalloc byte[] { COMMA, CR, LF };
+                int idx = readBuffer.IndexOfAny(allStopBytes);
+                if (idx < 0)
+                {
+                    CopyToCutBuffer(readBuffer);
+                    readBuffer = default;
+                    return;
+                }
+
+                switch (readBuffer[idx])
+                {
+                    case COMMA:
+                        ProcessEndOfField(readBuffer.Slice(0, idx));
+                        break;
+
+                    default:
+                        ProcessEndOfLine(readBuffer.Slice(0, idx));
+                        break;
                 }
 
                 readBuffer = readBuffer.Slice(idx + 1);
             }
-            while (!readBuffer.IsEmpty);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -225,78 +287,6 @@ namespace AirBreather.Csv
                 default:
                     parserFlags |= ParserFlags.QuotedFieldDataEnded;
                     break;
-            }
-        }
-
-        private bool TryFullyProcessQuotedFieldData(ReadOnlySpan<byte> readBuffer, out int idx)
-        {
-            idx = readBuffer.IndexOf(QUOTE);
-
-            if (idx < 0)
-            {
-                return false;
-            }
-
-            if (idx == readBuffer.Length - 1)
-            {
-                CopyToCutBuffer(readBuffer.Slice(0, idx++));
-                parserFlags |= ParserFlags.CutAtPotentiallyTerminalDoubleQuote;
-                return true;
-            }
-
-            switch (readBuffer[idx + 1])
-            {
-                case QUOTE:
-                    // escaped quote, copy it in and send it back
-                    CopyToCutBuffer(readBuffer.Slice(0, idx + 1));
-                    idx += 2;
-                    return true;
-
-                case COMMA:
-                    ProcessEndOfField(readBuffer.Slice(0, idx));
-                    idx += 2;
-                    return true;
-
-                case CR:
-                case LF:
-                    ProcessEndOfLine(readBuffer.Slice(0, idx));
-                    idx += 2;
-                    return true;
-
-                default:
-                    // we haven't definitely processed all the field data.
-                    // this isn't RFC 4180 compliant, so don't handhold.
-                    return false;
-            }
-        }
-
-        private bool FirstByteIsAllWeNeeded(byte firstByte)
-        {
-            // don't call the helper methods since this is intended to be super optimized.
-            switch (firstByte)
-            {
-                case COMMA:
-                    FieldProcessed?.Invoke(this, default);
-                    parserFlags = ParserFlags.ReadAnythingOnCurrentLine;
-                    return true;
-
-                case CR:
-                case LF:
-                    if ((parserFlags & ParserFlags.ReadAnythingOnCurrentLine) != 0)
-                    {
-                        FieldProcessed?.Invoke(this, default);
-                        EndOfLine?.Invoke(this, EventArgs.Empty);
-                        parserFlags &= ~ParserFlags.ReadAnythingOnCurrentLine;
-                    }
-
-                    return true;
-
-                case QUOTE:
-                    parserFlags |= ParserFlags.CurrentFieldStartedWithQuote | ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
-                    return true;
-
-                default:
-                    return false;
             }
         }
 
