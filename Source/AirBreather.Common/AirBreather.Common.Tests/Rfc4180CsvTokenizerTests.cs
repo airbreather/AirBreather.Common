@@ -38,62 +38,6 @@ namespace AirBreather.Tests
             Assert.Equal(lines[0], lines[1]);
         }
 
-        [Theory]
-        [InlineData(32)]
-        [InlineData(64)]
-        [InlineData(int.MaxValue)]
-        public void TestDegenerateCsvReading(int bufferSize)
-        {
-            // just one row, 2 fields, field0 is the entire byte array but 1, field1 is empty.
-            byte[] bytes = new byte[7654321];
-            bytes[bytes.Length - 1] = (byte)',';
-
-            var tokenizer = new Rfc4180CsvTokenizer { MaxFieldLength = bytes.Length - 1 };
-            int fieldProcessedCalls = 0;
-            int endOfLineCalls = 0;
-            bool gotToEndOfStream = false;
-
-            var visitor = new DelegateVisitor(VisitFieldData, VisitEndOfLine);
-            void VisitFieldData(ReadOnlySpan<byte> fieldData)
-            {
-                switch (++fieldProcessedCalls)
-                {
-                    case 1:
-                        var expected = new ReadOnlySpan<byte>(bytes, 0, bytes.Length - 1);
-                        Assert.True(expected.SequenceEqual(fieldData));
-                        break;
-
-                    case 2:
-                        Assert.True(fieldData.IsEmpty);
-                        break;
-
-                    default:
-                        Assert.True(false, "Expected 2 fields");
-                        break;
-                }
-
-                Assert.Equal(0, endOfLineCalls);
-                Assert.False(gotToEndOfStream);
-            }
-            void VisitEndOfLine()
-            {
-                Assert.Equal(1, ++endOfLineCalls);
-                Assert.Equal(2, fieldProcessedCalls);
-                Assert.False(gotToEndOfStream);
-            }
-
-            for (int rem = bytes.Length; rem > 0; rem -= bufferSize)
-            {
-                tokenizer.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(bytes, bytes.Length - rem, Math.Min(rem, bufferSize)), visitor);
-            }
-
-            tokenizer.ProcessFinalReadBufferChunk(visitor);
-            gotToEndOfStream = true;
-
-            Assert.Equal(2, fieldProcessedCalls);
-            Assert.Equal(1, endOfLineCalls);
-        }
-
         private static async Task<string[][]> ReadCsvFileUsingMineAsync(string path, Rfc4180CsvTokenizer tokenizer, int fileReadBufferLength)
         {
             var visitor = new StringBufferingVisitor();
@@ -149,22 +93,6 @@ namespace AirBreather.Tests
             }
 
             public override void VisitFieldData(ReadOnlySpan<byte> fieldData) => _fields.Add(encoding.GetString(fieldData));
-        }
-
-        private sealed class DelegateVisitor : CsvReaderVisitorBase
-        {
-            private readonly VisitFieldDataDelegate _visitFieldData;
-
-            private readonly Action _visitEndOfLine;
-
-            public delegate void VisitFieldDataDelegate(ReadOnlySpan<byte> fieldData);
-
-            public DelegateVisitor(VisitFieldDataDelegate visitFieldData, Action visitEndOfLine) =>
-                (_visitFieldData, _visitEndOfLine) = (visitFieldData, visitEndOfLine);
-
-            public override void VisitEndOfLine() => _visitEndOfLine();
-
-            public override void VisitFieldData(ReadOnlySpan<byte> fieldData) => _visitFieldData(fieldData);
         }
     }
 }
