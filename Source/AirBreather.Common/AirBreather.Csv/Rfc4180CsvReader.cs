@@ -292,7 +292,7 @@ namespace AirBreather.Csv
                     return true;
 
                 case QUOTE:
-                    parserFlags |= ParserFlags.CurrentFieldStartedWithQuote;
+                    parserFlags |= ParserFlags.CurrentFieldStartedWithQuote | ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
                     return true;
 
                 default:
