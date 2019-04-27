@@ -16,9 +16,9 @@ using Xunit;
 
 namespace AirBreather.Tests
 {
-    public sealed class Rfc4180CsvReaderTests
+    public sealed class Rfc4180CsvTokenizerTests
     {
-        private static readonly string TestCsvFilesFolderPath = Path.Combine(Path.GetDirectoryName(Assembly.GetAssembly(typeof(Rfc4180CsvReader)).Location), "TestCsvFiles");
+        private static readonly string TestCsvFilesFolderPath = Path.Combine(Path.GetDirectoryName(Assembly.GetAssembly(typeof(Rfc4180CsvTokenizer)).Location), "TestCsvFiles");
 
         public static IEnumerable<object[]> TestCsvFiles =>
             from filePath in Directory.EnumerateFiles(TestCsvFilesFolderPath, "*.csv")
@@ -32,7 +32,7 @@ namespace AirBreather.Tests
         {
             string fullCsvFilePath = Path.Combine(TestCsvFilesFolderPath, fileName + ".csv");
             var csvHelperReadTask = ReadCsvFileUsingCsvHelperAsync(fullCsvFilePath);
-            var airBreatherReadTask = ReadCsvFileUsingMineAsync(fullCsvFilePath, new Rfc4180CsvReader(), bufferSize);
+            var airBreatherReadTask = ReadCsvFileUsingMineAsync(fullCsvFilePath, new Rfc4180CsvTokenizer(), bufferSize);
 
             var lines = await Task.WhenAll(csvHelperReadTask, airBreatherReadTask).ConfigureAwait(false);
             Assert.Equal(lines[0], lines[1]);
@@ -48,7 +48,7 @@ namespace AirBreather.Tests
             byte[] bytes = new byte[7654321];
             bytes[bytes.Length - 1] = (byte)',';
 
-            var helper = new Rfc4180CsvReader { MaxFieldLength = bytes.Length - 1 };
+            var tokenizer = new Rfc4180CsvTokenizer { MaxFieldLength = bytes.Length - 1 };
             int fieldProcessedCalls = 0;
             int endOfLineCalls = 0;
             bool gotToEndOfStream = false;
@@ -84,17 +84,17 @@ namespace AirBreather.Tests
 
             for (int rem = bytes.Length; rem > 0; rem -= bufferSize)
             {
-                helper.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(bytes, bytes.Length - rem, Math.Min(rem, bufferSize)), visitor);
+                tokenizer.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(bytes, bytes.Length - rem, Math.Min(rem, bufferSize)), visitor);
             }
 
-            helper.ProcessNextReadBufferChunk(default, visitor);
+            tokenizer.ProcessFinalReadBufferChunk(visitor);
             gotToEndOfStream = true;
 
             Assert.Equal(2, fieldProcessedCalls);
             Assert.Equal(1, endOfLineCalls);
         }
 
-        private static async Task<string[][]> ReadCsvFileUsingMineAsync(string path, Rfc4180CsvReader reader, int fileReadBufferLength)
+        private static async Task<string[][]> ReadCsvFileUsingMineAsync(string path, Rfc4180CsvTokenizer tokenizer, int fileReadBufferLength)
         {
             var visitor = new StringBufferingVisitor();
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan | FileOptions.Asynchronous))
@@ -103,11 +103,11 @@ namespace AirBreather.Tests
                 int readBytes;
                 while ((readBytes = await stream.ReadAsync(buffer).ConfigureAwait(false)) != 0)
                 {
-                    reader.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(buffer, 0, readBytes), visitor);
+                    tokenizer.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(buffer, 0, readBytes), visitor);
                 }
             }
 
-            reader.ProcessNextReadBufferChunk(default, visitor);
+            tokenizer.ProcessFinalReadBufferChunk(visitor);
             return visitor.Finish();
         }
 

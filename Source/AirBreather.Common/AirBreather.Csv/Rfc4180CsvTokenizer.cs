@@ -74,7 +74,7 @@ namespace AirBreather.Csv
     /// no special processing.
     /// </para>
     /// </remarks>
-    public class Rfc4180CsvReader
+    public class Rfc4180CsvTokenizer
     {
         private const byte COMMA = (byte)',';
 
@@ -84,11 +84,13 @@ namespace AirBreather.Csv
 
         private const byte QUOTE = (byte)'"';
 
-        private byte[] cutFieldBuffer;
+        private static readonly byte[] AllStopBytes = { COMMA, QUOTE, CR, LF };
 
-        private int cutFieldBufferConsumed;
+        private byte[] _cutFieldBuffer = new byte[81920];
 
-        private ParserFlags parserFlags;
+        private int _cutFieldBufferConsumed;
+
+        private ParserFlags _parserFlags;
 
         [Flags]
         private enum ParserFlags : byte
@@ -104,7 +106,7 @@ namespace AirBreather.Csv
 
         public int MaxFieldLength
         {
-            get => CutFieldBuffer.Length;
+            get => _cutFieldBuffer.Length;
             set
             {
                 if (value < 1)
@@ -112,27 +114,27 @@ namespace AirBreather.Csv
                     throw new ArgumentOutOfRangeException(nameof(value), value, "Must be greater than zero.");
                 }
 
-                cutFieldBuffer = new byte[value];
+                _cutFieldBuffer = new byte[value];
             }
         }
 
-        private byte[] CutFieldBuffer => cutFieldBuffer ?? (cutFieldBuffer = new byte[81920]);
-
         public void ProcessNextReadBufferChunk(ReadOnlySpan<byte> readBuffer, CsvReaderVisitorBase visitor)
         {
-            if (readBuffer.IsEmpty)
+            if (visitor is null)
             {
-                ProcessEndOfLine(readBuffer, visitor);
-                return;
+                throw new ArgumentNullException(nameof(visitor));
             }
 
-            // we're going to consume the entire buffer that was handed to us.
-            ReadOnlySpan<byte> allStopBytes = stackalloc byte[] { COMMA, QUOTE, CR, LF };
+            ReadOnlySpan<byte> allStopBytes = AllStopBytes;
 
-            do
+            // we're going to consume the entire buffer that was handed to us.
+            while (!readBuffer.IsEmpty)
             {
-                if ((parserFlags & ParserFlags.ReadAnythingInCurrentField) != 0)
+                if ((_parserFlags & ParserFlags.ReadAnythingInCurrentField) != 0)
                 {
+                    // most of the time, we should be able to fully process each field in the same
+                    // loop iteration that we first start reading it.  the most prominent exception
+                    // is that 
                     PickUpFromLastTime(ref readBuffer, visitor);
                     continue;
                 }
@@ -140,8 +142,8 @@ namespace AirBreather.Csv
                 int idx = readBuffer.IndexOfAny(allStopBytes);
                 if (idx < 0)
                 {
-                    CopyToCutBuffer(readBuffer);
-                    parserFlags = ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
+                    CopyToCutBuffer(readBuffer, visitor);
+                    _parserFlags = ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
                     break;
                 }
 
@@ -150,12 +152,15 @@ namespace AirBreather.Csv
                     case QUOTE:
                         if (idx == 0)
                         {
-                            parserFlags = ParserFlags.CurrentFieldStartedWithQuote | ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
+                            _parserFlags = ParserFlags.CurrentFieldStartedWithQuote | ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
                         }
                         else
                         {
-                            CopyToCutBuffer(readBuffer.Slice(0, idx + 1));
-                            parserFlags = ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
+                            // RFC 4180 forbids quotes that show up anywhere but the beginning of a
+                            // field, so it's up to us to decide what we want to do about this.  We
+                            // choose to treat all such quotes as just regular data.
+                            CopyToCutBuffer(readBuffer.Slice(0, idx + 1), visitor);
+                            _parserFlags = ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
                         }
 
                         break;
@@ -171,32 +176,40 @@ namespace AirBreather.Csv
 
                 readBuffer = readBuffer.Slice(idx + 1);
             }
-            while (!readBuffer.IsEmpty);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
+        public void ProcessFinalReadBufferChunk(CsvReaderVisitorBase visitor)
+        {
+            if (visitor is null)
+            {
+                throw new ArgumentNullException(nameof(visitor));
+            }
+
+            ProcessEndOfLine(default, visitor);
+        }
+
         private void PickUpFromLastTime(ref ReadOnlySpan<byte> readBuffer, CsvReaderVisitorBase visitor)
         {
-            if ((parserFlags & ParserFlags.CutAtPotentiallyTerminalDoubleQuote) != 0)
+            if ((_parserFlags & ParserFlags.CutAtPotentiallyTerminalDoubleQuote) != 0)
             {
-                HandleBufferCutAtPotentiallyTerminalDoubleQuote(ref readBuffer);
+                HandleBufferCutAtPotentiallyTerminalDoubleQuote(ref readBuffer, visitor);
                 return;
             }
 
-            if ((parserFlags & (ParserFlags.CurrentFieldStartedWithQuote | ParserFlags.QuotedFieldDataEnded)) == ParserFlags.CurrentFieldStartedWithQuote)
+            if ((_parserFlags & (ParserFlags.CurrentFieldStartedWithQuote | ParserFlags.QuotedFieldDataEnded)) == ParserFlags.CurrentFieldStartedWithQuote)
             {
                 int idx = readBuffer.IndexOf(QUOTE);
                 if (idx < 0)
                 {
-                    CopyToCutBuffer(readBuffer);
+                    CopyToCutBuffer(readBuffer, visitor);
                     readBuffer = default;
                     return;
                 }
 
                 if (idx == readBuffer.Length - 1)
                 {
-                    CopyToCutBuffer(readBuffer.Slice(0, idx));
-                    parserFlags |= ParserFlags.CutAtPotentiallyTerminalDoubleQuote;
+                    CopyToCutBuffer(readBuffer.Slice(0, idx), visitor);
+                    _parserFlags |= ParserFlags.CutAtPotentiallyTerminalDoubleQuote;
                     readBuffer = default;
                     return;
                 }
@@ -205,7 +218,7 @@ namespace AirBreather.Csv
                 {
                     case QUOTE:
                         // escaped quote, copy it in and send it back
-                        CopyToCutBuffer(readBuffer.Slice(0, idx + 1));
+                        CopyToCutBuffer(readBuffer.Slice(0, idx + 1), visitor);
                         break;
 
                     case COMMA:
@@ -218,9 +231,9 @@ namespace AirBreather.Csv
                         break;
 
                     default:
-                        parserFlags |= ParserFlags.QuotedFieldDataEnded;
-                        CopyToCutBuffer(readBuffer.Slice(0, idx));
-                        CopyToCutBuffer(readBuffer.Slice(idx + 1, 1));
+                        _parserFlags |= ParserFlags.QuotedFieldDataEnded;
+                        CopyToCutBuffer(readBuffer.Slice(0, idx), visitor);
+                        CopyToCutBuffer(readBuffer.Slice(idx + 1, 1), visitor);
                         break;
                 }
 
@@ -235,7 +248,7 @@ namespace AirBreather.Csv
                 int idx = readBuffer.IndexOfAny(allStopBytes);
                 if (idx < 0)
                 {
-                    CopyToCutBuffer(readBuffer);
+                    CopyToCutBuffer(readBuffer, visitor);
                     readBuffer = default;
                     return;
                 }
@@ -256,40 +269,53 @@ namespace AirBreather.Csv
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private void HandleBufferCutAtPotentiallyTerminalDoubleQuote(ref ReadOnlySpan<byte> readBuffer)
+        private void HandleBufferCutAtPotentiallyTerminalDoubleQuote(ref ReadOnlySpan<byte> readBuffer, CsvReaderVisitorBase visitor)
         {
-            // like I mentioned in the comments near the caller, this method's job is just to do the
-            // special processing we need to do in order to clear the flag and move on.  this method
-            // is expected to be called so rarely, at least in performance-sensitive cases, that I
-            // don't think it will ever pay off to bother doing more processing here.
-            parserFlags &= ~ParserFlags.CutAtPotentiallyTerminalDoubleQuote;
+            // this method is only called in the rare case where the very last character of the last
+            // read buffer was a stopping double quote while we were reading quoted field data, so
+            // this method is expected to be called so rarely in performance-sensitive cases that I
+            // don't think it will ever pay off to bother doing more processing here.  so we just do
+            // the minimum amount that we need to do in order to clear this flag and get back into
+            // the normal swing of things.
+            _parserFlags &= ~ParserFlags.CutAtPotentiallyTerminalDoubleQuote;
             switch (readBuffer[0])
             {
                 case QUOTE:
-                    CopyToCutBuffer(readBuffer.Slice(0, 1));
+                    // the previous double quote was actually there to escape this double quote.  we
+                    // didn't copy the double quote into our cut buffer last time because we weren't
+                    // sure.  well, we're sure now, so go ahead copy it.
+                    CopyToCutBuffer(readBuffer.Slice(0, 1), visitor);
+
+                    // we processed the double quote, so main loop should resume at the next byte.
                     readBuffer = readBuffer.Slice(1);
                     break;
 
                 default:
-                    parserFlags |= ParserFlags.QuotedFieldDataEnded;
+                    // the previous double quote did in fact terminate the quoted part of the field
+                    // data, and so all we need to do is set this flag..  main loop will re-process
+                    // this buffer and go about its merry way.
+                    _parserFlags |= ParserFlags.QuotedFieldDataEnded;
                     break;
             }
         }
 
-        private ReadOnlySpan<byte> CopyToCutBuffer(ReadOnlySpan<byte> copyBuffer)
+        private ReadOnlySpan<byte> CopyToCutBuffer(ReadOnlySpan<byte> copyBuffer, CsvReaderVisitorBase visitor)
         {
-            if ((parserFlags & ParserFlags.FieldDataSoFarExceedsMaxLength) == 0)
+            if ((_parserFlags & ParserFlags.FieldDataSoFarExceedsMaxLength) == 0)
             {
-                if (cutFieldBufferConsumed + copyBuffer.Length <= CutFieldBuffer.Length)
+                if (_cutFieldBufferConsumed + copyBuffer.Length <= _cutFieldBuffer.Length)
                 {
-                    copyBuffer.CopyTo(new Span<byte>(cutFieldBuffer, cutFieldBufferConsumed, copyBuffer.Length));
-                    cutFieldBufferConsumed += copyBuffer.Length;
-                    return new ReadOnlySpan<byte>(cutFieldBuffer, 0, cutFieldBufferConsumed);
+                    copyBuffer.CopyTo(new Span<byte>(_cutFieldBuffer, _cutFieldBufferConsumed, copyBuffer.Length));
+                    _cutFieldBufferConsumed += copyBuffer.Length;
+                    return new ReadOnlySpan<byte>(_cutFieldBuffer, 0, _cutFieldBufferConsumed);
                 }
                 else
                 {
-                    ThrowFieldTooLongError();
-                    parserFlags |= ParserFlags.FieldDataSoFarExceedsMaxLength;
+                    int bytesToCopy = _cutFieldBuffer.Length - _cutFieldBufferConsumed;
+                    copyBuffer.Slice(0, bytesToCopy).CopyTo(new Span<byte>(_cutFieldBuffer, _cutFieldBufferConsumed, bytesToCopy));
+                    _cutFieldBufferConsumed = _cutFieldBuffer.Length;
+                    visitor.VisitStartOfOverflowingFieldData(_cutFieldBuffer);
+                    _parserFlags |= ParserFlags.FieldDataSoFarExceedsMaxLength;
                 }
             }
 
@@ -299,25 +325,22 @@ namespace AirBreather.Csv
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ProcessEndOfField(ReadOnlySpan<byte> lastReadSection, CsvReaderVisitorBase visitor)
         {
-            visitor.VisitFieldData(cutFieldBufferConsumed == 0
+            visitor.VisitFieldData(_cutFieldBufferConsumed == 0
                 ? lastReadSection
-                : CopyToCutBuffer(lastReadSection));
-            parserFlags = ParserFlags.ReadAnythingOnCurrentLine;
-            cutFieldBufferConsumed = 0;
+                : CopyToCutBuffer(lastReadSection, visitor));
+            _parserFlags = ParserFlags.ReadAnythingOnCurrentLine;
+            _cutFieldBufferConsumed = 0;
         }
 
         private void ProcessEndOfLine(ReadOnlySpan<byte> lastFieldData, CsvReaderVisitorBase visitor)
         {
-            if (!lastFieldData.IsEmpty || (parserFlags & ParserFlags.ReadAnythingOnCurrentLine) != 0)
+            if (!lastFieldData.IsEmpty || (_parserFlags & ParserFlags.ReadAnythingOnCurrentLine) != 0)
             {
                 ProcessEndOfField(lastFieldData, visitor);
                 visitor.VisitEndOfLine();
             }
 
-            parserFlags = ParserFlags.None;
+            _parserFlags = ParserFlags.None;
         }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void ThrowFieldTooLongError() => throw new InvalidDataException($"Data contains one or more fields that exceed the limit set in {nameof(MaxFieldLength)}.");
     }
 }
