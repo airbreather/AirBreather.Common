@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 using AirBreather.Csv;
@@ -51,17 +52,19 @@ namespace AirBreather.Tests
             int fieldProcessedCalls = 0;
             int endOfLineCalls = 0;
             bool gotToEndOfStream = false;
-            helper.FieldProcessed += (sender, actual) =>
+
+            var visitor = new DelegateVisitor(VisitFieldData, VisitEndOfLine);
+            void VisitFieldData(ReadOnlySpan<byte> fieldData)
             {
                 switch (++fieldProcessedCalls)
                 {
                     case 1:
                         var expected = new ReadOnlySpan<byte>(bytes, 0, bytes.Length - 1);
-                        Assert.True(expected.SequenceEqual(actual.Utf8FieldData));
+                        Assert.True(expected.SequenceEqual(fieldData));
                         break;
 
                     case 2:
-                        Assert.True(actual.Utf8FieldData.IsEmpty);
+                        Assert.True(fieldData.IsEmpty);
                         break;
 
                     default:
@@ -70,24 +73,21 @@ namespace AirBreather.Tests
                 }
 
                 Assert.Equal(0, endOfLineCalls);
-                Assert.Equal(helper, sender);
                 Assert.False(gotToEndOfStream);
-            };
-
-            helper.EndOfLine += (sender, args) =>
+            }
+            void VisitEndOfLine()
             {
                 Assert.Equal(1, ++endOfLineCalls);
                 Assert.Equal(2, fieldProcessedCalls);
-                Assert.Equal(helper, sender);
                 Assert.False(gotToEndOfStream);
-            };
+            }
 
             for (int rem = bytes.Length; rem > 0; rem -= bufferSize)
             {
-                helper.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(bytes, bytes.Length - rem, Math.Min(rem, bufferSize)));
+                helper.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(bytes, bytes.Length - rem, Math.Min(rem, bufferSize)), visitor);
             }
 
-            helper.ProcessNextReadBufferChunk(null);
+            helper.ProcessNextReadBufferChunk(default, visitor);
             gotToEndOfStream = true;
 
             Assert.Equal(2, fieldProcessedCalls);
@@ -96,38 +96,19 @@ namespace AirBreather.Tests
 
         private static async Task<string[][]> ReadCsvFileUsingMineAsync(string path, Rfc4180CsvReader reader, int fileReadBufferLength)
         {
-            var lines = new List<string[]>();
-            var currentLine = new List<string>();
-            reader.FieldProcessed += OnFieldProcessed;
-            reader.EndOfLine += OnEndOfLine;
-
-            try
+            var visitor = new StringBufferingVisitor();
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan | FileOptions.Asynchronous))
             {
-                using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan | FileOptions.Asynchronous))
+                byte[] buffer = new byte[fileReadBufferLength];
+                int readBytes;
+                while ((readBytes = await stream.ReadAsync(buffer).ConfigureAwait(false)) != 0)
                 {
-                    byte[] buffer = new byte[fileReadBufferLength];
-                    int readBytes;
-                    while ((readBytes = await stream.ReadAsync(buffer).ConfigureAwait(false)) != 0)
-                    {
-                        reader.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(buffer, 0, readBytes));
-                    }
+                    reader.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(buffer, 0, readBytes), visitor);
                 }
-
-                reader.ProcessNextReadBufferChunk(default);
-                return lines.ToArray();
-            }
-            finally
-            {
-                reader.EndOfLine -= OnEndOfLine;
-                reader.FieldProcessed -= OnFieldProcessed;
             }
 
-            void OnFieldProcessed(object sender, FieldProcessedEventArgs args) => currentLine.Add(EncodingEx.UTF8NoBOM.GetString(args.Utf8FieldData));
-            void OnEndOfLine(object sender, EventArgs args)
-            {
-                lines.Add(currentLine.ToArray());
-                currentLine.Clear();
-            }
+            reader.ProcessNextReadBufferChunk(default, visitor);
+            return visitor.Finish();
         }
 
         private static async Task<string[][]> ReadCsvFileUsingCsvHelperAsync(string path)
@@ -144,6 +125,46 @@ namespace AirBreather.Tests
             }
 
             return lines.ToArray();
+        }
+
+        private sealed class StringBufferingVisitor : CsvReaderVisitorBase
+        {
+            private static readonly UTF8Encoding encoding = new UTF8Encoding(false, false);
+
+            private readonly List<string[]> _lines = new List<string[]>();
+
+            private readonly List<string> _fields = new List<string>();
+
+            public string[][] Finish()
+            {
+                string[][] result = _lines.ToArray();
+                _lines.Clear();
+                return result;
+            }
+
+            public override void VisitEndOfLine()
+            {
+                _lines.Add(_fields.ToArray());
+                _fields.Clear();
+            }
+
+            public override void VisitFieldData(ReadOnlySpan<byte> fieldData) => _fields.Add(encoding.GetString(fieldData));
+        }
+
+        private sealed class DelegateVisitor : CsvReaderVisitorBase
+        {
+            private readonly VisitFieldDataDelegate _visitFieldData;
+
+            private readonly Action _visitEndOfLine;
+
+            public delegate void VisitFieldDataDelegate(ReadOnlySpan<byte> fieldData);
+
+            public DelegateVisitor(VisitFieldDataDelegate visitFieldData, Action visitEndOfLine) =>
+                (_visitFieldData, _visitEndOfLine) = (visitFieldData, visitEndOfLine);
+
+            public override void VisitEndOfLine() => _visitEndOfLine();
+
+            public override void VisitFieldData(ReadOnlySpan<byte> fieldData) => _visitFieldData(fieldData);
         }
     }
 }

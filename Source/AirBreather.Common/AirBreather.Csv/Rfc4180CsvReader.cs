@@ -102,20 +102,6 @@ namespace AirBreather.Csv
             FieldDataSoFarExceedsMaxLength      = 0b00100000,
         }
 
-        /// <summary>
-        /// Occurs when each field has been successfully processed.
-        /// </summary>
-        public event FieldProcessedEventHandler FieldProcessed;
-
-        /// <summary>
-        /// Occurs when the last field on a particular line has been processed.
-        /// </summary>
-        /// <remarks>
-        /// Blank lines are ignored, so <see cref="FieldProcessed"/> will always be raised at least
-        /// once before this event is raised.
-        /// </remarks>
-        public event EventHandler EndOfLine;
-
         public int MaxFieldLength
         {
             get => CutFieldBuffer.Length;
@@ -132,11 +118,11 @@ namespace AirBreather.Csv
 
         private byte[] CutFieldBuffer => cutFieldBuffer ?? (cutFieldBuffer = new byte[81920]);
 
-        public void ProcessNextReadBufferChunk(ReadOnlySpan<byte> readBuffer)
+        public void ProcessNextReadBufferChunk(ReadOnlySpan<byte> readBuffer, CsvReaderVisitorBase visitor)
         {
             if (readBuffer.IsEmpty)
             {
-                ProcessEndOfLine(readBuffer);
+                ProcessEndOfLine(readBuffer, visitor);
                 return;
             }
 
@@ -147,7 +133,7 @@ namespace AirBreather.Csv
             {
                 if ((parserFlags & ParserFlags.ReadAnythingInCurrentField) != 0)
                 {
-                    PickUpFromLastTime(ref readBuffer);
+                    PickUpFromLastTime(ref readBuffer, visitor);
                     continue;
                 }
 
@@ -175,11 +161,11 @@ namespace AirBreather.Csv
                         break;
 
                     case COMMA:
-                        ProcessEndOfField(readBuffer.Slice(0, idx));
+                        ProcessEndOfField(readBuffer.Slice(0, idx), visitor);
                         break;
 
                     default:
-                        ProcessEndOfLine(readBuffer.Slice(0, idx));
+                        ProcessEndOfLine(readBuffer.Slice(0, idx), visitor);
                         break;
                 }
 
@@ -189,7 +175,7 @@ namespace AirBreather.Csv
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private void PickUpFromLastTime(ref ReadOnlySpan<byte> readBuffer)
+        private void PickUpFromLastTime(ref ReadOnlySpan<byte> readBuffer, CsvReaderVisitorBase visitor)
         {
             if ((parserFlags & ParserFlags.CutAtPotentiallyTerminalDoubleQuote) != 0)
             {
@@ -223,12 +209,12 @@ namespace AirBreather.Csv
                         break;
 
                     case COMMA:
-                        ProcessEndOfField(readBuffer.Slice(0, idx));
+                        ProcessEndOfField(readBuffer.Slice(0, idx), visitor);
                         break;
 
                     case CR:
                     case LF:
-                        ProcessEndOfLine(readBuffer.Slice(0, idx));
+                        ProcessEndOfLine(readBuffer.Slice(0, idx), visitor);
                         break;
 
                     default:
@@ -257,11 +243,11 @@ namespace AirBreather.Csv
                 switch (readBuffer[idx])
                 {
                     case COMMA:
-                        ProcessEndOfField(readBuffer.Slice(0, idx));
+                        ProcessEndOfField(readBuffer.Slice(0, idx), visitor);
                         break;
 
                     default:
-                        ProcessEndOfLine(readBuffer.Slice(0, idx));
+                        ProcessEndOfLine(readBuffer.Slice(0, idx), visitor);
                         break;
                 }
 
@@ -311,23 +297,21 @@ namespace AirBreather.Csv
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ProcessEndOfField(ReadOnlySpan<byte> lastReadSection)
+        private void ProcessEndOfField(ReadOnlySpan<byte> lastReadSection, CsvReaderVisitorBase visitor)
         {
-            ReadOnlySpan<byte> fieldBuffer = cutFieldBufferConsumed == 0
+            visitor.VisitFieldData(cutFieldBufferConsumed == 0
                 ? lastReadSection
-                : CopyToCutBuffer(lastReadSection);
-
-            FieldProcessed?.Invoke(this, new FieldProcessedEventArgs(fieldBuffer));
+                : CopyToCutBuffer(lastReadSection));
             parserFlags = ParserFlags.ReadAnythingOnCurrentLine;
             cutFieldBufferConsumed = 0;
         }
 
-        private void ProcessEndOfLine(ReadOnlySpan<byte> lastFieldData)
+        private void ProcessEndOfLine(ReadOnlySpan<byte> lastFieldData, CsvReaderVisitorBase visitor)
         {
             if (!lastFieldData.IsEmpty || (parserFlags & ParserFlags.ReadAnythingOnCurrentLine) != 0)
             {
-                ProcessEndOfField(lastFieldData);
-                EndOfLine?.Invoke(this, EventArgs.Empty);
+                ProcessEndOfField(lastFieldData, visitor);
+                visitor.VisitEndOfLine();
             }
 
             parserFlags = ParserFlags.None;
