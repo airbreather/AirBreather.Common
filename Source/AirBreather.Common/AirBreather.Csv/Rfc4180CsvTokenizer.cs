@@ -311,15 +311,21 @@ namespace AirBreather.Csv
                 }
                 else
                 {
-                    int bytesToCopy = _cutFieldBuffer.Length - _cutFieldBufferConsumed;
-                    copyBuffer.Slice(0, bytesToCopy).CopyTo(new Span<byte>(_cutFieldBuffer, _cutFieldBufferConsumed, bytesToCopy));
-                    _cutFieldBufferConsumed = _cutFieldBuffer.Length;
-                    visitor.VisitStartOfOverflowingFieldData(_cutFieldBuffer);
-                    _parserFlags |= ParserFlags.FieldDataSoFarExceedsMaxLength;
+                    ProcessOverflowingFieldData(copyBuffer, visitor);
                 }
             }
 
             return default;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void ProcessOverflowingFieldData(ReadOnlySpan<byte> copyBuffer, CsvReaderVisitorBase visitor)
+        {
+            int bytesToCopy = _cutFieldBuffer.Length - _cutFieldBufferConsumed;
+            copyBuffer.Slice(0, bytesToCopy).CopyTo(new Span<byte>(_cutFieldBuffer, _cutFieldBufferConsumed, bytesToCopy));
+            _cutFieldBufferConsumed = _cutFieldBuffer.Length;
+            visitor.VisitStartOfOverflowingFieldData(_cutFieldBuffer);
+            _parserFlags |= ParserFlags.FieldDataSoFarExceedsMaxLength;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
