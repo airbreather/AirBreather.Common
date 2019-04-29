@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
+using AirBreather.BinaryHash;
 using AirBreather.Csv;
 using AirBreather.Text;
 
@@ -27,42 +28,44 @@ namespace AirBreather.Tests
 
         [Theory]
         [MemberData(nameof(TestCsvFiles))]
-        public async Task CompareToCsvHelper(string fileName, int bufferSize)
+        public async Task CsvTokenizationShouldMatchCsvHelper(string fileName, int chunkLength)
         {
+            // arrange
             string fullCsvFilePath = Path.Combine(TestCsvFilesFolderPath, fileName + ".csv");
-            var csvData = VaryLineEndings(await File.ReadAllBytesAsync(fullCsvFilePath).ConfigureAwait(false));
-            var airBreatherReadTasks = Array.ConvertAll(csvData,
-                                                        innerCsvData => ReadCsvFileUsingMineAsync(new MemoryStream(innerCsvData, false),
-                                                                                                  new Rfc4180CsvTokenizer(),
-                                                                                                  bufferSize));
+            byte[] fileData = await File.ReadAllBytesAsync(fullCsvFilePath).ConfigureAwait(false);
 
-            var csvHelperReadTask = ReadCsvFileUsingCsvHelperAsync(fullCsvFilePath);
-            string[][] expected = await csvHelperReadTask.ConfigureAwait(false);
-            Assert.All(await Task.WhenAll(airBreatherReadTasks).ConfigureAwait(false), actual => Assert.Equal(expected, actual));
+            // act
+            // make sure to test with multiple line-ending variants, including mixed.
+            string[][][] allActual = Array.ConvertAll(VaryLineEndings(fileName, chunkLength, fileData),
+                                                      csvData => TokenizeCsvFileUsingMine(csvData, new Rfc4180CsvTokenizer(), chunkLength));
+
+            // assert
+            string[][] expected = TokenizeCsvFileUsingCsvHelper(fileData);
+            Assert.All(allActual, actual => Assert.Equal(expected, actual));
         }
 
-        private static async Task<string[][]> ReadCsvFileUsingMineAsync(Stream stream, Rfc4180CsvTokenizer tokenizer, int fileReadBufferLength)
+        private static string[][] TokenizeCsvFileUsingMine(ReadOnlySpan<byte> fileData, Rfc4180CsvTokenizer tokenizer, int chunkLength)
         {
             var visitor = new StringBufferingVisitor();
-            byte[] buffer = new byte[fileReadBufferLength];
-            int readBytes;
-            while ((readBytes = await stream.ReadAsync(buffer).ConfigureAwait(false)) != 0)
+            while (fileData.Length >= chunkLength)
             {
-                tokenizer.ProcessNextReadBufferChunk(new ReadOnlySpan<byte>(buffer, 0, readBytes), visitor);
+                tokenizer.ProcessNextReadBufferChunk(fileData.Slice(0, chunkLength), visitor);
+                fileData = fileData.Slice(chunkLength);
             }
 
+            tokenizer.ProcessNextReadBufferChunk(fileData, visitor);
             tokenizer.ProcessFinalReadBufferChunk(visitor);
             return visitor.Finish();
         }
 
-        private static async Task<string[][]> ReadCsvFileUsingCsvHelperAsync(string path)
+        private static string[][] TokenizeCsvFileUsingCsvHelper(byte[] csvData)
         {
             var lines = new List<string[]>();
-            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan | FileOptions.Asynchronous))
+            using (var stream = new MemoryStream(csvData, false))
             using (var streamReader = new StreamReader(stream, EncodingEx.UTF8NoBOM, false))
             using (var csvReader = new CsvReader(streamReader, new Configuration { BadDataFound = null }))
             {
-                while (await csvReader.ReadAsync().ConfigureAwait(false))
+                while (csvReader.Read())
                 {
                     lines.Add(csvReader.Context.Record);
                 }
@@ -71,9 +74,9 @@ namespace AirBreather.Tests
             return lines.ToArray();
         }
 
-        private static byte[][] VaryLineEndings(ReadOnlySpan<byte> original)
+        private static byte[][] VaryLineEndings(string fileName, int chunkLength, ReadOnlySpan<byte> fileData)
         {
-            var resultList = new List<byte>[]
+            var resultLists = new List<byte>[]
             {
                 new List<byte>(),
                 new List<byte>(),
@@ -90,36 +93,40 @@ namespace AirBreather.Tests
                 new byte[] { (byte)'\r', (byte)'\n' },
             };
 
-            var random = new System.Random(8675309);
+            // use a random seed that differs by file but is still consistent across runs.
+            ulong fileNameHash = xxHash64.Hash(EncodingEx.UTF8NoBOM.GetBytes(fileName));
+            ulong combined = unchecked(fileNameHash + (uint)chunkLength);
+            int randomSeed = unchecked((int)combined ^ (int)(combined >> 32));
+
+            var random = new System.Random(randomSeed);
+
             ReadOnlySpan<byte> newLine = EncodingEx.UTF8NoBOM.GetBytes(Environment.NewLine);
-            while (true)
+            while (!fileData.IsEmpty)
             {
-                int idx = original.IndexOf(newLine);
-                byte[] final = (idx < 0 ? original : original.Slice(0, idx)).ToArray();
-                foreach (var list in resultList)
+                int newLineIndex = fileData.IndexOf(newLine);
+                byte[] dataBeforeEndOfLine = (newLineIndex < 0 ? fileData : fileData.Slice(0, newLineIndex)).ToArray();
+
+                foreach (var (resultList, i) in resultLists.TagIndexes())
                 {
-                    list.AddRange(final);
+                    resultList.AddRange(dataBeforeEndOfLine);
+
+                    if (i < lineEndings.Length)
+                    {
+                        // make sure to have, for every line ending, at least one result that uses
+                        // that line ending exclusively.
+                        resultList.AddRange(lineEndings[i]);
+                    }
+                    else
+                    {
+                        // vary the line endings within the rest of the results pseudo-randomly.
+                        resultList.AddRange(lineEndings[random.Next(lineEndings.Length)]);
+                    }
                 }
 
-                if (idx < 0)
-                {
-                    break;
-                }
-
-                // first three use the Mac, Unix, and Windows line endings
-                resultList[0].AddRange(lineEndings[0]);
-                resultList[1].AddRange(lineEndings[1]);
-                resultList[2].AddRange(lineEndings[2]);
-
-                // last three vary line endings within the file, pseudo-randomly.
-                resultList[3].AddRange(lineEndings[random.Next(3)]);
-                resultList[4].AddRange(lineEndings[random.Next(3)]);
-                resultList[5].AddRange(lineEndings[random.Next(3)]);
-
-                original = original.Slice(idx + newLine.Length);
+                fileData = newLineIndex < 0 ? default : fileData.Slice(newLineIndex + newLine.Length);
             }
 
-            return Array.ConvertAll(resultList, lst => lst.ToArray());
+            return Array.ConvertAll(resultLists, lst => lst.ToArray());
         }
 
         private sealed class StringBufferingVisitor : CsvReaderVisitorBase

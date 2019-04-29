@@ -1,11 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+
 using AirBreather.Csv;
+
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
+
 using CsvHelper;
 using CsvHelper.Configuration;
 
@@ -25,11 +28,11 @@ namespace AirBreather.Bench
         [Benchmark(Baseline = true)]
         public long CountRowsUsingMine()
         {
-            var vis = new RowCountingVisitor();
+            var visitor = new RowCountingVisitor();
             var tokenizer = new Rfc4180CsvTokenizer();
-            tokenizer.ProcessNextReadBufferChunk(this.data, vis);
-            tokenizer.ProcessFinalReadBufferChunk(vis);
-            return vis.RowCount;
+            tokenizer.ProcessNextReadBufferChunk(this.data, visitor);
+            tokenizer.ProcessFinalReadBufferChunk(visitor);
+            return visitor.RowCount;
         }
 
         [Benchmark]
