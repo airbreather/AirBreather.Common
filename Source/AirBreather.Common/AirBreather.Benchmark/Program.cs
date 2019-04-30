@@ -29,9 +29,9 @@ namespace AirBreather.Bench
         public long CountRowsUsingMine()
         {
             var visitor = new RowCountingVisitor();
-            var tokenizer = new Rfc4180CsvTokenizer();
-            tokenizer.ProcessNextReadBufferChunk(this.data, visitor);
-            tokenizer.ProcessFinalReadBufferChunk(visitor);
+            var tokenizer = new CsvTokenizer();
+            tokenizer.ProcessNextChunk(this.data, visitor);
+            tokenizer.ProcessEndOfStream(visitor);
             return visitor.RowCount;
         }
 
@@ -70,9 +70,9 @@ namespace AirBreather.Bench
         {
             public long RowCount { get; private set; }
 
-            public override void VisitEndOfLine() => ++this.RowCount;
-            public override void VisitLastFieldDataChunk(ReadOnlySpan<byte> chunk) { }
-            public override void VisitPartialFieldDataChunk(ReadOnlySpan<byte> chunk) { }
+            public override void VisitEndOfRecord() => ++this.RowCount;
+            public override void VisitEndOfField(ReadOnlySpan<byte> chunk) { }
+            public override void VisitPartialFieldContents(ReadOnlySpan<byte> chunk) { }
         }
     }
 }

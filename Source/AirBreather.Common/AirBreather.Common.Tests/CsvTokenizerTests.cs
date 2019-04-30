@@ -16,9 +16,9 @@ using Xunit;
 
 namespace AirBreather.Tests
 {
-    public sealed class Rfc4180CsvTokenizerTests
+    public sealed class CsvTokenizerTests
     {
-        private static readonly string TestCsvFilesFolderPath = Path.Combine(Path.GetDirectoryName(Assembly.GetAssembly(typeof(Rfc4180CsvTokenizer)).Location), "TestCsvFiles");
+        private static readonly string TestCsvFilesFolderPath = Path.Combine(Path.GetDirectoryName(Assembly.GetAssembly(typeof(CsvTokenizer)).Location), "TestCsvFiles");
 
         public static IEnumerable<object[]> TestCsvFiles =>
             from filePath in Directory.EnumerateFiles(TestCsvFilesFolderPath, "*.csv")
@@ -37,24 +37,24 @@ namespace AirBreather.Tests
             // act
             // make sure to test with multiple line-ending variants, including mixed.
             string[][][] allActual = Array.ConvertAll(VaryLineEndings(fileName, chunkLength, fileData),
-                                                      csvData => TokenizeCsvFileUsingMine(csvData, new Rfc4180CsvTokenizer(), chunkLength));
+                                                      csvData => TokenizeCsvFileUsingMine(csvData, new CsvTokenizer(), chunkLength));
 
             // assert
             string[][] expected = TokenizeCsvFileUsingCsvHelper(fileData);
             Assert.All(allActual, actual => Assert.Equal(expected, actual));
         }
 
-        private static string[][] TokenizeCsvFileUsingMine(ReadOnlySpan<byte> fileData, Rfc4180CsvTokenizer tokenizer, int chunkLength)
+        private static string[][] TokenizeCsvFileUsingMine(ReadOnlySpan<byte> fileData, CsvTokenizer tokenizer, int chunkLength)
         {
             var visitor = new StringBufferingVisitor();
             while (fileData.Length >= chunkLength)
             {
-                tokenizer.ProcessNextReadBufferChunk(fileData.Slice(0, chunkLength), visitor);
+                tokenizer.ProcessNextChunk(fileData.Slice(0, chunkLength), visitor);
                 fileData = fileData.Slice(chunkLength);
             }
 
-            tokenizer.ProcessNextReadBufferChunk(fileData, visitor);
-            tokenizer.ProcessFinalReadBufferChunk(visitor);
+            tokenizer.ProcessNextChunk(fileData, visitor);
+            tokenizer.ProcessEndOfStream(visitor);
             return visitor.Finish();
         }
 
@@ -146,15 +146,15 @@ namespace AirBreather.Tests
                 return result;
             }
 
-            public override void VisitEndOfLine()
+            public override void VisitEndOfRecord()
             {
                 _lines.Add(_fields.ToArray());
                 _fields.Clear();
             }
 
-            public override void VisitPartialFieldDataChunk(ReadOnlySpan<byte> chunk) => CopyToCutBuffer(chunk);
+            public override void VisitPartialFieldContents(ReadOnlySpan<byte> chunk) => CopyToCutBuffer(chunk);
 
-            public override void VisitLastFieldDataChunk(ReadOnlySpan<byte> chunk)
+            public override void VisitEndOfField(ReadOnlySpan<byte> chunk)
             {
                 if (_cutBufferConsumed != 0)
                 {

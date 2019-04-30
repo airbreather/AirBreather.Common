@@ -4,19 +4,39 @@ using System.Runtime.CompilerServices;
 namespace AirBreather.Csv
 {
     /// <summary>
-    /// Reader that processes RFC 4180 (CSV) fields.
+    /// Tokenizes a byte stream into CSV fields.  The processing follows the guidelines set out in
+    /// RFC 4180 unless and until the stream proves to be in an incompatible format, in which case a
+    /// set of additional rules kick in to ensure that all streams are still compatible.
+    /// <para>
+    /// The byte stream is tokenized according to the rules of the ASCII encoding.  This makes it
+    /// compatible with any encoding that encodes 0x0A, 0x0D, 0x22, and 0x2C the same way that ASCII
+    /// encodes them.  Windows code pages and UTF-8 are notable examples of acceptable encodings.
+    /// UTF-16 is a notable example of an unacceptable encoding; trying to use this class to process
+    /// text encoded in any other encoding will yield undesirable results without any errors.
+    /// </para>
+    /// <para>
+    /// All bytes that appear in the stream except 0x0A, 0x0D, 0x22, and 0x2C are unconditionally
+    /// treated as data and passed through as-is.  It is the consumer's responsibility to handle (or
+    /// not handle) NUL bytes, invalid UTF-8, leading UTF-8 BOM, or any other quirks that come with
+    /// the territory of text processing.
+    /// </para>
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// Each instance of this class expects to process all data from one stream, represented as zero
+    /// or more <see cref="ProcessNextChunk"/> followed by one <see cref="ProcessEndOfStream"/>,
+    /// before moving on to another stream.  An instance may be reused after a stream has been fully
+    /// processed, but each instance is also <strong>very</strong> lightweight, so it is recommended
+    /// that callers simply create a new instance for each stream that needs to be processed.
+    /// </para>
+    /// <para>
     /// RFC 4180 leaves a lot of wiggle room for implementers.  The following section explains how
     /// this implementation resolves ambiguities in the spec, explains where and why we deviate from
     /// it, and offers clarifying notes where the spec appears to have "gotchas", in the order that
-    /// the relevant items appear in the spec:
+    /// the relevant items appear in the spec, primarily modeled off of how Josh Close's CsvHelper
+    /// library handles the same situations:
+    /// </para>
     /// <list type="bullet">
-    /// <item>
-    /// The spec does not specify a maximum field length, but for practical reasons, we do impose a
-    /// limit of some sort.  This limit can be controlled by the caller, but we expect that most
-    /// streams will be perfectly satisfied leaving it at the default.
-    /// </item>
     /// <item>
     /// The spec says that separate lines are delimited by CRLF line breaks.  This implementation
     /// accepts line breaks of any format (CRLF, LF, CR).
@@ -72,8 +92,41 @@ namespace AirBreather.Csv
     /// Double quotes encountered at any other point are included verbatim as part of the field with
     /// no special processing.
     /// </para>
+    /// <para>
+    /// <example>
+    /// <code>
+    /// <![CDATA[
+    /// var visitor = new MyVisitorSubclass();
+    /// var tokenizer = new CsvTokenizer();
+    /// tokenizer.ProcessNextChunk(File.ReadAllBytes("..."), visitor);
+    /// tokenizer.ProcessEndOfStream(visitor);
+    /// ]]>
+    /// </code>
+    /// </example>
+    /// </para>
+    /// <para>
+    /// <example>
+    /// <code>
+    /// <![CDATA[
+    /// using (var stream = File.OpenRead("..."))
+    /// {
+    ///     var visitor = new MyVisitorSubclass();
+    ///     var tokenizer = new CsvTokenizer();
+    ///     var buffer = new byte[81920];
+    ///     int lastRead;
+    ///     while ((lastRead = stream.Read(buffer, 0, buffer.Length)) != 0)
+    ///     {
+    ///         tokenizer.ProcessNextChunk(new ReadOnlySpan<byte>(buffer, 0, lastRead), visitor);
+    ///     }
+    ///
+    ///     tokenizer.ProcessEndOfStream(visitor);
+    /// }
+    /// ]]>
+    /// </code>
+    /// </example>
+    /// </para>
     /// </remarks>
-    public class Rfc4180CsvTokenizer
+    public class CsvTokenizer
     {
         private const byte COMMA = (byte)',';
 
@@ -100,10 +153,25 @@ namespace AirBreather.Csv
             CutAtPotentiallyTerminalDoubleQuote = 0b00010000,
         }
 
-        public void ProcessNextReadBufferChunk(ReadOnlySpan<byte> readBuffer, CsvReaderVisitorBase visitor)
+        /// <summary>
+        /// Accepts the next (or first) chunk of data in the CSV stream, and informs an instance of
+        /// <see cref="CsvReaderVisitorBase"/> what it contains.
+        /// </summary>
+        /// <param name="chunk">
+        /// A <see cref="ReadOnlySpan{T}"/> containing the next chunk of data.
+        /// </param>
+        /// <param name="visitor">
+        /// The <see cref="CsvReaderVisitorBase"/> to interact with, or <see langword="null"/> if we
+        /// should simply advance the parser state.
+        /// </param>
+        /// <remarks>
+        /// If <paramref name="chunk"/> is empty, this method will do nothing.
+        /// </remarks>
+        public void ProcessNextChunk(ReadOnlySpan<byte> chunk, CsvReaderVisitorBase visitor)
         {
             if (visitor is null)
             {
+                // "null object" pattern.
                 visitor = CsvReaderVisitorBase.Null;
             }
 
@@ -111,26 +179,26 @@ namespace AirBreather.Csv
             ReadOnlySpan<byte> allStopBytes = AllStopBytes;
 
             // we're going to consume the entire buffer that was handed to us.
-            while (!readBuffer.IsEmpty)
+            while (!chunk.IsEmpty)
             {
                 if ((_parserFlags & ParserFlags.ReadAnythingInCurrentField) != 0)
                 {
                     // most of the time, we should be able to fully process each field in the same
                     // loop iteration that we first start reading it.  the most prominent exception
                     // is that 
-                    PickUpFromLastTime(ref readBuffer, visitor);
+                    PickUpFromLastTime(ref chunk, visitor);
                     continue;
                 }
 
-                int idx = readBuffer.IndexOfAny(allStopBytes);
+                int idx = chunk.IndexOfAny(allStopBytes);
                 if (idx < 0)
                 {
-                    visitor.VisitPartialFieldDataChunk(readBuffer);
+                    visitor.VisitPartialFieldContents(chunk);
                     _parserFlags = ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
                     break;
                 }
 
-                switch (readBuffer[idx])
+                switch (chunk[idx])
                 {
                     case QUOTE:
                         if (idx == 0)
@@ -142,27 +210,42 @@ namespace AirBreather.Csv
                             // RFC 4180 forbids quotes that show up anywhere but the beginning of a
                             // field, so it's up to us to decide what we want to do about this.  We
                             // choose to treat all such quotes as just regular data.
-                            visitor.VisitPartialFieldDataChunk(readBuffer.Slice(0, idx + 1));
+                            visitor.VisitPartialFieldContents(chunk.Slice(0, idx + 1));
                             _parserFlags = ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
                         }
 
                         break;
 
                     case COMMA:
-                        visitor.VisitLastFieldDataChunk(readBuffer.Slice(0, idx));
+                        visitor.VisitEndOfField(chunk.Slice(0, idx));
                         _parserFlags = ParserFlags.ReadAnythingOnCurrentLine;
                         break;
 
                     default:
-                        ProcessEndOfLine(readBuffer.Slice(0, idx), visitor);
+                        ProcessEndOfLine(chunk.Slice(0, idx), visitor);
                         break;
                 }
 
-                readBuffer = readBuffer.Slice(idx + 1);
+                chunk = chunk.Slice(idx + 1);
             }
         }
 
-        public void ProcessFinalReadBufferChunk(CsvReaderVisitorBase visitor)
+        /// <summary>
+        /// Informs this tokenizer that the last chunk of data in the stream has been read, and so
+        /// we should make any final interactions with the <see cref="CsvReaderVisitorBase"/> and
+        /// reset our state to prepare for the next stream.
+        /// </summary>
+        /// <param name="visitor">
+        /// The <see cref="CsvReaderVisitorBase"/> to interact with, or <see langword="null"/> if we
+        /// should simply advance the parser state.
+        /// </param>
+        /// <remarks>
+        /// <para>
+        /// If <see cref="ProcessNextChunk"/> has never been called (or has not been called since
+        /// the last time that this method was called), then this method will do nothing.
+        /// </para>
+        /// </remarks>
+        public void ProcessEndOfStream(CsvReaderVisitorBase visitor)
         {
             if (visitor is null)
             {
@@ -185,55 +268,73 @@ namespace AirBreather.Csv
                 int idx = readBuffer.IndexOf(QUOTE);
                 if (idx < 0)
                 {
-                    visitor.VisitPartialFieldDataChunk(readBuffer);
+                    visitor.VisitPartialFieldContents(readBuffer);
                     readBuffer = default;
                     return;
                 }
 
+                // the double quote we stopped at was either escaping a literal double quote, or it
+                // represented the end of a quoted field.  we will usually have at least one more
+                // byte ready for us (except in contrived cases), and so it should almost always pay
+                // off to try to look ahead by one more byte to see if we can avoid a Partial call.
                 if (idx == readBuffer.Length - 1)
                 {
-                    visitor.VisitPartialFieldDataChunk(readBuffer.Slice(0, idx));
+                    // in fact, it should pay off so well in so many cases that we can probably even
+                    // get away with making the other case really suboptimal, which is what it will
+                    // do when we pick up where we leave off after setting this flag.
+                    visitor.VisitPartialFieldContents(readBuffer.Slice(0, idx));
                     _parserFlags |= ParserFlags.CutAtPotentiallyTerminalDoubleQuote;
                     readBuffer = default;
                     return;
                 }
 
+                // we have at least one more byte, so let's see what the double quote actually means
                 switch (readBuffer[idx + 1])
                 {
                     case QUOTE:
-                        // the quote we stopped at was escaping a literal quote byte, so we send
-                        // everything up to and including the escaping quote.
-                        visitor.VisitPartialFieldDataChunk(readBuffer.Slice(0, idx + 1));
+                        // the double quote we stopped at was escaping a literal double quote, so we
+                        // send everything up to and including the escaping quote.
+                        visitor.VisitPartialFieldContents(readBuffer.Slice(0, idx + 1));
                         break;
 
                     case COMMA:
-                        visitor.VisitLastFieldDataChunk(readBuffer.Slice(0, idx));
+                        // the double quote was the end of a quoted field, so send the entire data
+                        // from the beginning of this quoted field data chunk up to the double quote
+                        // that terminated it (excluding, of course, the double quote itself).
+                        visitor.VisitEndOfField(readBuffer.Slice(0, idx));
                         _parserFlags = ParserFlags.ReadAnythingOnCurrentLine;
                         break;
 
                     case CR:
                     case LF:
+                        // same thing as the COMMA case, just the field ended at the end of a line
+                        // instead of the end of a field on the current line.
                         ProcessEndOfLine(readBuffer.Slice(0, idx), visitor);
                         break;
 
                     default:
+                        // the double quote was the end of the quoted part of the field data, but
+                        // then it continues on with more data; don't spend too much time optimizing
+                        // this case since it's not RFC 4180, just do the parts we need to do in
+                        // order to behave the way we said we would.
                         _parserFlags |= ParserFlags.QuotedFieldDataEnded;
-                        visitor.VisitPartialFieldDataChunk(readBuffer.Slice(0, idx));
-                        visitor.VisitPartialFieldDataChunk(readBuffer.Slice(idx + 1, 1));
+                        visitor.VisitPartialFieldContents(readBuffer.Slice(0, idx));
+                        visitor.VisitPartialFieldContents(readBuffer.Slice(idx + 1, 1));
                         break;
                 }
 
+                // slice off the data up to the quote and the next byte that we read.
                 readBuffer = readBuffer.Slice(idx + 2);
                 return;
             }
 
             // this is expected to be rare: either we were cut between field reads, or we're reading
-            // nonstandard field data where the quoted field data ends but there's extra stuff after
+            // nonstandard field data where there's a quote that neither starts nor ends the field.
             {
                 int idx = readBuffer.IndexOfAny(AllStopBytesExceptQuote);
                 if (idx < 0)
                 {
-                    visitor.VisitPartialFieldDataChunk(readBuffer);
+                    visitor.VisitPartialFieldContents(readBuffer);
                     readBuffer = default;
                     return;
                 }
@@ -241,7 +342,7 @@ namespace AirBreather.Csv
                 switch (readBuffer[idx])
                 {
                     case COMMA:
-                        visitor.VisitLastFieldDataChunk(readBuffer.Slice(0, idx));
+                        visitor.VisitEndOfField(readBuffer.Slice(0, idx));
                         _parserFlags = ParserFlags.ReadAnythingOnCurrentLine;
                         break;
 
@@ -270,7 +371,7 @@ namespace AirBreather.Csv
                     // the previous double quote was actually there to escape this double quote.  we
                     // didn't copy the double quote into our cut buffer last time because we weren't
                     // sure.  well, we're sure now, so go ahead copy it.
-                    visitor.VisitPartialFieldDataChunk(readBuffer.Slice(0, 1));
+                    visitor.VisitPartialFieldContents(readBuffer.Slice(0, 1));
 
                     // we processed the double quote, so main loop should resume at the next byte.
                     readBuffer = readBuffer.Slice(1);
@@ -285,12 +386,15 @@ namespace AirBreather.Csv
             }
         }
 
-        private void ProcessEndOfLine(ReadOnlySpan<byte> lastFieldData, CsvReaderVisitorBase visitor)
+        private void ProcessEndOfLine(ReadOnlySpan<byte> lastFieldDataChunk, CsvReaderVisitorBase visitor)
         {
-            if (!lastFieldData.IsEmpty || (_parserFlags & ParserFlags.ReadAnythingOnCurrentLine) != 0)
+            if (!lastFieldDataChunk.IsEmpty || (_parserFlags & ParserFlags.ReadAnythingOnCurrentLine) != 0)
             {
-                visitor.VisitLastFieldDataChunk(lastFieldData);
-                visitor.VisitEndOfLine();
+                // even if the last field data chunk is empty, we still need to send it: we might be
+                // looking at a newline that immediately follows a comma, which is defined to mean
+                // an empty field at the end of a line.
+                visitor.VisitEndOfField(lastFieldDataChunk);
+                visitor.VisitEndOfRecord();
             }
 
             _parserFlags = ParserFlags.None;
