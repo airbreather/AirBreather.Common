@@ -28,6 +28,29 @@ namespace AirBreather.Tests
 
         [Theory]
         [MemberData(nameof(TestCsvFiles))]
+        public async Task NullVisitorShouldBeFine(string fileName, int chunkLength)
+        {
+            // arrange
+            string fullCsvFilePath = Path.Combine(TestCsvFilesFolderPath, fileName + ".csv");
+            byte[] fileData = await File.ReadAllBytesAsync(fullCsvFilePath).ConfigureAwait(false);
+            var tokenizer = new CsvTokenizer();
+            int bytesReadSoFar = 0;
+
+            // act
+            while (bytesReadSoFar < fileData.Length)
+            {
+                int thisChunkLength = Math.Min(chunkLength, fileData.Length - bytesReadSoFar);
+                tokenizer.ProcessNextChunk(new ReadOnlySpan<byte>(fileData, bytesReadSoFar, thisChunkLength), null);
+                bytesReadSoFar += thisChunkLength;
+            }
+
+            tokenizer.ProcessEndOfStream(null);
+
+            // assert (empty)
+        }
+
+        [Theory]
+        [MemberData(nameof(TestCsvFiles))]
         public async Task CsvTokenizationShouldMatchCsvHelper(string fileName, int chunkLength)
         {
             // arrange
