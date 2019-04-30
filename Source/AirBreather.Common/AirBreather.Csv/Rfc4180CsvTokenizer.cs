@@ -104,7 +104,7 @@ namespace AirBreather.Csv
         {
             if (visitor is null)
             {
-                throw new ArgumentNullException(nameof(visitor));
+                visitor = CsvReaderVisitorBase.Null;
             }
 
             // cache the implicit conversion for the sake of "portable span" targets.
@@ -166,7 +166,7 @@ namespace AirBreather.Csv
         {
             if (visitor is null)
             {
-                throw new ArgumentNullException(nameof(visitor));
+                visitor = CsvReaderVisitorBase.Null;
             }
 
             ProcessEndOfLine(default, visitor);

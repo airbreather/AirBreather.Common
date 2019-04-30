@@ -156,14 +156,13 @@ namespace AirBreather.Tests
 
             public override void VisitLastFieldDataChunk(ReadOnlySpan<byte> chunk)
             {
-                ReadOnlySpan<byte> fullFieldData = chunk;
                 if (_cutBufferConsumed != 0)
                 {
                     CopyToCutBuffer(chunk);
-                    fullFieldData = new ReadOnlySpan<byte>(_cutBuffer, 0, _cutBufferConsumed);
+                    chunk = new ReadOnlySpan<byte>(_cutBuffer, 0, _cutBufferConsumed);
                 }
 
-                _fields.Add(EncodingEx.UTF8NoBOM.GetString(fullFieldData));
+                _fields.Add(EncodingEx.UTF8NoBOM.GetString(chunk));
                 _cutBufferConsumed = 0;
             }
 
