@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace AirBreather.Csv
@@ -86,9 +85,7 @@ namespace AirBreather.Csv
 
         private static readonly byte[] AllStopBytes = { COMMA, QUOTE, CR, LF };
 
-        private byte[] _cutFieldBuffer = new byte[81920];
-
-        private int _cutFieldBufferConsumed;
+        private static readonly byte[] AllStopBytesExceptQuote = { COMMA, CR, LF };
 
         private ParserFlags _parserFlags;
 
@@ -101,21 +98,6 @@ namespace AirBreather.Csv
             CurrentFieldStartedWithQuote        = 0b00000100,
             QuotedFieldDataEnded                = 0b00001000,
             CutAtPotentiallyTerminalDoubleQuote = 0b00010000,
-            FieldDataSoFarExceedsMaxLength      = 0b00100000,
-        }
-
-        public int MaxFieldLength
-        {
-            get => _cutFieldBuffer.Length;
-            set
-            {
-                if (value < 1)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value), value, "Must be greater than zero.");
-                }
-
-                _cutFieldBuffer = new byte[value];
-            }
         }
 
         public void ProcessNextReadBufferChunk(ReadOnlySpan<byte> readBuffer, CsvReaderVisitorBase visitor)
@@ -125,6 +107,7 @@ namespace AirBreather.Csv
                 throw new ArgumentNullException(nameof(visitor));
             }
 
+            // cache the implicit conversion for the sake of "portable span" targets.
             ReadOnlySpan<byte> allStopBytes = AllStopBytes;
 
             // we're going to consume the entire buffer that was handed to us.
@@ -142,7 +125,7 @@ namespace AirBreather.Csv
                 int idx = readBuffer.IndexOfAny(allStopBytes);
                 if (idx < 0)
                 {
-                    CopyToCutBuffer(readBuffer, visitor);
+                    visitor.VisitPartialFieldDataChunk(readBuffer);
                     _parserFlags = ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
                     break;
                 }
@@ -159,14 +142,15 @@ namespace AirBreather.Csv
                             // RFC 4180 forbids quotes that show up anywhere but the beginning of a
                             // field, so it's up to us to decide what we want to do about this.  We
                             // choose to treat all such quotes as just regular data.
-                            CopyToCutBuffer(readBuffer.Slice(0, idx + 1), visitor);
+                            visitor.VisitPartialFieldDataChunk(readBuffer.Slice(0, idx + 1));
                             _parserFlags = ParserFlags.ReadAnythingInCurrentField | ParserFlags.ReadAnythingOnCurrentLine;
                         }
 
                         break;
 
                     case COMMA:
-                        ProcessEndOfField(readBuffer.Slice(0, idx), visitor);
+                        visitor.VisitLastFieldDataChunk(readBuffer.Slice(0, idx));
+                        _parserFlags = ParserFlags.ReadAnythingOnCurrentLine;
                         break;
 
                     default:
@@ -201,14 +185,14 @@ namespace AirBreather.Csv
                 int idx = readBuffer.IndexOf(QUOTE);
                 if (idx < 0)
                 {
-                    CopyToCutBuffer(readBuffer, visitor);
+                    visitor.VisitPartialFieldDataChunk(readBuffer);
                     readBuffer = default;
                     return;
                 }
 
                 if (idx == readBuffer.Length - 1)
                 {
-                    CopyToCutBuffer(readBuffer.Slice(0, idx), visitor);
+                    visitor.VisitPartialFieldDataChunk(readBuffer.Slice(0, idx));
                     _parserFlags |= ParserFlags.CutAtPotentiallyTerminalDoubleQuote;
                     readBuffer = default;
                     return;
@@ -217,12 +201,14 @@ namespace AirBreather.Csv
                 switch (readBuffer[idx + 1])
                 {
                     case QUOTE:
-                        // escaped quote, copy it in and send it back
-                        CopyToCutBuffer(readBuffer.Slice(0, idx + 1), visitor);
+                        // the quote we stopped at was escaping a literal quote byte, so we send
+                        // everything up to and including the escaping quote.
+                        visitor.VisitPartialFieldDataChunk(readBuffer.Slice(0, idx + 1));
                         break;
 
                     case COMMA:
-                        ProcessEndOfField(readBuffer.Slice(0, idx), visitor);
+                        visitor.VisitLastFieldDataChunk(readBuffer.Slice(0, idx));
+                        _parserFlags = ParserFlags.ReadAnythingOnCurrentLine;
                         break;
 
                     case CR:
@@ -232,8 +218,8 @@ namespace AirBreather.Csv
 
                     default:
                         _parserFlags |= ParserFlags.QuotedFieldDataEnded;
-                        CopyToCutBuffer(readBuffer.Slice(0, idx), visitor);
-                        CopyToCutBuffer(readBuffer.Slice(idx + 1, 1), visitor);
+                        visitor.VisitPartialFieldDataChunk(readBuffer.Slice(0, idx));
+                        visitor.VisitPartialFieldDataChunk(readBuffer.Slice(idx + 1, 1));
                         break;
                 }
 
@@ -244,11 +230,10 @@ namespace AirBreather.Csv
             // this is expected to be rare: either we were cut between field reads, or we're reading
             // nonstandard field data where the quoted field data ends but there's extra stuff after
             {
-                ReadOnlySpan<byte> allStopBytes = stackalloc byte[] { COMMA, CR, LF };
-                int idx = readBuffer.IndexOfAny(allStopBytes);
+                int idx = readBuffer.IndexOfAny(AllStopBytesExceptQuote);
                 if (idx < 0)
                 {
-                    CopyToCutBuffer(readBuffer, visitor);
+                    visitor.VisitPartialFieldDataChunk(readBuffer);
                     readBuffer = default;
                     return;
                 }
@@ -256,7 +241,8 @@ namespace AirBreather.Csv
                 switch (readBuffer[idx])
                 {
                     case COMMA:
-                        ProcessEndOfField(readBuffer.Slice(0, idx), visitor);
+                        visitor.VisitLastFieldDataChunk(readBuffer.Slice(0, idx));
+                        _parserFlags = ParserFlags.ReadAnythingOnCurrentLine;
                         break;
 
                     default:
@@ -284,7 +270,7 @@ namespace AirBreather.Csv
                     // the previous double quote was actually there to escape this double quote.  we
                     // didn't copy the double quote into our cut buffer last time because we weren't
                     // sure.  well, we're sure now, so go ahead copy it.
-                    CopyToCutBuffer(readBuffer.Slice(0, 1), visitor);
+                    visitor.VisitPartialFieldDataChunk(readBuffer.Slice(0, 1));
 
                     // we processed the double quote, so main loop should resume at the next byte.
                     readBuffer = readBuffer.Slice(1);
@@ -299,50 +285,11 @@ namespace AirBreather.Csv
             }
         }
 
-        private ReadOnlySpan<byte> CopyToCutBuffer(ReadOnlySpan<byte> copyBuffer, CsvReaderVisitorBase visitor)
-        {
-            if ((_parserFlags & ParserFlags.FieldDataSoFarExceedsMaxLength) == 0)
-            {
-                if (_cutFieldBufferConsumed + copyBuffer.Length <= _cutFieldBuffer.Length)
-                {
-                    copyBuffer.CopyTo(new Span<byte>(_cutFieldBuffer, _cutFieldBufferConsumed, copyBuffer.Length));
-                    _cutFieldBufferConsumed += copyBuffer.Length;
-                    return new ReadOnlySpan<byte>(_cutFieldBuffer, 0, _cutFieldBufferConsumed);
-                }
-                else
-                {
-                    ProcessOverflowingFieldData(copyBuffer, visitor);
-                }
-            }
-
-            return default;
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private void ProcessOverflowingFieldData(ReadOnlySpan<byte> copyBuffer, CsvReaderVisitorBase visitor)
-        {
-            int bytesToCopy = _cutFieldBuffer.Length - _cutFieldBufferConsumed;
-            copyBuffer.Slice(0, bytesToCopy).CopyTo(new Span<byte>(_cutFieldBuffer, _cutFieldBufferConsumed, bytesToCopy));
-            _cutFieldBufferConsumed = _cutFieldBuffer.Length;
-            visitor.VisitStartOfOverflowingFieldData(_cutFieldBuffer);
-            _parserFlags |= ParserFlags.FieldDataSoFarExceedsMaxLength;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ProcessEndOfField(ReadOnlySpan<byte> lastReadSection, CsvReaderVisitorBase visitor)
-        {
-            visitor.VisitFieldData(_cutFieldBufferConsumed == 0
-                ? lastReadSection
-                : CopyToCutBuffer(lastReadSection, visitor));
-            _parserFlags = ParserFlags.ReadAnythingOnCurrentLine;
-            _cutFieldBufferConsumed = 0;
-        }
-
         private void ProcessEndOfLine(ReadOnlySpan<byte> lastFieldData, CsvReaderVisitorBase visitor)
         {
             if (!lastFieldData.IsEmpty || (_parserFlags & ParserFlags.ReadAnythingOnCurrentLine) != 0)
             {
-                ProcessEndOfField(lastFieldData, visitor);
+                visitor.VisitLastFieldDataChunk(lastFieldData);
                 visitor.VisitEndOfLine();
             }
 

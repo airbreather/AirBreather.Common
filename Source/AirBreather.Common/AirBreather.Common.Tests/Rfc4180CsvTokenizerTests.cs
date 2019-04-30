@@ -135,6 +135,10 @@ namespace AirBreather.Tests
 
             private readonly List<string> _fields = new List<string>();
 
+            private byte[] _cutBuffer = new byte[4];
+
+            private int _cutBufferConsumed;
+
             public string[][] Finish()
             {
                 var result = _lines.ToArray();
@@ -148,7 +152,38 @@ namespace AirBreather.Tests
                 _fields.Clear();
             }
 
-            public override void VisitFieldData(ReadOnlySpan<byte> fieldData) => _fields.Add(EncodingEx.UTF8NoBOM.GetString(fieldData));
+            public override void VisitPartialFieldDataChunk(ReadOnlySpan<byte> chunk) => CopyToCutBuffer(chunk);
+
+            public override void VisitLastFieldDataChunk(ReadOnlySpan<byte> chunk)
+            {
+                ReadOnlySpan<byte> fullFieldData = chunk;
+                if (_cutBufferConsumed != 0)
+                {
+                    CopyToCutBuffer(chunk);
+                    fullFieldData = new ReadOnlySpan<byte>(_cutBuffer, 0, _cutBufferConsumed);
+                }
+
+                _fields.Add(EncodingEx.UTF8NoBOM.GetString(fullFieldData));
+                _cutBufferConsumed = 0;
+            }
+
+            private void CopyToCutBuffer(ReadOnlySpan<byte> chunk)
+            {
+                int minLength = _cutBufferConsumed + chunk.Length;
+                if (_cutBuffer.Length < minLength)
+                {
+                    int newLength = _cutBuffer.Length;
+                    while (newLength < minLength)
+                    {
+                        newLength *= 2;
+                    }
+
+                    Array.Resize(ref _cutBuffer, newLength);
+                }
+
+                chunk.CopyTo(new Span<byte>(_cutBuffer, _cutBufferConsumed, chunk.Length));
+                _cutBufferConsumed += chunk.Length;
+            }
         }
     }
 }

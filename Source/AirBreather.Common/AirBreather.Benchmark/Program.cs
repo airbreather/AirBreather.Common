@@ -71,7 +71,8 @@ namespace AirBreather.Bench
             public long RowCount { get; private set; }
 
             public override void VisitEndOfLine() => ++this.RowCount;
-            public override void VisitFieldData(ReadOnlySpan<byte> fieldData) { }
+            public override void VisitLastFieldDataChunk(ReadOnlySpan<byte> chunk) { }
+            public override void VisitPartialFieldDataChunk(ReadOnlySpan<byte> chunk) { }
         }
     }
 }
