@@ -63,8 +63,12 @@ namespace AirBreather.Tests
                                                       csvData => TokenizeCsvFileUsingMine(csvData, new CsvTokenizer(), chunkLength));
 
             // assert
-            string[][] expected = TokenizeCsvFileUsingCsvHelper(fileData);
-            Assert.All(allActual, actual => Assert.Equal(expected, actual));
+            string[][][] allExpected = Array.ConvertAll(VaryLineEndings(fileName, chunkLength, fileData),
+                                                        csvData => TokenizeCsvFileUsingCsvHelper(csvData));
+            for (int i = 0; i < allActual.Length; i++)
+            {
+                Assert.Equal(allExpected[i], allActual[i]);
+            }
         }
 
         private static string[][] TokenizeCsvFileUsingMine(ReadOnlySpan<byte> fileData, CsvTokenizer tokenizer, int chunkLength)
