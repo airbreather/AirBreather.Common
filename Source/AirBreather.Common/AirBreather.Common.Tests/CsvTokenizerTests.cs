@@ -58,11 +58,12 @@ namespace AirBreather.Tests
 
             // make sure to test with multiple line-ending variants, including mixed.
             // use a random seed that differs by file but is still consistent across runs.
-            var hashState = xxHash64.Init();
-            xxHash64.Add(ref hashState, MemoryMarshal.Cast<char, byte>(fileName));
-            xxHash64.Add(ref hashState, MemoryMarshal.Cast<int, byte>(MemoryMarshal.CreateSpan(ref chunkLength, 1)));
-            ulong hashFinal = xxHash64.Finish(ref hashState);
-            int randomSeed = unchecked((int)hashFinal ^ (int)(hashFinal >> 32));
+            ulong hash = xxHash64
+                .Init()
+                .Add(MemoryMarshal.Cast<char, byte>(fileName))
+                .Add(MemoryMarshal.Cast<int, byte>(MemoryMarshal.CreateSpan(ref chunkLength, 1)))
+                .Finish();
+            int randomSeed = unchecked((int)hash ^ (int)(hash >> 32));
 
             foreach (byte[] fileData in VaryLineEndings(fileDataTemplate, randomSeed))
             {

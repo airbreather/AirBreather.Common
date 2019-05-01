@@ -8,14 +8,24 @@ namespace AirBreather.BinaryHash
 {
     public static class xxHash64
     {
-        [StructLayout(LayoutKind.Auto)]
-        public unsafe struct State
+        // shortcut for Init / Add / Finish
+        public static ulong Hash(ReadOnlySpan<byte> input, ulong seed = 0) => Init(seed).Add(input).Finish();
+
+        public static xxHash64State Init(ulong seed = 0)
         {
-            internal fixed ulong Values[4];
-            internal fixed byte Buffer[32];
-            internal ulong BytesProcessedSoFar;
-            internal byte BufferUsed; // [0, 32)
+            var state = default(xxHash64State);
+            state.Init(seed);
+            return state;
         }
+    }
+
+    [StructLayout(LayoutKind.Auto)]
+    public unsafe struct xxHash64State
+    {
+        private fixed ulong Values[4];
+        private fixed byte Buffer[32];
+        private ulong BytesProcessedSoFar;
+        private byte BufferUsed; // [0, 32)
 
         private const ulong Prime1 = 11400714785074694791;
         private const ulong Prime2 = 14029467366897019727;
@@ -23,50 +33,40 @@ namespace AirBreather.BinaryHash
         private const ulong Prime4 = 9650029242287828579;
         private const ulong Prime5 = 2870177450012600261;
 
-        // shortcut for Init / Add / Finish so one-shot callers don't need to worry about state.
-        public static ulong Hash(ReadOnlySpan<byte> input, ulong seed = 0)
-        {
-            State state = Init(seed);
-            Add(ref state, input);
-            return Finish(ref state);
-        }
-
         // start a streaming hash
-        public static unsafe State Init(ulong seed = 0)
+        public void Init(ulong seed = 0)
         {
-            State state = default;
+            this = default;
             unchecked
             {
-                state.Values[0] = seed + Prime1 + Prime2;
-                state.Values[1] = seed + Prime2;
-                state.Values[2] = seed;
-                state.Values[3] = seed - Prime1;
+                this.Values[0] = seed + Prime1 + Prime2;
+                this.Values[1] = seed + Prime2;
+                this.Values[2] = seed;
+                this.Values[3] = seed - Prime1;
             }
-
-            return state;
         }
 
         // add the next chunk to a streaming hash.
-        public static unsafe void Add(ref State state, ReadOnlySpan<byte> input)
+        public unsafe xxHash64State Add(ReadOnlySpan<byte> input)
         {
             if (input.IsEmpty)
             {
-                return;
+                return this;
             }
 
             // pin because accessing the fixed-size buffers requires it.
-            fixed (State* p = &state)
+            fixed (xxHash64State* p = &this)
             {
                 p->BytesProcessedSoFar += unchecked((ulong)input.Length);
 
                 var stateBuffer = new Span<byte>(p->Buffer, 32);
-                Span<byte> freeBuffer = stateBuffer.Slice(p->BufferUsed);
+                var freeBuffer = stateBuffer.Slice(p->BufferUsed);
                 if (input.Length < freeBuffer.Length)
                 {
                     input.CopyTo(freeBuffer.Slice(0, input.Length));
 
                     p->BufferUsed = unchecked((byte)(p->BufferUsed + input.Length));
-                    return;
+                    return this;
                 }
 
                 var values = new Span<ulong>(p->Values, 4);
@@ -92,15 +92,17 @@ namespace AirBreather.BinaryHash
 
                 p->BufferUsed = unchecked((byte)input.Length);
             }
+
+            return this;
         }
 
         // wrap up a streaming hash
-        public static unsafe ulong Finish(ref State state)
+        public unsafe ulong Finish()
         {
             unchecked
             {
                 // pin because accessing the fixed-size buffers requires it.
-                fixed (State* p = &state)
+                fixed (xxHash64State* p = &this)
                 {
                     var values = new Span<ulong>(p->Values, 4);
 
