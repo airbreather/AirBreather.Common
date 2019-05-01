@@ -20,11 +20,13 @@ namespace AirBreather.Tests
     {
         private static readonly string TestCsvFilesFolderPath = Path.Combine(Path.GetDirectoryName(Assembly.GetAssembly(typeof(CsvTokenizer)).Location), "TestCsvFiles");
 
+        private static readonly int[] TestChunkLengths = { 1, 2, 3, 5, 8, 13, 21, 34 };
+
         public static IEnumerable<object[]> TestCsvFiles =>
             from filePath in Directory.EnumerateFiles(TestCsvFilesFolderPath, "*.csv")
             let fileName = Path.GetFileNameWithoutExtension(filePath)
-            from bufferSize in new[] { 1, 2, 3, 5, 8, 13, 21, 34 }
-            select new object[] { fileName, bufferSize };
+            from chunkLength in TestChunkLengths
+            select new object[] { fileName, chunkLength };
 
         [Theory]
         [MemberData(nameof(TestCsvFiles))]
