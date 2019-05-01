@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 using AirBreather.BinaryHash;
 using AirBreather.Csv;
@@ -18,7 +17,7 @@ namespace AirBreather.Tests
 {
     public sealed class CsvTokenizerTests
     {
-        private static readonly string TestCsvFilesFolderPath = Path.Combine(Path.GetDirectoryName(Assembly.GetAssembly(typeof(CsvTokenizer)).Location), "TestCsvFiles");
+        private static readonly string TestCsvFilesFolderPath = Path.Combine(Path.GetDirectoryName(typeof(CsvTokenizer).Assembly.Location), "TestCsvFiles");
 
         private static readonly int[] TestChunkLengths = { 1, 2, 3, 5, 8, 13, 21, 34 };
 
@@ -30,22 +29,21 @@ namespace AirBreather.Tests
 
         [Theory]
         [MemberData(nameof(TestCsvFiles))]
-        public async Task NullVisitorShouldBeFine(string fileName, int chunkLength)
+        public void NullVisitorShouldBeFine(string fileName, int chunkLength)
         {
             // arrange
             string fullCsvFilePath = Path.Combine(TestCsvFilesFolderPath, fileName + ".csv");
-            byte[] fileData = await File.ReadAllBytesAsync(fullCsvFilePath).ConfigureAwait(false);
+            ReadOnlySpan<byte> fileData = File.ReadAllBytes(fullCsvFilePath);
             var tokenizer = new CsvTokenizer();
-            int bytesReadSoFar = 0;
 
             // act
-            while (bytesReadSoFar < fileData.Length)
+            while (fileData.Length >= chunkLength)
             {
-                int thisChunkLength = Math.Min(chunkLength, fileData.Length - bytesReadSoFar);
-                tokenizer.ProcessNextChunk(new ReadOnlySpan<byte>(fileData, bytesReadSoFar, thisChunkLength), null);
-                bytesReadSoFar += thisChunkLength;
+                tokenizer.ProcessNextChunk(fileData.Slice(0, chunkLength), null);
+                fileData = fileData.Slice(chunkLength);
             }
 
+            tokenizer.ProcessNextChunk(fileData, null);
             tokenizer.ProcessEndOfStream(null);
 
             // assert (empty)
@@ -53,29 +51,34 @@ namespace AirBreather.Tests
 
         [Theory]
         [MemberData(nameof(TestCsvFiles))]
-        public async Task CsvTokenizationShouldMatchCsvHelper(string fileName, int chunkLength)
+        public void CsvTokenizationShouldMatchCsvHelper(string fileName, int chunkLength)
         {
             // arrange
-            string fullCsvFilePath = Path.Combine(TestCsvFilesFolderPath, fileName + ".csv");
-            byte[] fileData = await File.ReadAllBytesAsync(fullCsvFilePath).ConfigureAwait(false);
+            byte[] fileDataTemplate = File.ReadAllBytes(Path.Combine(TestCsvFilesFolderPath, fileName + ".csv"));
 
-            // act
             // make sure to test with multiple line-ending variants, including mixed.
-            string[][][] allActual = Array.ConvertAll(VaryLineEndings(fileName, chunkLength, fileData),
-                                                      csvData => TokenizeCsvFileUsingMine(csvData, new CsvTokenizer(), chunkLength));
+            // use a random seed that differs by file but is still consistent across runs.
+            var hashState = xxHash64.Init();
+            xxHash64.Add(ref hashState, MemoryMarshal.Cast<char, byte>(fileName));
+            xxHash64.Add(ref hashState, MemoryMarshal.Cast<int, byte>(MemoryMarshal.CreateSpan(ref chunkLength, 1)));
+            ulong hashFinal = xxHash64.Finish(ref hashState);
+            int randomSeed = unchecked((int)hashFinal ^ (int)(hashFinal >> 32));
 
-            // assert
-            string[][][] allExpected = Array.ConvertAll(VaryLineEndings(fileName, chunkLength, fileData),
-                                                        csvData => TokenizeCsvFileUsingCsvHelper(csvData));
-            for (int i = 0; i < allActual.Length; i++)
+            foreach (byte[] fileData in VaryLineEndings(fileDataTemplate, randomSeed))
             {
-                Assert.Equal(allExpected[i], allActual[i]);
+                // act
+                var actual = TokenizeCsvFileUsingMine(fileData, chunkLength);
+
+                // assert
+                var expected = TokenizeCsvFileUsingCsvHelper(fileData);
+                Assert.Equal(expected, actual);
             }
         }
 
-        private static string[][] TokenizeCsvFileUsingMine(ReadOnlySpan<byte> fileData, CsvTokenizer tokenizer, int chunkLength)
+        private static List<string[]> TokenizeCsvFileUsingMine(ReadOnlySpan<byte> fileData, int chunkLength)
         {
-            var visitor = new StringBufferingVisitor();
+            var tokenizer = new CsvTokenizer();
+            var visitor = new StringBufferingVisitor(fileData.Length);
             while (fileData.Length >= chunkLength)
             {
                 tokenizer.ProcessNextChunk(fileData.Slice(0, chunkLength), visitor);
@@ -84,26 +87,23 @@ namespace AirBreather.Tests
 
             tokenizer.ProcessNextChunk(fileData, visitor);
             tokenizer.ProcessEndOfStream(visitor);
-            return visitor.Finish();
+            return visitor.Lines;
         }
 
-        private static string[][] TokenizeCsvFileUsingCsvHelper(byte[] csvData)
+        private static IEnumerable<string[]> TokenizeCsvFileUsingCsvHelper(byte[] csvData)
         {
-            var lines = new List<string[]>();
             using (var stream = new MemoryStream(csvData, false))
             using (var streamReader = new StreamReader(stream, EncodingEx.UTF8NoBOM, false))
             using (var csvReader = new CsvReader(streamReader, new Configuration { BadDataFound = null }))
             {
                 while (csvReader.Read())
                 {
-                    lines.Add(csvReader.Context.Record);
+                    yield return csvReader.Context.Record;
                 }
             }
-
-            return lines.ToArray();
         }
 
-        private static byte[][] VaryLineEndings(string fileName, int chunkLength, ReadOnlySpan<byte> fileData)
+        private static byte[][] VaryLineEndings(ReadOnlySpan<byte> fileData, int randomSeed)
         {
             var resultLists = new List<byte>[]
             {
@@ -121,11 +121,6 @@ namespace AirBreather.Tests
                 new byte[] { (byte)'\n' },
                 new byte[] { (byte)'\r', (byte)'\n' },
             };
-
-            // use a random seed that differs by file but is still consistent across runs.
-            ulong fileNameHash = xxHash64.Hash(EncodingEx.UTF8NoBOM.GetBytes(fileName));
-            ulong combined = unchecked(fileNameHash + (uint)chunkLength);
-            int randomSeed = unchecked((int)combined ^ (int)(combined >> 32));
 
             var random = new System.Random(randomSeed);
 
@@ -160,24 +155,19 @@ namespace AirBreather.Tests
 
         private sealed class StringBufferingVisitor : CsvReaderVisitorBase
         {
-            private readonly List<string[]> _lines = new List<string[]>();
-
             private readonly List<string> _fields = new List<string>();
 
-            private byte[] _cutBuffer = new byte[4];
+            private readonly byte[] _cutBuffer;
 
             private int _cutBufferConsumed;
 
-            public string[][] Finish()
-            {
-                var result = _lines.ToArray();
-                _lines.Clear();
-                return result;
-            }
+            public StringBufferingVisitor(int fileLength) => _cutBuffer = new byte[fileLength];
+
+            public List<string[]> Lines { get; } = new List<string[]>();
 
             public override void VisitEndOfRecord()
             {
-                _lines.Add(_fields.ToArray());
+                Lines.Add(_fields.ToArray());
                 _fields.Clear();
             }
 
@@ -197,18 +187,6 @@ namespace AirBreather.Tests
 
             private void CopyToCutBuffer(ReadOnlySpan<byte> chunk)
             {
-                int minLength = _cutBufferConsumed + chunk.Length;
-                if (_cutBuffer.Length < minLength)
-                {
-                    int newLength = _cutBuffer.Length;
-                    while (newLength < minLength)
-                    {
-                        newLength *= 2;
-                    }
-
-                    Array.Resize(ref _cutBuffer, newLength);
-                }
-
                 chunk.CopyTo(new Span<byte>(_cutBuffer, _cutBufferConsumed, chunk.Length));
                 _cutBufferConsumed += chunk.Length;
             }
