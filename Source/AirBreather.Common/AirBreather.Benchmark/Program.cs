@@ -5,8 +5,6 @@ using System.Text;
 using AirBreather.Csv;
 
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
 
 using CsvHelper;
@@ -14,6 +12,10 @@ using CsvHelper.Configuration;
 
 namespace AirBreather.Bench
 {
+    [ClrJob]
+    [CoreJob]
+    [CoreRtJob]
+    [GcServer(true)]
     [MemoryDiagnoser]
     public class Program
     {
@@ -59,11 +61,7 @@ namespace AirBreather.Bench
             Console.WriteLine(prog.CountRowsUsingMine());
             Console.WriteLine(prog.CountRowsUsingCsvHelper());
 
-            BenchmarkRunner.Run<Program>(
-                ManualConfig.Create(
-                    DefaultConfig.Instance.With(
-                        Job.Core.WithGcServer(true),
-                        Job.Clr.WithGcServer(true))));
+            BenchmarkRunner.Run<Program>();
         }
 
         private sealed class RowCountingVisitor : CsvReaderVisitorBase
