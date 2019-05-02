@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 using AirBreather.Csv;
@@ -19,28 +20,24 @@ namespace AirBreather.Bench
     [MemoryDiagnoser]
     public class Program
     {
-        private byte[] data;
-
-        [GlobalSetup]
-        public void Setup()
-        {
-            this.data = File.ReadAllBytes(@"N:\media\datasets\csv-from-nz\Building consents by institutional control (Monthly).csv");
-        }
+        public static CsvFile[] CsvFiles => GetCsvFiles();
 
         [Benchmark(Baseline = true)]
-        public long CountRowsUsingMine()
+        [ArgumentsSource(nameof(CsvFiles))]
+        public long CountRowsUsingMine(CsvFile csvFile)
         {
             var visitor = new RowCountingVisitor();
             var tokenizer = new CsvTokenizer();
-            tokenizer.ProcessNextChunk(this.data, visitor);
+            tokenizer.ProcessNextChunk(csvFile.FileData, visitor);
             tokenizer.ProcessEndOfStream(visitor);
             return visitor.RowCount;
         }
 
         [Benchmark]
-        public long CountRowsUsingCsvHelper()
+        [ArgumentsSource(nameof(CsvFiles))]
+        public long CountRowsUsingCsvHelper(CsvFile csvFile)
         {
-            using (var ms = new MemoryStream(this.data, false))
+            using (var ms = new MemoryStream(csvFile.FileData, false))
             using (var tr = new StreamReader(ms, new UTF8Encoding(false, false), false))
             using (var rd = new CsvReader(tr, new Configuration { BadDataFound = null }))
             {
@@ -54,14 +51,40 @@ namespace AirBreather.Bench
             }
         }
 
-        static void Main()
+        static int Main()
         {
             var prog = new Program();
-            prog.Setup();
-            Console.WriteLine(prog.CountRowsUsingMine());
-            Console.WriteLine(prog.CountRowsUsingCsvHelper());
+            foreach (var csvFile in CsvFiles)
+            {
+                if (prog.CountRowsUsingMine(csvFile) != prog.CountRowsUsingCsvHelper(csvFile))
+                {
+                    Console.Error.WriteLine($"Failed on {csvFile}.");
+                    return 1;
+                }
+            }
 
             BenchmarkRunner.Run<Program>();
+            return 0;
+        }
+
+        public readonly struct CsvFile
+        {
+            public CsvFile(string fullPath) =>
+                (FullPath, FileName, FileData) = (fullPath, Path.GetFileNameWithoutExtension(fullPath), File.ReadAllBytes(fullPath));
+
+            public string FullPath { get; }
+
+            public string FileName { get; }
+
+            public byte[] FileData { get; }
+
+            public override string ToString() => FileName;
+        }
+
+        static CsvFile[] GetCsvFiles([CallerFilePath]string myLocation = null)
+        {
+            return Array.ConvertAll(Directory.GetFiles(Path.Combine(Path.GetDirectoryName(myLocation), "large-data-files"), "*.csv"),
+                                    fullPath => new CsvFile(fullPath));
         }
 
         private sealed class RowCountingVisitor : CsvReaderVisitorBase
