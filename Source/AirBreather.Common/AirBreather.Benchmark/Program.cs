@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 using AirBreather.Csv;
@@ -38,7 +39,7 @@ namespace AirBreather.Bench
         public long CountRowsUsingCsvHelper(CsvFile csvFile)
         {
             using (var ms = new MemoryStream(csvFile.FileData, false))
-            using (var tr = new StreamReader(ms, new UTF8Encoding(false, false), false))
+            using (var tr = new StreamReader(ms, new UTF8Encoding(false, true), false))
             using (var rd = new CsvReader(tr, new Configuration { BadDataFound = null }))
             {
                 long cnt = 0;
@@ -89,11 +90,38 @@ namespace AirBreather.Bench
 
         private sealed class RowCountingVisitor : CsvReaderVisitorBase
         {
+            private readonly Decoder _decoder = new UTF8Encoding(false, true).GetDecoder();
+
             public long RowCount { get; private set; }
 
             public override void VisitEndOfRecord() => ++this.RowCount;
-            public override void VisitEndOfField(ReadOnlySpan<byte> chunk) { }
-            public override void VisitPartialFieldContents(ReadOnlySpan<byte> chunk) { }
+
+            public unsafe override void VisitEndOfField(ReadOnlySpan<byte> chunk)
+            {
+#if NETCOREAPP
+                _decoder.GetCharCount(chunk, true);
+#else
+                fixed (byte* b = &MemoryMarshal.GetReference(chunk))
+                {
+                    _decoder.GetCharCount(b == null ? (byte*)1 : b, chunk.Length, true);
+                }
+#endif
+            }
+
+            public unsafe override void VisitPartialFieldContents(ReadOnlySpan<byte> chunk)
+            {
+#if NETCOREAPP
+                _decoder.GetCharCount(chunk, false);
+#else
+                if (!chunk.IsEmpty)
+                {
+                    fixed (byte* b = &MemoryMarshal.GetReference(chunk))
+                    {
+                        _decoder.GetCharCount(b, chunk.Length, false);
+                    }
+                }
+#endif
+            }
         }
     }
 }

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>AirBreather.Bench.Program-20190504-080036</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet=v0.11.5, OS=Windows 10.0.17134.753 (1803/April2018Update/Redstone4)
+Intel Core i7-6850K CPU 3.60GHz (Skylake), 1 CPU, 12 logical and 6 physical cores
+Frequency=3515622 Hz, Resolution=284.4447 ns, Timer=TSC
+.NET Core SDK=3.0.100-preview4-011223
+  [Host]     : .NET Core 3.0.0-preview4-27615-11 (CoreCLR 4.6.27615.73, CoreFX 4.700.19.21213), 64bit RyuJIT
+  Job-UIOCLB : .NET Framework 4.7.2 (CLR 4.0.30319.42000), 64bit RyuJIT-v4.7.3394.0
+  Job-RCBFPW : .NET Core 3.0.0-preview4-27615-11 (CoreCLR 4.6.27615.73, CoreFX 4.700.19.21213), 64bit RyuJIT
+  Job-LFZQHY : .NET CoreRT 1.0.27704.01 @BuiltBy: dlab14-DDVSOWINAGE101 @Branch: master @Commit: 64fca2f1b1b1bf6d5c1bbc0df3b9c55eddd63d37, 64bit AOT
+</code></pre>
+<pre><code>Server=True  
+</code></pre>
+
+<table>
+<thead><tr><th>           Method</th><th>Runtime</th><th>csvFile</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Ratio</th><th>RatioSD</th><th>Gen 0</th><th>Gen 1</th><th>Gen 2</th><th>Allocated</th>
+</tr>
+</thead><tbody><tr><td>CountRowsUsingMine</td><td>Clr</td><td>mocked</td><td>11.723 ms</td><td>0.0393 ms</td><td>0.0348 ms</td><td>1.00</td><td>0.00</td><td>-</td><td>-</td><td>-</td><td>256 B</td>
+</tr><tr><td>CountRowsUsingCsvHelper</td><td>Clr</td><td>mocked</td><td>166.222 ms</td><td>0.9912 ms</td><td>0.9272 ms</td><td>14.18</td><td>0.10</td><td>18000.0000</td><td>333.3333</td><td>-</td><td>115764283 B</td>
+</tr><tr><td>CountRowsUsingMine</td><td>Core</td><td>mocked</td><td>10.342 ms</td><td>0.0213 ms</td><td>0.0189 ms</td><td>1.00</td><td>0.00</td><td>-</td><td>-</td><td>-</td><td>216 B</td>
+</tr><tr><td>CountRowsUsingCsvHelper</td><td>Core</td><td>mocked</td><td>159.995 ms</td><td>0.3022 ms</td><td>0.2827 ms</td><td>15.47</td><td>0.05</td><td>1666.6667</td><td>-</td><td>-</td><td>114613744 B</td>
+</tr><tr><td>CountRowsUsingMine</td><td>CoreRT</td><td>mocked</td><td>8.771 ms</td><td>0.0462 ms</td><td>0.0432 ms</td><td>1.00</td><td>0.00</td><td>-</td><td>-</td><td>-</td><td>208 B</td>
+</tr><tr><td>CountRowsUsingCsvHelper</td><td>CoreRT</td><td>mocked</td><td>127.769 ms</td><td>0.2357 ms</td><td>0.2089 ms</td><td>14.56</td><td>0.08</td><td>500.0000</td><td>-</td><td>-</td><td>114615166 B</td>
+</tr></tbody></table>
+</body>
+</html>
