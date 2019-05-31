@@ -134,9 +134,6 @@ namespace AirBreather
             }
         }
 
-        // A version of the above that does slightly less work for IReadOnlyCollection<T> instances.
-        // Should JIT to something that gets optimized to something that's only marginally different
-        // than the other one, but it's still cheap and easy to do it this way.
         public static void CopyTo<T>(this IReadOnlyCollection<T> collection, T[] array, int arrayIndex = 0)
         {
             collection.ValidateNotNull(nameof(collection));
@@ -208,7 +205,7 @@ namespace AirBreather
 
         public static IEnumerable<(T1 x1, T2 x2)> Zip<T1, T2>(this IEnumerable<T1> first, IEnumerable<T2> second) => Enumerable.Zip(first, second, (x1, x2) => (x1, x2));
 
-        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this ImmutableArray<T> array) => array.AsRegularArrayDangerous().AsSpan();
+        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this ImmutableArray<T> array) => array.AsRegularArrayDangerous();
 
         public static MemoryStream ToReadableStream(this ImmutableArray<byte> array, int index = 0) => ToReadableStreamCore(array, index, null);
         public static MemoryStream ToReadableStream(this ImmutableArray<byte> array, int index, int count) => ToReadableStreamCore(array, index, count);
