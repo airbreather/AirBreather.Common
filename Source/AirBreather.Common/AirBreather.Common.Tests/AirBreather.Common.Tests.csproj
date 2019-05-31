@@ -13,9 +13,6 @@
 
   <ItemGroup>
     <Compile Remove="Experimental\**" />
-    <AirBreatherCsvFile Include="TestCsvFiles\*" />
-
-    <ProjectReference Include="..\AirBreather.Csv\AirBreather.Csv.csproj" />
 
     <ProjectReference Include="..\AirBreather.Common\AirBreather.Common.csproj" />
 
@@ -25,12 +22,6 @@
     <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
     <PackageReference Include="System.Memory" Version="4.5.2" />
     <PackageReference Include="xunit" Version="2.4.1" />
-    <PackageReference Include="CsvHelper" Version="12.1.2" />
   </ItemGroup>
-
-  <Target Name="CopyTestCsvFiles" AfterTargets="Build">
-    <RemoveDir Directories="$(OutDir)TestCsvFiles" />
-    <Copy SourceFiles="@(AirBreatherCsvFile)" DestinationFolder="$(OutDir)TestCsvFiles" />
-  </Target>
 
 </Project>
